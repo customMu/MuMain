@@ -66,9 +66,19 @@ namespace SEASON3B
         DWORD GetMsgBoxType();
 
         void GetInputBoxText(wchar_t* strText);
+        void SetInputBoxText(const wchar_t* strText);
         void SetInputBoxOption(int iOption);
         void SetInputBoxPosition(int x, int y);
         void SetInputBoxSize(int width, int height);
+
+        // Adds a small third button beside the input field, e.g. "Max" to
+        // pre-fill the field with a suggested value. Off by default, so
+        // every existing caller of this box (trade zen, vault codes, ...)
+        // is unaffected unless it opts in. Clicking it does NOT close the
+        // box or send MSGBOX_EVENT_USER_COMMON_OK - it only fires
+        // MSGBOX_EVENT_USER_QUICK, so the caller decides what to fill and
+        // the player still has to press OK themselves.
+        void EnableQuickButton(const wchar_t* label);
 
     private:
         int SeparateText(const type_string& strMsg, DWORD dwColor, BYTE byFontType);
@@ -85,6 +95,8 @@ namespace SEASON3B
 
         CNewUIMessageBoxButton m_BtnOk;
         CNewUIMessageBoxButton m_BtnCancel;
+        CNewUIMessageBoxButton m_BtnQuick;
+        bool m_bHasQuickButton = false;
 
     public:
         void SetPassword(WORD password) { m_password = password; }
@@ -1038,6 +1050,9 @@ namespace SEASON3B
         static CALLBACK_RESULT ReturnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
         static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
         static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        // Fills the input field with the live available-point count. Does
+        // NOT confirm anything by itself - the player still has to press OK.
+        static CALLBACK_RESULT MaxBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
 
     private:
         static CALLBACK_RESULT ProcessOk(class CNewUIMessageBoxBase* pOwner);

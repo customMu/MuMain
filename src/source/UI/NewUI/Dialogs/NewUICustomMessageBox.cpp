@@ -164,6 +164,12 @@ CALLBACK_RESULT SEASON3B::CNewUITextInputMsgBox::LButtonUp(class CNewUIMessageBo
     auto* pMsgBox = dynamic_cast<CNewUITextInputMsgBox*>(pOwner);
     if (pMsgBox)
     {
+        if (pMsgBox->m_bHasQuickButton && pMsgBox->m_BtnQuick.IsMouseIn() == true)
+        {
+            g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_QUICK);
+            return CALLBACK_BREAK;
+        }
+
         switch (pMsgBox->GetMsgBoxType())
         {
         case MSGBOX_COMMON_TYPE_OK:
@@ -260,6 +266,11 @@ bool SEASON3B::CNewUITextInputMsgBox::Update()
         m_BtnOk.Update();
         m_BtnCancel.Update();
         break;
+    }
+
+    if (m_bHasQuickButton)
+    {
+        m_BtnQuick.Update();
     }
 
     if (m_pInputBox)
@@ -360,6 +371,11 @@ void SEASON3B::CNewUITextInputMsgBox::RenderButtons()
         m_BtnCancel.Render();
         break;
     }
+
+    if (m_bHasQuickButton)
+    {
+        m_BtnQuick.Render();
+    }
 }
 
 void SEASON3B::CNewUITextInputMsgBox::GetInputBoxText(wchar_t* strText)
@@ -367,6 +383,14 @@ void SEASON3B::CNewUITextInputMsgBox::GetInputBoxText(wchar_t* strText)
     if (m_pInputBox)
     {
         m_pInputBox->GetText(strText);
+    }
+}
+
+void SEASON3B::CNewUITextInputMsgBox::SetInputBoxText(const wchar_t* strText)
+{
+    if (m_pInputBox)
+    {
+        m_pInputBox->SetText(strText);
     }
 }
 
@@ -392,6 +416,30 @@ void SEASON3B::CNewUITextInputMsgBox::SetInputBoxSize(int width, int height)
     {
         m_pInputBox->SetSize(width, height);
     }
+}
+
+void SEASON3B::CNewUITextInputMsgBox::EnableQuickButton(const wchar_t* label)
+{
+    if (m_pInputBox == nullptr)
+    {
+        return;
+    }
+
+    constexpr float QUICK_BTN_WIDTH = 40.f;
+    constexpr float QUICK_BTN_HEIGHT = 14.f;
+    constexpr float QUICK_BTN_GAP = 6.f; // space between the input field and this button
+
+    // Reads the input box's CURRENT position/size, so call this after
+    // SetInputBoxPosition/SetInputBoxSize/AddMsg (a multi-line message
+    // shifts the input box down) - not before, or the button ends up
+    // misaligned.
+    const float x = static_cast<float>(m_pInputBox->GetPosition_x() + m_pInputBox->GetWidth()) + QUICK_BTN_GAP;
+    const float y = static_cast<float>(m_pInputBox->GetPosition_y()) - ((QUICK_BTN_HEIGHT - m_pInputBox->GetHeight()) / 2.f);
+
+    m_BtnQuick.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL, x, y, QUICK_BTN_WIDTH, QUICK_BTN_HEIGHT,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+    m_BtnQuick.SetText(label);
+    m_bHasQuickButton = true;
 }
 
 void SEASON3B::CNewUIKeyPadButton::Render()
@@ -4159,9 +4207,17 @@ bool SEASON3B::CStatPointMsgBoxLayout::SetLayout()
 
     pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY | UIOPTION_PAINTBACK);
 
+    // Goes through I18N (Game group), not a hardcoded literal, so the text
+    // follows whatever language the player has selected instead of always
+    // showing up in one language regardless of their locale setting.
     wchar_t strMsg[256];
-    mu_swprintf(strMsg, L"Сколько очков добавить? (Доступно: %d)", s_MaxPoints);
+    mu_swprintf_s(strMsg, I18N::Game::HowManyPointsToAddAvailableD, s_MaxPoints);
     pMsgBox->AddMsg(strMsg);
+
+    // Placed after AddMsg on purpose: EnableQuickButton reads the input
+    // box's final position, and AddMsg is what may have just moved it down.
+    pMsgBox->EnableQuickButton(I18N::Game::Max);
+    pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::MaxBtnDown, MSGBOX_EVENT_USER_QUICK);
 
     pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::ReturnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
     pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
@@ -4221,6 +4277,26 @@ CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::CancelBtnDown(class CNewUIMess
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
 
     return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::MaxBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    auto* pMsgBox = dynamic_cast<CNewUITextInputMsgBox*>(pOwner);
+    if (pMsgBox == nullptr)
+        return CALLBACK_CONTINUE;
+
+    // Live count, same reasoning as ProcessOk: points may have been gained
+    // or spent elsewhere since the popup opened, so don't trust s_MaxPoints.
+    const int iAvailable = static_cast<int>(CharacterAttribute->LevelUpPoint);
+    wchar_t strValue[16];
+    mu_swprintf_s(strValue, L"%d", iAvailable);
+    pMsgBox->SetInputBoxText(strValue);
+
+    PlayBuffer(SOUND_CLICK01);
+
+    // Deliberately NOT sending MSGBOX_EVENT_USER_COMMON_OK or DESTROY here -
+    // this only fills the field, the player still presses OK themselves.
+    return CALLBACK_CONTINUE;
 }
 
 bool SEASON3B::CTradeZenMsgBoxLayout::SetLayout()

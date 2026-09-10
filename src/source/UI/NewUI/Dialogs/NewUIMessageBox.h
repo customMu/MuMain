@@ -38,6 +38,11 @@ namespace SEASON3B
         // common msgbox
         MSGBOX_EVENT_USER_COMMON_OK,
         MSGBOX_EVENT_USER_COMMON_CANCEL,
+        // Fired by the optional third button that CNewUITextInputMsgBox can
+        // show next to its input field (see EnableQuickButton). Generic on
+        // purpose - any layout using that box can repurpose it, not just the
+        // stat-point popup that introduced it.
+        MSGBOX_EVENT_USER_QUICK,
         // keypad
         MSGBOX_EVENT_USER_CUSTOM_KEYPAD_INPUT,
         MSGBOX_EVENT_USER_CUSTOM_KEYPAD_DELETE,

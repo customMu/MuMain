@@ -12887,4 +12887,7 @@
   <data name="DefaultFont" xml:space="preserve">
     <value>По умолчанию</value>
   </data>
+  <data name="How many points to add? (Available: %d)" xml:space="preserve">
+    <value>Сколько очков добавить? (Доступно: %d)</value>
+  </data>
 </root>

@@ -12970,4 +12970,10 @@
   <data name="ChatCommandsUnknownCommand" xml:space="preserve">
     <value>This command is not available anymore.</value>
   </data>
+  <data name="How many points to add? (Available: %d)" xml:space="preserve">
+    <value>How many points to add? (Available: %d)</value>
+  </data>
+  <data name="Max" xml:space="preserve">
+    <value>Max</value>
+  </data>
 </root>
