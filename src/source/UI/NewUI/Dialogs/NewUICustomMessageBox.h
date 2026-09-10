@@ -1021,6 +1021,31 @@ namespace SEASON3B
         static CALLBACK_RESULT ProcessOk(class CNewUIMessageBoxBase* pOwner);
     };
 
+    // A popup that lets the player type how many level-up points to spend on
+    // one stat at once, instead of clicking the plus-button that many times.
+    // Opened with a right click on the stat's plus-button; the ordinary left
+    // click still adds a single point right away.
+    class CStatPointMsgBoxLayout : public TMsgBoxLayout<CNewUITextInputMsgBox>
+    {
+    public:
+        bool SetLayout();
+
+        // Set right before CreateMessageBox(MSGBOX_LAYOUT_CLASS(CStatPointMsgBoxLayout))
+        // is called, because the layout is default-constructed by that macro
+        // and has no other way to learn which stat/button was clicked.
+        static void SetContext(int statIndex, int maxPoints);
+
+        static CALLBACK_RESULT ReturnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+
+    private:
+        static CALLBACK_RESULT ProcessOk(class CNewUIMessageBoxBase* pOwner);
+
+        static int s_StatIndex;
+        static int s_MaxPoints;
+    };
+
     class CZenReceiptMsgBoxLayout : public TMsgBoxLayout<CNewUITextInputMsgBox>
     {
     public:

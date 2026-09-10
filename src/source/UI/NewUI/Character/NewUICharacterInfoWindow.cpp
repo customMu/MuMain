@@ -10,6 +10,7 @@
 #include "Audio/DSPlaySound.h"
 #include "Engine/Object/ZzzCharacter.h"
 #include "UI/Legacy/UIControls.h"
+#include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "Scenes/SceneCore.h"
 #include "Engine/Object/ZzzInventory.h"
@@ -180,6 +181,19 @@ bool SEASON3B::CNewUICharacterInfoWindow::BtnProcess()
         }
         for (int i = 0; i < iCount; ++i)
         {
+            // Right click opens a popup to spend several points on this stat
+            // at once. Checked before UpdateMouseEvent() below, which only
+            // reacts to the left button and would otherwise swallow this
+            // click without doing anything.
+            if (SEASON3B::IsRelease(VK_RBUTTON)
+                && CheckMouseIn(m_BtnStat[i].GetPos().x, m_BtnStat[i].GetPos().y, m_BtnStat[i].GetSize().x, m_BtnStat[i].GetSize().y))
+            {
+                SEASON3B::CStatPointMsgBoxLayout::SetContext(i, static_cast<int>(CharacterAttribute->LevelUpPoint));
+                SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CStatPointMsgBoxLayout));
+                PlayBuffer(SOUND_CLICK01);
+                return true;
+            }
+
             if (m_BtnStat[i].UpdateMouseEvent() == true)
             {
                 SocketClient->ToGameServer()->SendIncreaseCharacterStatPoint(static_cast<CharacterStatAttribute>(i));

@@ -4139,6 +4139,90 @@ void CCherryBlossomMsgBox::RenderButtons()
     m_BtnExit.Render();
 }
 
+int SEASON3B::CStatPointMsgBoxLayout::s_StatIndex = 0;
+int SEASON3B::CStatPointMsgBoxLayout::s_MaxPoints = 0;
+
+void SEASON3B::CStatPointMsgBoxLayout::SetContext(int statIndex, int maxPoints)
+{
+    s_StatIndex = statIndex;
+    s_MaxPoints = maxPoints;
+}
+
+bool SEASON3B::CStatPointMsgBoxLayout::SetLayout()
+{
+    CNewUITextInputMsgBox* pMsgBox = GetMsgBox();
+    if (0 == pMsgBox)
+        return false;
+
+    if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL, INPUTBOX_TYPE_NUMBER, INPUTBOX_WIDTH, INPUTBOX_HEIGHT, INPUTBOX_TEXTLIMIT))
+        return false;
+
+    pMsgBox->SetInputBoxOption(UIOPTION_NUMBERONLY | UIOPTION_PAINTBACK);
+
+    wchar_t strMsg[256];
+    mu_swprintf(strMsg, L"Сколько очков добавить? (Доступно: %d)", s_MaxPoints);
+    pMsgBox->AddMsg(strMsg);
+
+    pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::ReturnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
+    pMsgBox->AddCallbackFunc(CStatPointMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_PRESSKEY_ESC);
+    return true;
+}
+
+CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::ProcessOk(class CNewUIMessageBoxBase* pOwner)
+{
+    auto* pMsgBox = dynamic_cast<CNewUITextInputMsgBox*>(pOwner);
+    wchar_t strText[MAX_TEXT_LENGTH] = { 0, };
+    pMsgBox->GetInputBoxText(strText);
+    if (wcslen(strText) == 0)
+        return CALLBACK_CONTINUE;
+
+    int iRequested = _wtoi(strText);
+    if (iRequested <= 0)
+        return CALLBACK_CONTINUE;
+
+    // Re-check against the live point count: time may have passed since the
+    // popup opened (another window, a level-up, lag), so don't trust the
+    // snapshot taken when the popup was created.
+    int iAvailable = static_cast<int>(CharacterAttribute->LevelUpPoint);
+    int iToSend = iRequested < iAvailable ? iRequested : iAvailable;
+    if (iToSend <= 0)
+        return CALLBACK_CONTINUE;
+
+    // The protocol only has a "spend one point" packet - there is no
+    // batched variant - so asking for N points means sending N packets.
+    // The server validates and decrements its own counter on every one of
+    // them, so this is safe even though the client fires them all at once.
+    for (int i = 0; i < iToSend; ++i)
+    {
+        SocketClient->ToGameServer()->SendIncreaseCharacterStatPoint(static_cast<CharacterStatAttribute>(s_StatIndex));
+    }
+
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+
+    return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::ReturnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    return ProcessOk(pOwner);
+}
+
+CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    return ProcessOk(pOwner);
+}
+
+CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+
+    return CALLBACK_BREAK;
+}
+
 bool SEASON3B::CTradeZenMsgBoxLayout::SetLayout()
 {
     CNewUITextInputMsgBox* pMsgBox = GetMsgBox();
