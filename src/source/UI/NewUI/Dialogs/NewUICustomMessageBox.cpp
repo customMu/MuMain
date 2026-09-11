@@ -14,6 +14,7 @@
 #include "GameLogic/Items/MixMgr.h"
 #include "GameLogic/Items/PersonalShopTitleImp.h"
 #include "GameLogic/NPCs/npcBreeder.h"
+#include "GameLogic/Commands/ChatCommandCatalog.h"
 #include "Engine/Object/ZzzOpenData.h"
 #include "GameLogic/Items/InventoryUtils.h"
 #include "UI/NewUI/NewUISystem.h"
@@ -4246,14 +4247,20 @@ CALLBACK_RESULT SEASON3B::CStatPointMsgBoxLayout::ProcessOk(class CNewUIMessageB
     if (iToSend <= 0)
         return CALLBACK_CONTINUE;
 
-    // The protocol only has a "spend one point" packet - there is no
-    // batched variant - so asking for N points means sending N packets.
-    // The server validates and decrements its own counter on every one of
-    // them, so this is safe even though the client fires them all at once.
-    for (int i = 0; i < iToSend; ++i)
-    {
-        SocketClient->ToGameServer()->SendIncreaseCharacterStatPoint(static_cast<CharacterStatAttribute>(s_StatIndex));
-    }
+    // IncreaseCharacterStatPoint only ever spends one point per packet - but
+    // OpenMU exposes a proper batched path through its "/add" chat command
+    // (AddStatChatCommandPlugIn.cs on the server, MinCharacterStatusRequirement
+    // = Normal, so this is available to ordinary players, not just GMs). The
+    // server applies the whole amount in a single IncreaseStatsAsync call, so
+    // this is one round trip instead of up to hundreds/thousands of packets.
+    static const wchar_t* const s_StatCodes[] = { L"str", L"agi", L"vit", L"ene", L"cmd" };
+    constexpr int STAT_CODE_COUNT = 5;
+    if (s_StatIndex < 0 || s_StatIndex >= STAT_CODE_COUNT)
+        return CALLBACK_CONTINUE;
+
+    wchar_t strCommand[64];
+    mu_swprintf_s(strCommand, L"/add %ls %d", s_StatCodes[s_StatIndex], iToSend);
+    GameLogic::Commands::ChatCommandCatalog::Execute(strCommand);
 
     PlayBuffer(SOUND_CLICK01);
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
