@@ -824,6 +824,7 @@ bool CNewUIInventoryActionController::TryConsumeItem(CNewUIInventoryCtrl* target
             if (g_csQuest.getQuestState2(QUEST_CHANGE_UP_3) != QUEST_END)
             {
                 bReadBookGem = false;
+                CreateOkMessageBox(I18N::Game::YouMustCompleteTheRequiredQuestFirst);
             }
         }
 
@@ -832,6 +833,7 @@ bool CNewUIInventoryActionController::TryConsumeItem(CNewUIInventoryCtrl* target
             if (CharacterAttribute->Level < 220)
             {
                 bReadBookGem = false;
+                CreateOkMessageBox(I18N::Game::YouMustCompleteTheRequiredQuestFirst);
             }
         }
 
@@ -849,7 +851,7 @@ bool CNewUIInventoryActionController::TryConsumeItem(CNewUIInventoryCtrl* target
             return true;
         }
 
-        return false;
+        return true;
     }
 
     if (pItem->Type == ITEM_FRUITS)

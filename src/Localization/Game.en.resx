@@ -12976,4 +12976,7 @@
   <data name="Max" xml:space="preserve">
     <value>Max</value>
   </data>
+  <data name="You must complete the required quest first" xml:space="preserve">
+    <value>You must complete the required quest first</value>
+  </data>
 </root>
