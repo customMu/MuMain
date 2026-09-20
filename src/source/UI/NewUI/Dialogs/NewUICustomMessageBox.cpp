@@ -171,6 +171,16 @@ CALLBACK_RESULT SEASON3B::CNewUITextInputMsgBox::LButtonUp(class CNewUIMessageBo
             return CALLBACK_BREAK;
         }
 
+        for (int i = 0; i < pMsgBox->m_iQuickRowCount; ++i)
+        {
+            if (pMsgBox->m_QuickRow[i].IsMouseIn() == true)
+            {
+                pMsgBox->m_iLastQuickIndex = i;
+                g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_USER_QUICK);
+                return CALLBACK_BREAK;
+            }
+        }
+
         switch (pMsgBox->GetMsgBoxType())
         {
         case MSGBOX_COMMON_TYPE_OK:
@@ -272,6 +282,11 @@ bool SEASON3B::CNewUITextInputMsgBox::Update()
     if (m_bHasQuickButton)
     {
         m_BtnQuick.Update();
+    }
+
+    for (int i = 0; i < m_iQuickRowCount; ++i)
+    {
+        m_QuickRow[i].Update();
     }
 
     if (m_pInputBox)
@@ -377,6 +392,11 @@ void SEASON3B::CNewUITextInputMsgBox::RenderButtons()
     {
         m_BtnQuick.Render();
     }
+
+    for (int i = 0; i < m_iQuickRowCount; ++i)
+    {
+        m_QuickRow[i].Render();
+    }
 }
 
 void SEASON3B::CNewUITextInputMsgBox::GetInputBoxText(wchar_t* strText)
@@ -441,6 +461,38 @@ void SEASON3B::CNewUITextInputMsgBox::EnableQuickButton(const wchar_t* label)
         CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
     m_BtnQuick.SetText(label);
     m_bHasQuickButton = true;
+}
+
+void SEASON3B::CNewUITextInputMsgBox::EnableQuickButtonRow(const wchar_t* const* labels, int count)
+{
+    if (m_pInputBox == nullptr || labels == nullptr || count <= 0 || count > QUICK_ROW_MAX_BUTTONS)
+    {
+        return;
+    }
+
+    constexpr float ROW_BTN_WIDTH = 34.f;
+    constexpr float ROW_BTN_HEIGHT = 14.f;
+    constexpr float ROW_BTN_GAP = 6.f;
+    constexpr float ROW_TOP_GAP = 8.f; // space between the input field and the row
+
+    // The row needs room of its own: the box draws one middle segment per text line, so an empty text line
+    // makes it one segment taller, and the OK/Cancel buttons move down with the bottom edge.
+    m_MsgTextList.push_back(new MSGBOX_TEXTDATA);
+    SetSize(GetSize().cx, GetSize().cy + MSGBOX_MIDDLE_HEIGHT);
+    AddButtonBlank(1);
+
+    const float rowWidth = (count * ROW_BTN_WIDTH) + ((count - 1) * ROW_BTN_GAP);
+    float x = GetPos().x + ((MSGBOX_WIDTH - rowWidth) / 2.f);
+    const float y = static_cast<float>(m_pInputBox->GetPosition_y() + m_pInputBox->GetHeight()) + ROW_TOP_GAP;
+
+    for (int i = 0; i < count; ++i)
+    {
+        m_QuickRow[i].SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL, x, y, ROW_BTN_WIDTH,
+                              ROW_BTN_HEIGHT, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+        m_QuickRow[i].SetText(labels[i]);
+        x += ROW_BTN_WIDTH + ROW_BTN_GAP;
+    }
+    m_iQuickRowCount = count;
 }
 
 void SEASON3B::CNewUIKeyPadButton::Render()

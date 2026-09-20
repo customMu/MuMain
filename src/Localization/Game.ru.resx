@@ -12890,4 +12890,7 @@
   <data name="How many points to add? (Available: %d)" xml:space="preserve">
     <value>Сколько очков добавить? (Доступно: %d)</value>
   </data>
+  <data name="Split stack: how many? (Total: %d)" xml:space="preserve">
+    <value>Разделить стек: сколько отделить? (Всего: %d)</value>
+  </data>
 </root>

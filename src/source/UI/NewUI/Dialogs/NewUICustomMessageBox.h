@@ -80,6 +80,13 @@ namespace SEASON3B
         // the player still has to press OK themselves.
         void EnableQuickButton(const wchar_t* label);
 
+        // Adds one row of small buttons below the input field (e.g. "-", "10", "50", "100", "+"). Clicking one
+        // of them fires MSGBOX_EVENT_USER_QUICK, and GetLastQuickIndex() tells which one it was. Like the single
+        // quick button, it neither closes the box nor confirms anything. The box gets one line taller, so call it
+        // after AddMsg (there has to be at least one message line).
+        void EnableQuickButtonRow(const wchar_t* const* labels, int count);
+        int GetLastQuickIndex() const { return m_iLastQuickIndex; }
+
     private:
         int SeparateText(const type_string& strMsg, DWORD dwColor, BYTE byFontType);
         void SetButtonInfo();
@@ -97,6 +104,11 @@ namespace SEASON3B
         CNewUIMessageBoxButton m_BtnCancel;
         CNewUIMessageBoxButton m_BtnQuick;
         bool m_bHasQuickButton = false;
+
+        static constexpr int QUICK_ROW_MAX_BUTTONS = 6;
+        CNewUIMessageBoxButton m_QuickRow[QUICK_ROW_MAX_BUTTONS];
+        int m_iQuickRowCount = 0;
+        int m_iLastQuickIndex = -1;
 
     public:
         void SetPassword(WORD password) { m_password = password; }

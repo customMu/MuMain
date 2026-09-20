@@ -9,6 +9,7 @@
 #include "Engine/Object/ZzzInventory.h"
 #include "GameLogic/Items/CComGem.h"
 #include "GameLogic/Items/StackableJewels.h"
+#include "UI/NewUI/Dialogs/SplitStackMsgBox.h"
 #include "GameLogic/Pets/GIPetManager.h"
 #include "GameLogic/Items/CSItemOption.h"
 #include "Network/Server/SocketSystem.h"
@@ -948,6 +949,17 @@ bool IsCarryingStackableJewel()
     return pPicked != nullptr && pPicked->GetItem() != nullptr &&
            GameLogic::Items::IsStackableJewel(pPicked->GetItem()->Type);
 }
+
+// Shift + click on a stack of jewels opens the popup to split the stack, instead of picking the whole stack up.
+bool OpenSplitStackPopupOnShiftClick(SEASON3B::CNewUIInventoryCtrl* pCtrl, ITEM* pItem)
+{
+    if (pCtrl->GetStorageType() != STORAGE_TYPE::INVENTORY || !SEASON3B::IsRepeat(VK_SHIFT))
+    {
+        return false;
+    }
+
+    return SEASON3B::CSplitStackMsgBoxLayout::Open(pCtrl->GetIndexByItem(pItem));
+}
 } // namespace
 
 bool SEASON3B::CNewUIInventoryCtrl::UpdateMouseEvent()
@@ -963,6 +975,12 @@ bool SEASON3B::CNewUIInventoryCtrl::UpdateMouseEvent()
         ITEM* pItem = this->FindItem(m_iPointedSquareIndex);
         if (pItem)
         {
+            if (OpenSplitStackPopupOnShiftClick(this, pItem))
+            {
+                m_EventState = EVENT_NONE;
+                return false;
+            }
+
             if (CreatePickedItem(this, pItem, true))
             {
                 RemoveItem(pItem);
