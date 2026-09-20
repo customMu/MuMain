@@ -18,6 +18,7 @@
 
 #include "Audio/DSPlaySound.h"
 #include "Network/Server/SocketSystem.h"
+#include "UI/Scaling/UITransform.h"
 
 using namespace SEASON3B;
 
@@ -79,6 +80,15 @@ void CNewUIMixInventory::Release()
     }
     if (g_pNewUI3DRenderMng)
         g_pNewUI3DRenderMng->DeleteUI2DEffectObject(UI2DEffectCallback);
+}
+
+// True if the mouse pointer is over this window. It is evaluated with the layout of this window,
+// because it can be asked while another window (e.g. the inventory) is being updated.
+bool CNewUIMixInventory::ContainsMouse() const
+{
+    const auto transform = UI::Scaling::TransformForLayout(GetLayoutMode(), WindowWidth, WindowHeight);
+    UI::Scaling::ScopedActiveTransform layout(transform, true);
+    return CheckMouseIn(m_Pos.x, m_Pos.y, INVENTORY_WIDTH, INVENTORY_HEIGHT);
 }
 
 void CNewUIMixInventory::SetMixState(int iMixState)

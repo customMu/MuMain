@@ -474,6 +474,13 @@ bool CNewUIMyInventory::UpdateMouseEvent()
         && !UI::Scaling::BottomHudContainsWindowPoint(WindowWidth, WindowHeight,
                                                        g_fWindowMouseX, g_fWindowMouseY))
     {
+        if (g_pNewUISystem->IsVisible(INTERFACE_MIXINVENTORY) == true && g_pMixInventory->ContainsMouse())
+        {
+            // The click belongs to the chaos machine window, which puts the picked item into the machine itself.
+            // Swallowing it here (to not drop the item on the ground) would make that impossible.
+            return true;
+        }
+
         if (g_pNewUISystem->IsVisible(INTERFACE_NPCSHOP) == true
             || g_pNewUISystem->IsVisible(INTERFACE_TRADE) == true
             || g_pNewUISystem->IsVisible(INTERFACE_DEVILSQUARE) == true

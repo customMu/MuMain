@@ -67,6 +67,7 @@ namespace SEASON3B
         int GetMixState() { return m_iMixState; }
 
         int GetPointedItemIndex();
+        bool ContainsMouse() const;
 
         void SetPos(int x, int y);
 
