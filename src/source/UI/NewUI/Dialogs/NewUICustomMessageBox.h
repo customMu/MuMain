@@ -80,12 +80,22 @@ namespace SEASON3B
         // the player still has to press OK themselves.
         void EnableQuickButton(const wchar_t* label);
 
-        // Adds one row of small buttons below the input field (e.g. "-", "10", "50", "100", "+"). Clicking one
-        // of them fires MSGBOX_EVENT_USER_QUICK, and GetLastQuickIndex() tells which one it was. Like the single
-        // quick button, it neither closes the box nor confirms anything. The box gets one line taller, so call it
-        // after AddMsg (there has to be at least one message line).
-        void EnableQuickButtonRow(const wchar_t* const* labels, int count);
+        // Adds rows of small buttons ABOVE the input field, e.g. {"-1", "+1", "10", "50", "100"} with the row
+        // sizes {2, 3}. The labels of all rows are given one after another, rowSizes tells how many of them
+        // belong to each row. Clicking a button fires MSGBOX_EVENT_USER_QUICK, and GetLastQuickIndex() tells
+        // which one it was (its position in labels). Like the single quick button, it neither closes the box
+        // nor confirms anything. The box gets taller, so call it after AddMsg (there has to be at least one
+        // message line).
+        void EnableQuickButtonRows(const wchar_t* const* labels, const int* rowSizes, int rowCount);
         int GetLastQuickIndex() const { return m_iLastQuickIndex; }
+
+        // Selects the whole text of the input field, so that typing replaces it.
+        void SelectInputBoxText();
+
+        // The first click into the input field clears its text, if it still is the text which the field has now.
+        // For a suggested default value which is in the way when the player wants to type an own one.
+        // Setting the text with SetInputBoxText() (e.g. by a quick button) cancels this, so call it after that.
+        void EnableClearOnFirstClick();
 
     private:
         int SeparateText(const type_string& strMsg, DWORD dwColor, BYTE byFontType);
@@ -109,6 +119,8 @@ namespace SEASON3B
         CNewUIMessageBoxButton m_QuickRow[QUICK_ROW_MAX_BUTTONS];
         int m_iQuickRowCount = 0;
         int m_iLastQuickIndex = -1;
+        bool m_bClearOnFirstClick = false;
+        std::wstring m_strClearOnFirstClickText;
 
     public:
         void SetPassword(WORD password) { m_password = password; }

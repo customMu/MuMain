@@ -11,22 +11,25 @@ using namespace SEASON3B;
 
 namespace
 {
+// The order of the buttons: first the row of "-1" and "+1", then the row of the fixed amounts.
 enum QuickButton
 {
     QUICK_MINUS = 0,
+    QUICK_PLUS,
     QUICK_TEN,
     QUICK_FIFTY,
     QUICK_HUNDRED,
-    QUICK_PLUS,
     QUICK_BUTTON_COUNT,
 };
 
-// Amounts which the buttons between "-" and "+" set.
+// Amounts which the buttons of the second row set.
 constexpr int PRESET_AMOUNTS[] = { 10, 50, 100 };
 constexpr int MINIMUM_SPLIT_AMOUNT = 1;
 
 // The label of a button is not a sentence, so it doesn't need to be translated.
-const wchar_t* const QUICK_BUTTON_LABELS[QUICK_BUTTON_COUNT] = { L"-", L"10", L"50", L"100", L"+" };
+const wchar_t* const QUICK_BUTTON_LABELS[QUICK_BUTTON_COUNT] = { L"-1", L"+1", L"10", L"50", L"100" };
+constexpr int QUICK_ROW_SIZES[] = { 2, 3 };
+constexpr int QUICK_ROW_COUNT = 2;
 
 // The stack keeps at least one piece, so at most (stack size - 1) pieces can be split off.
 // Uses the live stack, because the amount could have changed since the popup was opened.
@@ -104,8 +107,10 @@ bool SEASON3B::CSplitStackMsgBoxLayout::SetLayout()
     mu_swprintf_s(strMsg, I18N::Game::SplitStackHowManyTotalD, static_cast<int>(pItem->Durability));
     pMsgBox->AddMsg(strMsg);
 
-    // After AddMsg on purpose: the row is placed below the input field, and AddMsg may have moved that.
-    pMsgBox->EnableQuickButtonRow(QUICK_BUTTON_LABELS, QUICK_BUTTON_COUNT);
+    // After AddMsg on purpose: the rows take the place of the input field, and AddMsg may have moved that.
+    pMsgBox->EnableQuickButtonRows(QUICK_BUTTON_LABELS, QUICK_ROW_SIZES, QUICK_ROW_COUNT);
+    pMsgBox->SelectInputBoxText();
+    pMsgBox->EnableClearOnFirstClick();
     pMsgBox->AddCallbackFunc(CSplitStackMsgBoxLayout::QuickBtnDown, MSGBOX_EVENT_USER_QUICK);
 
     pMsgBox->AddCallbackFunc(CSplitStackMsgBoxLayout::ReturnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
