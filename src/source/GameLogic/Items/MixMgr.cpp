@@ -8,6 +8,7 @@
 #include "UI/Legacy/UIJewelHarmony.h"
 #include "Network/Server/SocketSystem.h"
 #include "GameLogic/Skills/SkillManager.h"
+#include "GameLogic/Items/StackableJewels.h"
 
 using namespace SEASON3A;
 
@@ -169,6 +170,10 @@ void CMixItem::SetItem(ITEM* pItem, DWORD dwMixValue)
     case ITEM_POTION + 100:
         m_bCanStack = TRUE;
         break;
+    }
+    if (GameLogic::Items::IsStackableJewel(pItem->Type))
+    {
+        m_bCanStack = TRUE;
     }
     m_dwMixValue = dwMixValue;
 

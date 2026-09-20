@@ -18,6 +18,7 @@
 #include "Engine/Object/ZzzInterface.h"
 #include "UI/Legacy/UIManager.h"
 #include "GameLogic/Items/ChangeRingManager.h"
+#include "GameLogic/Items/StackableJewels.h"
 #include "World/MapInfra/PortalMgr.h"
 #include "GameLogic/Quests/CSQuest.h"
 #include "I18N/All.h"
@@ -482,6 +483,21 @@ bool CNewUIInventoryActionController::RepairItemAtMousePoint(CNewUIInventoryCtrl
     return true;
 }
 
+namespace
+{
+// The server only decreases the stack when a piece of a stacked jewel is applied. The stack has to go back
+// into its slot, otherwise it stays "in hand" and the whole stack seems to be gone.
+void ReturnStackedJewelToSlot(const ITEM* pPickItem)
+{
+    if (!GameLogic::Items::IsStackableJewel(pPickItem->Type) || pPickItem->Durability <= 1)
+    {
+        return;
+    }
+
+    CNewUIInventoryCtrl::BackupPickedItem();
+}
+} // namespace
+
 bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetControl, CNewUIPickedItem* pPickedItem,
                                                   ITEM* pPickItem, int iSourceIndex, int iTargetIndex) const
 {
@@ -593,6 +609,7 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
         const int targetIndex = targetControl->GetIndexByItem(pItem);
         SendRequestUse(iSourceIndex, targetIndex);
         PlayBuffer(SOUND_GET_ITEM01);
+        ReturnStackedJewelToSlot(pPickItem);
         return true;
     }
 

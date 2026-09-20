@@ -8,6 +8,7 @@
 #include "UI/NewUI/NewUISystem.h"
 #include "Engine/Object/ZzzInventory.h"
 #include "GameLogic/Items/CComGem.h"
+#include "GameLogic/Items/StackableJewels.h"
 #include "GameLogic/Pets/GIPetManager.h"
 #include "GameLogic/Items/CSItemOption.h"
 #include "Network/Server/SocketSystem.h"
@@ -1573,6 +1574,10 @@ void SEASON3B::CNewUIInventoryCtrl::RenderNumberOfItem()
             SEASON3B::RenderNumber(x + width - 6, y + 1, pItem->Durability);
         }
         else if (pItem->Type == ITEM_POTION + 133 && pItem->Durability > 1)
+        {
+            SEASON3B::RenderNumber(x + width - 6, y + 1, pItem->Durability);
+        }
+        else if (GameLogic::Items::IsStackableJewel(pItem->Type) && pItem->Durability > 1)
         {
             SEASON3B::RenderNumber(x + width - 6, y + 1, pItem->Durability);
         }
