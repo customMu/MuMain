@@ -235,6 +235,12 @@ DWORD CMixItemInventory::EvaluateMixItemValue(ITEM* pItem)
         dwMixValue = ItemValue(pItem, 0);
         break;
     }
+
+    // A stack of jewels counts like the same number of single jewels.
+    if (GameLogic::Items::IsStackableJewel(pItem->Type) && pItem->Durability > 1)
+    {
+        dwMixValue *= pItem->Durability;
+    }
     return dwMixValue;
 }
 

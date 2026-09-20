@@ -5,6 +5,8 @@ namespace GameLogic::Items
     // Jewels and stones which the server stacks in the inventory (up to 255 pieces per stack).
     // The number of pieces of a stack is transferred as the durability of the item.
     // Keep in sync with the item definitions of the server (ItemDefinition.Durability = 255).
+    inline constexpr int MaximumJewelStackSize = 255;
+
     inline bool IsStackableJewel(const int itemType)
     {
         switch (itemType)

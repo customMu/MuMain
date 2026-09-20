@@ -938,6 +938,18 @@ int SEASON3B::CNewUIInventoryCtrl::GetEmptySlotCount()
     return iResult;
 }
 
+namespace
+{
+// While a stack of jewels is carried, the tooltip of the item under the cursor stays visible,
+// so the level of an item which is being upgraded can be seen.
+bool IsCarryingStackableJewel()
+{
+    const SEASON3B::CNewUIPickedItem* pPicked = SEASON3B::CNewUIInventoryCtrl::GetPickedItem();
+    return pPicked != nullptr && pPicked->GetItem() != nullptr &&
+           GameLogic::Items::IsStackableJewel(pPicked->GetItem()->Type);
+}
+} // namespace
+
 bool SEASON3B::CNewUIInventoryCtrl::UpdateMouseEvent()
 {
     if (m_EventState == EVENT_NONE && SEASON3B::IsNone(VK_LBUTTON) && m_iPointedSquareIndex != -1)
@@ -958,9 +970,10 @@ bool SEASON3B::CNewUIInventoryCtrl::UpdateMouseEvent()
             }
         }
     }
-    else if (m_EventState == EVENT_HOVER && SEASON3B::IsNone(VK_LBUTTON) && m_iPointedSquareIndex != -1 &&
-             nullptr == GetPickedItem() && (m_pdwItemCheckBox[m_iPointedSquareIndex - m_nIndexOffset] > 1) &&
-             g_pNewUIMng)
+    else if ((m_EventState == EVENT_HOVER || (m_EventState == EVENT_PICKING && IsCarryingStackableJewel())) &&
+             SEASON3B::IsNone(VK_LBUTTON) && m_iPointedSquareIndex != -1 &&
+             (nullptr == GetPickedItem() || IsCarryingStackableJewel()) &&
+             (m_pdwItemCheckBox[m_iPointedSquareIndex - m_nIndexOffset] > 1) && g_pNewUIMng)
     {
         ITEM* pItem = this->FindItem(m_iPointedSquareIndex);
         if (pItem != nullptr && pItem != m_pToolTipItem)
@@ -1285,7 +1298,7 @@ void SEASON3B::CNewUIInventoryCtrl::Render()
     {
         m_pNew3DRenderMng->RenderUI2DEffect(INVENTORY_CAMERA_Z_ORDER, UI2DEffectCallback, this, RENDER_NUMBER_OF_ITEM,
                                             0);
-        if (m_pToolTipItem && GetPickedItem() == nullptr)
+        if (m_pToolTipItem && (GetPickedItem() == nullptr || IsCarryingStackableJewel()))
         {
             if (tooltipvisible)
             {
@@ -1763,6 +1776,12 @@ bool SEASON3B::CNewUIInventoryCtrl::AreItemsStackable(ITEM* pSourceItem, ITEM* p
     if (iSrcType != iTarType)
     {
         return false;
+    }
+
+    if (GameLogic::Items::IsStackableJewel(iSrcType) && iSrcLevel == iTarLevel &&
+        iTarDurability < GameLogic::Items::MaximumJewelStackSize)
+    {
+        return true;
     }
 
     if (iSrcType == ITEM_SIEGE_POTION && iTarType == ITEM_SIEGE_POTION &&
