@@ -142,6 +142,7 @@ namespace SEASON3B
         CNewUIInventoryCtrl* GetInventoryCtrl() const;
 
         ITEM* FindItem(int iLinealPos) const;
+        void ContinueStackedJewelUse(int iLinealPos) const;
         ITEM* FindItemByKey(DWORD dwKey) const;
         int   FindItemIndex(short int siType, int iLevel = -1) const;
         int   FindItemReverseIndex(short sType, int iLevel = -1) const;

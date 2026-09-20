@@ -1655,6 +1655,25 @@ bool SEASON3B::CNewUIInventoryCtrl::CreatePickedItem(CNewUIInventoryCtrl* pSrc, 
     return false;
 }
 
+// Takes an item of the control into the "hand" again, e.g. to keep using a stack of jewels.
+bool SEASON3B::CNewUIInventoryCtrl::PickItemAgain(CNewUIInventoryCtrl* pCtrl, ITEM* pItem)
+{
+    if (pCtrl == nullptr || pItem == nullptr || GetPickedItem() != nullptr)
+    {
+        return false;
+    }
+
+    pCtrl->m_EventState = EVENT_PICKING;
+    if (!CreatePickedItem(pCtrl, pItem))
+    {
+        pCtrl->m_EventState = EVENT_NONE;
+        return false;
+    }
+
+    pCtrl->RemoveItem(pItem);
+    return true;
+}
+
 void SEASON3B::CNewUIInventoryCtrl::DeletePickedItem()
 {
     if (ms_pPickedItem)

@@ -288,6 +288,7 @@ namespace SEASON3B
         static bool CreatePickedItem(CNewUIInventoryCtrl* pSrc, ITEM* pItem, bool preservePickupAnchor = false);
         static void DeletePickedItem();
         static void BackupPickedItem();
+        static bool PickItemAgain(CNewUIInventoryCtrl* pCtrl, ITEM* pItem);
 
         //protected:
         void Render3D();

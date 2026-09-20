@@ -7158,6 +7158,10 @@ void ReceiveDurability(const BYTE* ReceiveBuffer)
         if (pItem)
         {
             pItem->Durability = Data->KeyH;
+            if (Data->KeyL)
+            {
+                g_pMyInventory->ContinueStackedJewelUse(Data->Value);
+            }
         }
     }
 

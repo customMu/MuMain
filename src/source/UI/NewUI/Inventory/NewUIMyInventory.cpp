@@ -30,6 +30,7 @@ extern bool SelectFlag;
 #include "GameLogic/Events/Event.h"
 #endif // CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
 #include "GameLogic/Items/ChangeRingManager.h"
+#include "GameLogic/Items/StackableJewels.h"
 #include "GameLogic/Social/MonkSystem.h"
 #include "Character/CharacterManager.h"
 #include "Audio/DSPlaySound.h"
@@ -850,6 +851,19 @@ ITEM* CNewUIMyInventory::FindItem(int iLinealPos) const
     if (m_pNewInventoryCtrl)
         return m_pNewInventoryCtrl->FindItem(iLinealPos);
     return nullptr;
+}
+
+// After a piece of a jewel stack was used, the stack is taken into the "hand" again,
+// so the next item can be clicked right away.
+void CNewUIMyInventory::ContinueStackedJewelUse(int iLinealPos) const
+{
+    ITEM* pItem = FindItem(iLinealPos);
+    if (pItem == nullptr || !GameLogic::Items::IsStackableJewel(pItem->Type) || pItem->Durability <= 1)
+    {
+        return;
+    }
+
+    CNewUIInventoryCtrl::PickItemAgain(m_pNewInventoryCtrl, pItem);
 }
 
 ITEM* CNewUIMyInventory::FindItemByKey(DWORD dwKey) const
