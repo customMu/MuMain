@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <chrono>
 #include "Core/Input/KeyState.h"
 #include "Core/Platform/Imm.h"
 #include "UI/Legacy/UIManager.h"
@@ -105,6 +106,11 @@ int   MouseUpdateTimeMax = 6;
 // same click can't fall through to ground movement and instantly close the NPC window.
 // A fresh press (e.g. deliberately clicking the ground to walk away) still works normally.
 static bool s_bIgnoreHeldClickAfterNpcTalk = false;
+
+// A held mouse button repeats the world action (walk, attack, pick up, ...) at most this often. It used to repeat
+// on every rendered frame, i.e. 60+ times per second, which flooded the server with walk requests.
+static constexpr std::chrono::milliseconds kHeldClickRepeatMs{100};
+static std::chrono::steady_clock::time_point s_lastHeldClickRepeat{};
 bool  WhisperEnable = true;
 bool  ChatWindowEnable = true;
 int   InputFrame = 0;
@@ -3026,7 +3032,12 @@ void MoveHero()
                 }
                 if (MouseLButton)
                 {
-                    Success = true;
+                    const auto now = std::chrono::steady_clock::now();
+                    if (Success || now - s_lastHeldClickRepeat >= kHeldClickRepeatMs)
+                    {
+                        s_lastHeldClickRepeat = now;
+                        Success = true;
+                    }
                 }
 
                 if ((

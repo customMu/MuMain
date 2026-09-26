@@ -3,11 +3,17 @@
 
 #include <SDL3/SDL.h>
 
+#include <chrono>
+
 namespace Core::Input
 {
     namespace
     {
         bool g_leftMouseButtonPressEdge = false;
+
+        // Minimum time between two accepted left mouse button presses (only filters accidental duplicates).
+        constexpr std::chrono::milliseconds kMinLeftPressIntervalMs{10};
+        std::chrono::steady_clock::time_point g_lastAcceptedLeftPress{};
 
         // Map a Win32 virtual-key code (or ASCII letter/digit) to an SDL
         // scancode. Returns SDL_SCANCODE_UNKNOWN for keys we don't translate.
@@ -61,6 +67,19 @@ namespace Core::Input
     void ClearLeftMouseButtonPressEdge()
     {
         g_leftMouseButtonPressEdge = false;
+    }
+
+    bool AcceptLeftMousePress()
+    {
+        const auto now = std::chrono::steady_clock::now();
+        if (g_lastAcceptedLeftPress != std::chrono::steady_clock::time_point{} &&
+            now - g_lastAcceptedLeftPress < kMinLeftPressIntervalMs)
+        {
+            return false;
+        }
+
+        g_lastAcceptedLeftPress = now;
+        return true;
     }
 
     bool IsKeyDown(int virtualKey)

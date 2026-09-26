@@ -5,9 +5,16 @@
 #include "stdafx.h"
 #include "UI/NewUI/Dialogs/NewUIMessageBox.h"	// self
 #include "UI/NewUI/NewUIManager.h"
+#include "UI/NewUI/NewUISystem.h"
 #include "UI/Legacy/UIControls.h"
 #include "UI/Scaling/UITransform.h"
 #include "Render/Textures/ZzzOpenglUtil.h"
+
+namespace
+{
+    // Clicks are ignored for this long after a message box was closed (prevents click-through / double clicks).
+    constexpr int MessageBoxCloseInputCooldownMs = 300;
+}
 
 using namespace SEASON3B;
 
@@ -398,6 +405,8 @@ void SEASON3B::CNewUIMessageBoxMng::DeleteMessageBox(const CNewUIMessageBoxBase*
             break;
         }
     }
+
+    SEASON3B::CNewUISystem::GetInstance()->BeginInputCooldown(MessageBoxCloseInputCooldownMs);
 }
 
 void SEASON3B::CNewUIMessageBoxMng::PopMessageBox()
@@ -408,6 +417,8 @@ void SEASON3B::CNewUIMessageBoxMng::PopMessageBox()
         auto vi = m_vecMsgBoxes.begin();
         m_pMsgBoxFactory->DeleteMessageBox((*vi));
         m_vecMsgBoxes.erase(vi);
+
+        SEASON3B::CNewUISystem::GetInstance()->BeginInputCooldown(MessageBoxCloseInputCooldownMs);
     }
 }
 

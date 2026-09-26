@@ -988,6 +988,10 @@ void HandleMouseButton(const SDL_Event& e)
     case SDL_BUTTON_LEFT:
         if (down)
         {
+            // Presses which follow the previous one too quickly are ignored completely.
+            if (!Core::Input::AcceptLeftMousePress())
+                break;
+
             MouseLButtonPop = false;
             if (!MouseLButton)
                 MouseLButtonPush = true;

@@ -1825,9 +1825,19 @@ void CNewUISystem::Disable(DWORD dwKey)
     }
 }
 
+void CNewUISystem::BeginInputCooldown(int milliseconds)
+{
+    m_inputCooldownUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(milliseconds);
+}
+
+bool CNewUISystem::IsInputCooldownActive() const
+{
+    return std::chrono::steady_clock::now() < m_inputCooldownUntil;
+}
+
 bool CNewUISystem::CheckMouseUse()
 {
-    if (m_mouseInputCaptured)
+    if (m_mouseInputCaptured || IsInputCooldownActive())
     {
         return true;
     }
@@ -1883,18 +1893,42 @@ bool CNewUISystem::Update()
     bool result = false;
     if (m_pNewUIMng)
     {
+        // Only a press which starts over a window captures the button (so dragging off the window
+        // does not walk the hero). A button which was pressed in the world and is merely moved across
+        // a window while held must not be captured: otherwise the held-click walk stopped for good the
+        // moment the cursor touched any window (HUD, chat, minimap...) and resumed only after release.
+        // Hovering a window still pauses the world action through CheckMouseUse(), just not beyond it.
+        // Copied here because the UI objects may consume the push flag in UpdateMouseEvent() below.
+        const bool leftPressStartedThisFrame = MouseLButtonPush;
+
         if (!MouseLButton)
         {
             m_mouseInputCaptured = false;
         }
-        else if (m_pNewUIMng->GetActiveMouseUIObj())
+        else if (leftPressStartedThisFrame && m_pNewUIMng->GetActiveMouseUIObj())
         {
             m_mouseInputCaptured = true;
         }
 
-        m_pNewUIMng->UpdateMouseEvent();
+        if (IsInputCooldownActive())
+        {
+            // A message box was closed a moment ago: swallow the clicks, otherwise a quick second click
+            // would hit whatever is located underneath the closed box (e.g. buy an item in the shop).
+            MouseLButton = false;
+            MouseLButtonPop = false;
+            MouseLButtonPush = false;
+            MouseRButton = false;
+            MouseRButtonPop = false;
+            MouseRButtonPush = false;
+            m_pNewUIMng->ResetActiveUIObj();
+            m_mouseInputCaptured = false;
+        }
+        else
+        {
+            m_pNewUIMng->UpdateMouseEvent();
+        }
 
-        if (MouseLButton && m_pNewUIMng->GetActiveMouseUIObj())
+        if (MouseLButton && leftPressStartedThisFrame && m_pNewUIMng->GetActiveMouseUIObj())
         {
             m_mouseInputCaptured = true;
         }

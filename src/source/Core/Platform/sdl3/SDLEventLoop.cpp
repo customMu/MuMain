@@ -251,6 +251,12 @@ bool SDLEventLoop::PollEvents()
             switch (event.button.button)
             {
             case SDL_BUTTON_LEFT:
+                // Presses which follow the previous one too quickly are ignored completely.
+                if (!Core::Input::AcceptLeftMousePress())
+                {
+                    break;
+                }
+
                 MouseLButtonPop = false;
                 if (!MouseLButton)
                 {

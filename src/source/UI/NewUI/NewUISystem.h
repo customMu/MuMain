@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <chrono>
+
 #include "UI/NewUI/NewUIManager.h"
 #include "UI/NewUI/NewUI3DRenderMng.h"
 #include "UI/NewUI/HUD/NewUIHotKey.h"
@@ -92,6 +94,7 @@ namespace SEASON3B
         CNewUI3DRenderMng* m_pNewUI3DRenderMng;
         CNewUIHotKey* m_pNewUIHotKey;
         bool m_mouseInputCaptured = false;
+        std::chrono::steady_clock::time_point m_inputCooldownUntil{};
 
     public:
         ~CNewUISystem();
@@ -120,6 +123,11 @@ namespace SEASON3B
 
         bool CheckMouseUse();
         bool CheckKeyUse();
+
+        // Ignores mouse clicks for a short time (e.g. right after a message box was closed), so that a quick
+        // second click on the same spot does not hit the window which is located underneath.
+        void BeginInputCooldown(int milliseconds);
+        bool IsInputCooldownActive() const;
 
         bool Update();
         bool Render();
