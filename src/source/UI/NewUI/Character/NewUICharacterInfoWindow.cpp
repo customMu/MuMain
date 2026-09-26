@@ -273,9 +273,10 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderFrame()
         RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 119 - 14, 1, 14);
     }
 
+    // Separator below the header rows "Level | Resets" and the level-up points (see RenderTableTexts).
     for (int x = m_Pos.x + 14; x < m_Pos.x + 12 + 165 - 4; ++x)
     {
-        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 48 + 12, 1, 14);
+        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 48 + 17, 1, 14);
     }
 
     for (int y = m_Pos.y + 48 + 14; y < m_Pos.y + 119 - 14; y++)
@@ -372,7 +373,16 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
     g_pRenderText->SetFont(g_hFontBold);
     g_pRenderText->SetTextColor(230, 230, 0, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
-    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 58, strLevel);
+    // Summary rows. The free level-up points got their own row below "Level | Resets", because with
+    // the reset count the level line is too long to have the points on the same line.
+    // The separator line between the header rows and the rest is drawn in RenderFrame (m_Pos.y + 48 + 17).
+    constexpr int SummaryRowLevel = 51;
+    constexpr int SummaryRowPoints = 63;
+    constexpr int SummaryRowExp = 80;
+    constexpr int SummaryRowProbability = 92;
+    constexpr int SummaryRowAddMinus = 104;
+
+    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowLevel, strLevel);
 
     if (CharacterAttribute->LevelUpPoint > 0)
     {
@@ -387,13 +397,13 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
         g_pRenderText->SetFont(g_hFontBold);
         g_pRenderText->SetTextColor(255, 138, 0, 255);
         g_pRenderText->SetBgColor(0, 0, 0, 0);
-        g_pRenderText->RenderText(m_Pos.x + 110, m_Pos.y + 58, strLevelUpPoint);
+        g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowPoints, strLevelUpPoint);
     }
 
     g_pRenderText->SetFont(g_hFont);
     g_pRenderText->SetTextColor(255, 255, 255, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
-    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 75, strExp);
+    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowExp, strExp);
 
     int iAddPoint, iMinusPoint;
 
@@ -461,11 +471,11 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
     g_pRenderText->SetFont(g_hFont);
     g_pRenderText->SetTextColor(76, 197, 254, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
-    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 88, strPointProbability);
+    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowProbability, strPointProbability);
 
     g_pRenderText->SetTextColor(76, 197, 254, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
-    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 101, strPoint);
+    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowAddMinus, strPoint);
 }
 
 void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
