@@ -635,8 +635,8 @@ static std::uint8_t g_tabBar = 0;
         if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP))
         {
             wchar_t textBuffer[kTooltipBufferCapacity] {};
-            std::uint32_t gold = GetPetItemValue(&giPetManager::gs_PetInfo) / 3u;
-            gold = (gold / 100u) * 100u;
+            // Server pays a flat 1 zen for any item sold to an npc (SellItemToNpcAction).
+            const std::uint32_t gold = 1u;
 
             ConvertGold(gold, textBuffer);
             appendLine(TEXT_COLOR_WHITE, true, false, priceFormat.c_str(), textBuffer);

@@ -2200,7 +2200,8 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             }
             else
             {
-                ConvertGold(ItemValue(ip, 1), Text);
+                // Server pays a flat 1 zen for any item sold to an npc (SellItemToNpcAction).
+                ConvertGold(1, Text);
                 mu_swprintf(TextList[TextNum], I18N::Game::SellingPriceS, Text);
             }
 
