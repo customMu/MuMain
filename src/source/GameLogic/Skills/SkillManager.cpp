@@ -283,7 +283,9 @@ void CSkillManager::RebuildSkillAttributeRequirementsCache()
         }
 
         DemendConditionInfo skillRequirements;
-        skillRequirements.SkillLevel = SkillAttribute[baseSkill].Level;
+        // Skills in the skill list are already learned and may be used regardless of their level
+        // requirement (e.g. after a reset), matching the server plugin "Learned skills without level requirement".
+        skillRequirements.SkillLevel = 0;
         skillRequirements.SkillStrength = SkillAttribute[baseSkill].Strength;
         skillRequirements.SkillDexterity = SkillAttribute[baseSkill].Dexterity;
         skillRequirements.SkillVitality = 0;
