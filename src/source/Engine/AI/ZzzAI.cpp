@@ -747,6 +747,17 @@ void CalcFPS()
 
     if (SceneFlag == MAIN_SCENE)
     {
-        gSkillManager.CalcSkillDelay(static_cast<int>(differenceMs));
+        // SkillDelay is stored in whole milliseconds. Carry the fractional part
+        // over instead of truncating each frame: with sub-millisecond frames
+        // (e.g. a minimized window with no present to pace the loop) plain
+        // truncation adds 0 and cooldowns never expire.
+        static double skillDelayRemainderMs = 0.0;
+        skillDelayRemainderMs += differenceMs;
+        const int wholeMs = static_cast<int>(skillDelayRemainderMs);
+        skillDelayRemainderMs -= wholeMs;
+        if (wholeMs > 0)
+        {
+            gSkillManager.CalcSkillDelay(wholeMs);
+        }
     }
 }

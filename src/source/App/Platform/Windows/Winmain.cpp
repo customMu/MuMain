@@ -891,6 +891,36 @@ static bool SDLCALL Win32MessageHook(void* /*userdata*/, MSG* msg)
     if (msg->message == WM_CLOSE)
         return true;
 
+    // Non-client mouse input (caption buttons: minimize/maximize/close, title
+    // bar drag, system-menu right click) and WM_SYSCOMMAND are not handled by
+    // WndProc; it would only pass them to DefWindowProc. This hook runs BEFORE
+    // SDL dispatches the same message to its own window procedure, so forwarding
+    // them makes DefWindowProc run twice. For a click on the minimize button
+    // that means two caption-button tracking loops: the first minimizes the
+    // window, the second starts with the button already released and blocks the
+    // whole main loop (no logic, no timers, MU Helper stops) until the next
+    // click. Let SDL handle these alone.
+    switch (msg->message)
+    {
+    case WM_NCLBUTTONDOWN:
+    case WM_NCLBUTTONUP:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_NCRBUTTONDOWN:
+    case WM_NCRBUTTONUP:
+    case WM_NCRBUTTONDBLCLK:
+    case WM_NCMBUTTONDOWN:
+    case WM_NCMBUTTONUP:
+    case WM_NCMBUTTONDBLCLK:
+    case WM_NCXBUTTONDOWN:
+    case WM_NCXBUTTONUP:
+    case WM_NCXBUTTONDBLCLK:
+    case WM_NCMOUSEMOVE:
+    case WM_SYSCOMMAND:
+        return true;
+    default:
+        break;
+    }
+
     WndProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
     return true;
 }
@@ -1332,6 +1362,11 @@ MSG MainLoop()
 
     HandleFocusChange(Core::Platform::HasSDLWindowInputFocus(SDL_GetWindowFlags(g_sdlWindow)));
 
+    // While the window is minimized/hidden nothing is presented, so VSync no
+    // longer paces the loop (target FPS is -1 with VSync on) and it spins flat
+    // out on a render-free frame. Sleep a little per iteration in that state.
+    constexpr int kNotVisibleFrameSleepMs = 10;
+
     while (!Destroy)
     {
         SDL_Event event;
@@ -1533,6 +1568,14 @@ MSG MainLoop()
             // SDL_PollEvent above already drained pending events, so just pace
             // the frame.
             WaitForNextActivity(precise == TIMERR_NOERROR);
+        }
+
+        const SDL_WindowFlags windowFlags = SDL_GetWindowFlags(g_sdlWindow);
+        const bool windowNotVisible =
+            (windowFlags & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN | SDL_WINDOW_OCCLUDED)) != 0;
+        if (windowNotVisible)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(kNotVisibleFrameSleepMs));
         }
 
     } // while (!Destroy)
