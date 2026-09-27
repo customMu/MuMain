@@ -43,11 +43,13 @@ namespace SEASON3B
         {
             CHAINFO_WINDOW_WIDTH = 190,
             CHAINFO_WINDOW_HEIGHT = 429,
-            HEIGHT_STRENGTH = 120,
-            HEIGHT_DEXTERITY = 175,
-            HEIGHT_VITALITY = 240,
-            HEIGHT_ENERGY = 295,
-            HEIGHT_CHARISMA = 350,
+            // The stat rows are 12 pixels lower than originally, to make room for the reset boost row
+            // in the summary table above them (see RenderFrame and RenderTableTexts).
+            HEIGHT_STRENGTH = 132,
+            HEIGHT_DEXTERITY = 187,
+            HEIGHT_VITALITY = 252,
+            HEIGHT_ENERGY = 307,
+            HEIGHT_CHARISMA = 362,
             BTN_STAT_COUNT = 5,
             STAT_STRENGTH = 0,
             STAT_DEXTERITY,

@@ -12982,4 +12982,10 @@
   <data name="Split stack: how many? (Total: %d)" xml:space="preserve">
     <value>Split stack: how many? (Total: %d)</value>
   </data>
+  <data name="Reset boost: HP/MP %ls, DMG/DEF %ls" xml:space="preserve">
+    <value>Reset boost: HP/MP %ls, DMG/DEF %ls</value>
+  </data>
+  <data name="HP/MP %ls  DMG/DEF %ls" xml:space="preserve">
+    <value>HP/MP %ls  DMG/DEF %ls</value>
+  </data>
 </root>

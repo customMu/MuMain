@@ -31,6 +31,7 @@ extern bool SelectFlag;
 #endif // CSK_FIX_BLUELUCKYBAG_MOVECOMMAND
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/StackableJewels.h"
+#include "GameLogic/Items/ItemRequirements.h"
 #include "GameLogic/Social/MonkSystem.h"
 #include "Character/CharacterManager.h"
 #include "Audio/DSPlaySound.h"
@@ -278,12 +279,14 @@ bool CNewUIMyInventory::IsEquipable(int iIndex, ITEM* pItem) const
     if (bEquipable == false)
         return false;
 
-    const WORD wStrength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
-    const WORD wDexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
-    const WORD wEnergy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
-    const WORD wVitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
-    const WORD wCharisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
-    const WORD wLevel = CharacterAttribute->Level;
+    // Requirements are checked against the base stats; the level requirement is ignored after the first reset
+    // (see GameLogic/Items/ItemRequirements.h).
+    const WORD wStrength = CharacterAttribute->Strength;
+    const WORD wDexterity = CharacterAttribute->Dexterity;
+    const WORD wEnergy = CharacterAttribute->Energy;
+    const WORD wVitality = CharacterAttribute->Vitality;
+    const WORD wCharisma = CharacterAttribute->Charisma;
+    const WORD wLevel = GameLogic::Items::GetLevelForEquipmentRequirement(CharacterAttribute->Level, CharacterAttribute->Resets);
 
     const int iItemLevel = pItem->Level;
 

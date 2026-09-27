@@ -25,6 +25,7 @@
 #include "Network/Server/SocketSystem.h"
 #include "UI/NewUI/NewUISystem.h"
 #include "Character/CharacterManager.h"
+#include "GameLogic/Items/ItemRequirements.h"
 #include "GameLogic/Skills/SkillManager.h"
 
 CLASS_ATTRIBUTE     ClassAttribute[MAX_CLASS];
@@ -2234,12 +2235,14 @@ bool IsRequireEquipItem(ITEM* pItem)
     if (bEquipable == false)
         return false;
 
-    WORD wStrength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
-    WORD wDexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
-    WORD wEnergy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
-    WORD wVitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
-    WORD wCharisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
-    WORD wLevel = CharacterAttribute->Level;
+    // Requirements are checked against the base stats; the level requirement is ignored after the first reset
+    // (see GameLogic/Items/ItemRequirements.h). An item which doesn't meet them gives no bonuses.
+    WORD wStrength = CharacterAttribute->Strength;
+    WORD wDexterity = CharacterAttribute->Dexterity;
+    WORD wEnergy = CharacterAttribute->Energy;
+    WORD wVitality = CharacterAttribute->Vitality;
+    WORD wCharisma = CharacterAttribute->Charisma;
+    WORD wLevel = GameLogic::Items::GetLevelForEquipmentRequirement(CharacterAttribute->Level, CharacterAttribute->Resets);
 
     int iItemLevel = pItem->Level;
 
@@ -3537,8 +3540,60 @@ void CHARACTER_MACHINE::getAllAddStateOnlyExValues(int& iAddStrengthExValues, in
     iAddEnergyExValues += g_SocketItemMgr.m_StatusBonus.m_iEnergyBonus;
 }
 
+namespace
+{
+    // While the stats are calculated, equipped items which don't meet their requirements (see IsRequireEquipItem)
+    // are hidden, so that they give nothing - neither their damage, defense, speed nor options - exactly like
+    // the server handles them (plugin "Item requirements by base stats"). The items are restored afterwards.
+    class InactiveEquipmentMask
+    {
+    public:
+        explicit InactiveEquipmentMask(ITEM* equipment)
+            : m_equipment(equipment)
+        {
+            for (int i = 0; i < MAX_EQUIPMENT; ++i)
+            {
+                ITEM& item = m_equipment[i];
+                if (item.Type == -1 || IsRequireEquipItem(&item))
+                {
+                    continue;
+                }
+
+                m_masked[i] = true;
+                m_type[i] = item.Type;
+                m_durability[i] = item.Durability;
+                item.Type = -1;
+                item.Durability = 0;
+            }
+        }
+
+        ~InactiveEquipmentMask()
+        {
+            for (int i = 0; i < MAX_EQUIPMENT; ++i)
+            {
+                if (m_masked[i])
+                {
+                    m_equipment[i].Type = m_type[i];
+                    m_equipment[i].Durability = m_durability[i];
+                }
+            }
+        }
+
+        InactiveEquipmentMask(const InactiveEquipmentMask&) = delete;
+        InactiveEquipmentMask& operator=(const InactiveEquipmentMask&) = delete;
+
+    private:
+        ITEM* m_equipment;
+        bool m_masked[MAX_EQUIPMENT] = {};
+        short m_type[MAX_EQUIPMENT] = {};
+        BYTE m_durability[MAX_EQUIPMENT] = {};
+    };
+}
+
 void CHARACTER_MACHINE::CalculateAll()
 {
+    const InactiveEquipmentMask inactiveEquipmentMask(Equipment);
+
     CalculateBasicState();
     g_csItemOption.CheckItemSetOptions();
     InitAddValue();

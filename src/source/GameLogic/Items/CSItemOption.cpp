@@ -10,6 +10,7 @@
 #include "Scenes/SceneCore.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "GameLogic/Items/ItemRequirements.h"
 #include "Character/CharacterManager.h"
 #include "UI/Legacy/UIControls.h"
 #include "UI/NewUI/NewUISystem.h"
@@ -832,12 +833,14 @@ void CSItemOption::CheckItemSetOptions()
     calcSetOptionList(byOptionList);
     getAllAddStateOnlyAddValue(&CharacterAttribute->AddStrength, &CharacterAttribute->AddDexterity, &CharacterAttribute->AddEnergy, &CharacterAttribute->AddVitality, &CharacterAttribute->AddCharisma);
 
-    const auto AllStrength = static_cast<std::uint16_t>(CharacterAttribute->Strength + CharacterAttribute->AddStrength);
-    const auto AllDexterity = static_cast<std::uint16_t>(CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity);
-    const auto AllEnergy = static_cast<std::uint16_t>(CharacterAttribute->Energy + CharacterAttribute->AddEnergy);
-    auto AllVitality = static_cast<std::uint16_t>(CharacterAttribute->Vitality + CharacterAttribute->AddVitality);
-    const auto AllCharisma = static_cast<std::uint16_t>(CharacterAttribute->Charisma + CharacterAttribute->AddCharisma);
-    const auto AllLevel = static_cast<std::uint16_t>(CharacterAttribute->Level);
+    // Set options only count items whose requirements are met by the base stats; the level requirement
+    // is ignored after the first reset (see GameLogic/Items/ItemRequirements.h).
+    const auto AllStrength = static_cast<std::uint16_t>(CharacterAttribute->Strength);
+    const auto AllDexterity = static_cast<std::uint16_t>(CharacterAttribute->Dexterity);
+    const auto AllEnergy = static_cast<std::uint16_t>(CharacterAttribute->Energy);
+    auto AllVitality = static_cast<std::uint16_t>(CharacterAttribute->Vitality);
+    const auto AllCharisma = static_cast<std::uint16_t>(CharacterAttribute->Charisma);
+    const auto AllLevel = GameLogic::Items::GetLevelForEquipmentRequirement(static_cast<std::uint16_t>(CharacterAttribute->Level), CharacterAttribute->Resets);
 
     // And now we're doing all that again, just for checking the required stats?!
     // TODO: How can this be improved?

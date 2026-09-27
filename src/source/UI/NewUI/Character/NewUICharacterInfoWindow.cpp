@@ -19,6 +19,7 @@
 #include "UI/Legacy/UIManager.h"
 #include "Network/Server/ServerListManager.h"
 #include "I18N/All.h"
+#include "GameLogic/Character/ResetBoost.h"
 
 using namespace SEASON3B;
 
@@ -261,25 +262,27 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderFrame()
     RenderImage(IMAGE_CHAINFO_BOTTOM, m_Pos.x, m_Pos.y + 429 - 45, 190.f, 45.f);
 
     constexpr unsigned int SummaryBackdropColor = 0x4D000000u;
-    RenderColorQuadARGB(m_Pos.x + 12, m_Pos.y + 48, 160, 66, SummaryBackdropColor);
+    // The summary table spans from y 48 to SummaryTableBottom; it got one row (12 pixels) higher for the reset boost.
+    constexpr int SummaryTableBottom = 131;
+    RenderColorQuadARGB(m_Pos.x + 12, m_Pos.y + 48, 160, SummaryTableBottom - 53, SummaryBackdropColor);
     RenderImage(IMAGE_CHAINFO_TABLE_TOP_LEFT, m_Pos.x + 12, m_Pos.y + 48, 14, 14);
     RenderImage(IMAGE_CHAINFO_TABLE_TOP_RIGHT, m_Pos.x + 12 + 165 - 14, m_Pos.y + 48, 14, 14);
-    RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_LEFT, m_Pos.x + 12, m_Pos.y + 119 - 14, 14, 14);
-    RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_RIGHT, m_Pos.x + 12 + 165 - 14, m_Pos.y + 119 - 14, 14, 14);
+    RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_LEFT, m_Pos.x + 12, m_Pos.y + SummaryTableBottom - 14, 14, 14);
+    RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_RIGHT, m_Pos.x + 12 + 165 - 14, m_Pos.y + SummaryTableBottom - 14, 14, 14);
 
     for (int x = m_Pos.x + 12 + 14; x < m_Pos.x + 12 + 165 - 14; ++x)
     {
         RenderImage(IMAGE_CHAINFO_TABLE_TOP_PIXEL, x, m_Pos.y + 48, 1, 14);
-        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 119 - 14, 1, 14);
+        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + SummaryTableBottom - 14, 1, 14);
     }
 
-    // Separator below the header rows "Level | Resets" and the level-up points (see RenderTableTexts).
+    // Separator below the header rows "Level | Resets", reset boost and level-up points (see RenderTableTexts).
     for (int x = m_Pos.x + 14; x < m_Pos.x + 12 + 165 - 4; ++x)
     {
-        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 48 + 17, 1, 14);
+        RenderImage(IMAGE_CHAINFO_TABLE_BOTTOM_PIXEL, x, m_Pos.y + 48 + 29, 1, 14);
     }
 
-    for (int y = m_Pos.y + 48 + 14; y < m_Pos.y + 119 - 14; y++)
+    for (int y = m_Pos.y + 48 + 14; y < m_Pos.y + SummaryTableBottom - 14; y++)
     {
         RenderImage(IMAGE_CHAINFO_TABLE_LEFT_PIXEL, m_Pos.x + 12, y, 14, 1);
         RenderImage(IMAGE_CHAINFO_TABLE_RIGHT_PIXEL, m_Pos.x + 12 + 165 - 14, y, 14, 1);
@@ -375,14 +378,51 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
     g_pRenderText->SetBgColor(0, 0, 0, 0);
     // Summary rows. The free level-up points got their own row below "Level | Resets", because with
     // the reset count the level line is too long to have the points on the same line.
-    // The separator line between the header rows and the rest is drawn in RenderFrame (m_Pos.y + 48 + 17).
+    // The reset boost row sits between them. The separator line between the header rows and the rest
+    // is drawn in RenderFrame (m_Pos.y + 48 + 29).
     constexpr int SummaryRowLevel = 51;
-    constexpr int SummaryRowPoints = 63;
-    constexpr int SummaryRowExp = 80;
-    constexpr int SummaryRowProbability = 92;
-    constexpr int SummaryRowAddMinus = 104;
+    constexpr int SummaryRowResetBoost = 63;
+    constexpr int SummaryRowPoints = 75;
+    constexpr int SummaryRowExp = 92;
+    constexpr int SummaryRowProbability = 104;
+    constexpr int SummaryRowAddMinus = 116;
+    constexpr int SummaryRowMaxTextWidth = 152;
 
     g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowLevel, strLevel);
+
+    // Reset boost, e.g. "Reset boost: HP/MP +7.6%, DMG/DEF +5.7%". Whole numbers are shown without decimals.
+    // If the text doesn't fit into the table, the shorter variant without the label is used.
+    {
+        const auto formatPercent = [](wchar_t (&buffer)[16], const float percent)
+        {
+            const auto rounded = static_cast<float>(static_cast<int>(percent * 10.f + 0.5f)) / 10.f;
+            if (rounded == static_cast<float>(static_cast<int>(rounded)))
+            {
+                mu_swprintf(buffer, L"+%d%%", static_cast<int>(rounded));
+            }
+            else
+            {
+                mu_swprintf(buffer, L"+%.1f%%", rounded);
+            }
+        };
+
+        wchar_t strHealthAndMana[16];
+        wchar_t strDamageAndDefense[16];
+        formatPercent(strHealthAndMana, GameLogic::Character::GetResetBoostHealthAndManaPercent(CharacterAttribute->Resets));
+        formatPercent(strDamageAndDefense, GameLogic::Character::GetResetBoostDamageAndDefensePercent(CharacterAttribute->Resets));
+
+        wchar_t strResetBoost[128];
+        g_pRenderText->SetFont(g_hFont);
+        mu_swprintf(strResetBoost, I18N::Game::ResetBoostHPMPLsDMGDEFLs, strHealthAndMana, strDamageAndDefense);
+        if (g_pRenderText->MeasureText(strResetBoost, static_cast<int>(wcslen(strResetBoost))).cx > SummaryRowMaxTextWidth)
+        {
+            mu_swprintf(strResetBoost, I18N::Game::HPMPLsDMGDEFLs, strHealthAndMana, strDamageAndDefense);
+        }
+
+        g_pRenderText->SetTextColor(120, 220, 120, 255);
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
+        g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + SummaryRowResetBoost, strResetBoost);
+    }
 
     if (CharacterAttribute->LevelUpPoint > 0)
     {

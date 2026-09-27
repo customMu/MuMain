@@ -36,6 +36,7 @@
 #include "GameLogic/Events/Cinematic/CDirection.h"
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/MixMgr.h"
+#include "GameLogic/Items/ItemRequirements.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "UI/NewUI/Inventory/NewUIInventoryCtrl.h"
@@ -4757,7 +4758,10 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     if (ip->RequireLevel && ip->Type != ITEM_LOCHS_FEATHER)
     {
         mu_swprintf(TextList[TextNum], I18N::Game::MinimumLevelRequirementD, ip->RequireLevel);
-        if (CharacterAttribute->Level < ip->RequireLevel)
+        const auto levelForRequirement = GameLogic::Items::IsEquipmentSlot(ItemAttribute[ip->Type].m_byItemSlot)
+            ? GameLogic::Items::GetLevelForEquipmentRequirement(CharacterAttribute->Level, CharacterAttribute->Resets)
+            : CharacterAttribute->Level;
+        if (levelForRequirement < ip->RequireLevel)
         {
             TextListColor[TextNum] = TEXT_COLOR_RED;
             TextBold[TextNum] = false;
@@ -4814,7 +4818,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         mu_swprintf(TextList[TextNum], I18N::Game::StrengthRequirementD, ip->RequireStrength - si_iNeedStrength);
 
         WORD Strength;
-        Strength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
+        Strength = CharacterAttribute->Strength; // base stats only, see GameLogic/Items/ItemRequirements.h
         if (Strength < ip->RequireStrength - si_iNeedStrength)
         {
             TextListColor[TextNum] = TEXT_COLOR_RED;
@@ -4844,7 +4848,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     {
         mu_swprintf(TextList[TextNum], I18N::Game::AgilityRequirementD, ip->RequireDexterity - si_iNeedDex);
         WORD Dexterity;
-        Dexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
+        Dexterity = CharacterAttribute->Dexterity; // base stats only
         if (Dexterity < (ip->RequireDexterity - si_iNeedDex))
         {
             TextListColor[TextNum] = TEXT_COLOR_RED;
@@ -4876,7 +4880,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         mu_swprintf(TextList[TextNum], I18N::Game::StaminaRequirementD, ip->RequireVitality);
 
         WORD Vitality;
-        Vitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
+        Vitality = CharacterAttribute->Vitality; // base stats only
         if (Vitality < ip->RequireVitality)
         {
             TextListColor[TextNum] = TEXT_COLOR_RED;
@@ -4900,7 +4904,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         mu_swprintf(TextList[TextNum], I18N::Game::EnergyRequirementD, ip->RequireEnergy);
 
         WORD Energy;
-        Energy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
+        Energy = CharacterAttribute->Energy; // base stats only
 
         if (Energy < ip->RequireEnergy)
         {
@@ -4925,7 +4929,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         mu_swprintf(TextList[TextNum], I18N::Game::CharismaRequirementD, ip->RequireCharisma);
 
         WORD Charisma;
-        Charisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
+        Charisma = CharacterAttribute->Charisma; // base stats only
         if (Charisma < ip->RequireCharisma)
         {
             TextListColor[TextNum] = TEXT_COLOR_RED;
