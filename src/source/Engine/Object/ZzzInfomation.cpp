@@ -26,6 +26,7 @@
 #include "UI/NewUI/NewUISystem.h"
 #include "Character/CharacterManager.h"
 #include "GameLogic/Items/ItemRequirements.h"
+#include "GameLogic/Items/ArmorRanks.h"
 #include "GameLogic/Skills/SkillManager.h"
 
 CLASS_ATTRIBUTE     ClassAttribute[MAX_CLASS];
@@ -668,6 +669,26 @@ void CalcDefense(ITEM* ip, ITEM_ATTRIBUTE* p)
             ip->Defense = ip->Defense + (ip->Defense * 20 / setItemDropLevel + 2);
         }
 
+        return;
+    }
+
+    if (const auto* rankedArmor = GameLogic::Items::FindArmorRank(ip->Type))
+    {
+        // Armor defense by set rank, same as the server (ItemPowerUpFactory): base + level bonus,
+        // excellent/ancient items get the additional base bonus calculated from the ranked base.
+        const int baseDefense = rankedArmor->BaseDefense;
+        int defense = baseDefense + GameLogic::Items::ArmorRankLevelBonus(*rankedArmor, ip->Level);
+        if ((isExcellent || isAncientItem) && p->Level > 0)
+        {
+            const int additionalDefense = baseDefense * 12 / p->Level + p->Level / 5 + 4;
+            defense += additionalDefense;
+            if (isAncientItem)
+            {
+                defense += 2 + (baseDefense + additionalDefense) * 3 / setItemDropLevel + setItemDropLevel / 30;
+            }
+        }
+
+        ip->Defense = defense;
         return;
     }
 
@@ -3264,7 +3285,12 @@ void CHARACTER_MACHINE::CalculateDefense()
     {
         Character.Defense = Dexterity / 10;
     }
-    else if (CharacterClass == CLASS_KNIGHT || CharacterClass == CLASS_SUMMONER)
+    else if (CharacterClass == CLASS_KNIGHT)
+    {
+        // Server data: Agility -> Base Defense of the Dark Knight classes is 1/18 (dk-defense-test.sql).
+        Character.Defense = Dexterity / 18;
+    }
+    else if (CharacterClass == CLASS_SUMMONER)
     {
         Character.Defense = Dexterity / 3;
     }
@@ -3310,7 +3336,9 @@ void CHARACTER_MACHINE::CalculateDefense()
     }
     Character.Defense += Defense;
 
-    if (g_bAddDefense)
+    // The native complete set defense bonus (+5..+30% for full sets +10..+15) is removed on the server
+    // (set-bonus-removal-and-bronze.sql); the set glow is still shown.
+    if (false && g_bAddDefense)
     {
         float addDefense = 0.f;
         switch (EquipmentLevelSet)

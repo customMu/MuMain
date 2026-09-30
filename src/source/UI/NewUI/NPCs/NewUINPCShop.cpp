@@ -9,6 +9,7 @@
 #include "UI/NewUI/NewUISystem.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "GameLogic/Items/SellConfirmation.h"
 
 #include "GameLogic/Social/GambleSystem.h"
 
@@ -350,7 +351,7 @@ bool SEASON3B::CNewUINPCShop::InventoryProcess()
 
             return true;
         }
-        if (pItem && IsHighValueItem(pItem) == true)
+        if (pItem && GameLogic::Items::NeedsSellConfirmation(pItem))
         {
             SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CHighValueItemCheckMsgBoxLayout));
             pPickedItem->HidePickedItem();

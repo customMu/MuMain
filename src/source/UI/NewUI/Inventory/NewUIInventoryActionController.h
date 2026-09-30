@@ -37,7 +37,6 @@ private:
     bool HandleSellToNPC(CNewUIInventoryCtrl* targetControl) const;
     bool HandleInventoryRightClickActions(CNewUIInventoryCtrl* targetControl) const;
     bool TryEquipItem(CNewUIInventoryCtrl* targetControl, ITEM* pItem, int iSrcIndex) const;
-    bool TryDropItem(CNewUIInventoryCtrl* targetControl, ITEM* pItem) const;
 
     int FindAlternateEquipSlot(int nOriginalSlot, ITEM* pItem) const;
     bool IsSlotOccupied(int nSlot) const;

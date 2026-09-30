@@ -19,6 +19,7 @@
 #include "UI/Legacy/UIManager.h"
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/StackableJewels.h"
+#include "GameLogic/Items/SellConfirmation.h"
 #include "World/MapInfra/PortalMgr.h"
 #include "GameLogic/Quests/CSQuest.h"
 #include "I18N/All.h"
@@ -260,7 +261,7 @@ bool CNewUIInventoryActionController::HandleSellToNPC(CNewUIInventoryCtrl* targe
         return false;
     }
 
-    if (IsHighValueItem(pItem))
+    if (GameLogic::Items::NeedsSellConfirmation(pItem))
     {
         CreateMessageBox(MSGBOX_LAYOUT_CLASS(CHighValueItemCheckMsgBoxLayout));
         return true;
@@ -320,11 +321,9 @@ bool CNewUIInventoryActionController::HandleInventoryRightClickActions(CNewUIInv
         }
     }
 
-    if (TryDropItem(targetControl, pItem))
-    {
-        return true;
-    }
-
+    // A right click never drops an item on the ground. Items which can neither be used nor
+    // equipped (e.g. a skill scroll the character can't learn) stay in the inventory.
+    // Dropping is only possible by dragging the item out of the inventory window.
     return false;
 }
 
@@ -410,49 +409,6 @@ bool CNewUIInventoryActionController::TryEquipItem(CNewUIInventoryCtrl* targetCo
     pPickedItem->HidePickedItem();
 
     SendRequestEquipmentItem(STORAGE_TYPE::INVENTORY, iSrcIndex, pItem, STORAGE_TYPE::INVENTORY, nDstIndex);
-    return true;
-}
-
-bool CNewUIInventoryActionController::TryDropItem(CNewUIInventoryCtrl* targetControl, ITEM* pItem) const
-{
-    if (Hero->Dead != 0)
-    {
-        return false;
-    }
-
-    if (IsHighValueItem(pItem))
-    {
-        g_pSystemLogBox->AddText(I18N::Game::YouAreNotAllowedToDropThisExpensiveItem, TYPE_ERROR_MESSAGE);
-        return true;
-    }
-
-    if (IsDropBan(pItem))
-    {
-        g_pSystemLogBox->AddText(I18N::Game::ThisItemCannotBeDropped, TYPE_ERROR_MESSAGE);
-        return true;
-    }
-
-    if (!CNewUIInventoryCtrl::CreatePickedItem(targetControl, pItem))
-    {
-        return false;
-    }
-
-    CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem();
-    if (pPickedItem == nullptr)
-    {
-        return false;
-    }
-
-    targetControl->RemoveItem(pItem);
-    pPickedItem->HidePickedItem();
-
-    const int tx = Hero->PositionX;
-    const int ty = Hero->PositionY;
-    const int sourceIndex = pPickedItem->GetSourceLinealPos();
-
-    SocketClient->ToGameServer()->SendDropItemRequest(tx, ty, sourceIndex);
-    SendDropItem = sourceIndex;
-
     return true;
 }
 
