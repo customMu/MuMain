@@ -13,6 +13,8 @@
 #include "World/MapInfra/MapManager.h"
 #include "Character/CharacterManager.h"
 #include "Audio/DSPlaySound.h"
+#include "Engine/Object/ZzzInfomation.h"
+#include "GameLogic/Travel/TravelRequirements.h"
 #include "I18N/All.h"
 
 using namespace SEASON3B;
@@ -37,6 +39,30 @@ namespace
         L"Devias",
         L"LostTower",
     };
+
+    std::uint32_t GetRequiredResets(const CMoveCommandData::MOVEINFODATA* moveInfo)
+    {
+        const int gateNumber = moveInfo->_ReqInfo.iGateNum;
+        if (GateAttribute == nullptr || gateNumber < 0 || gateNumber >= MAX_GATES)
+        {
+            return 0;
+        }
+
+        return GameLogic::Travel::GetRequiredResetsForMap(GateAttribute[gateNumber].Map);
+    }
+
+    // The required level, followed by the required resets if the target map has any ("80/6R").
+    void FormatRequirement(wchar_t* text, std::size_t size, int requiredLevel, std::uint32_t requiredResets)
+    {
+        if (requiredResets > 0)
+        {
+            mu_swprintf_s(text, size, L"%d/%uR", requiredLevel, requiredResets);
+        }
+        else
+        {
+            mu_swprintf_s(text, size, L"%d", requiredLevel);
+        }
+    }
 
     bool IsLuckySeal(const std::wstring& name)
     {
@@ -114,6 +140,18 @@ void SEASON3B::CNewUIMoveCommandWindow::SetPos(int x, int y)
 void SEASON3B::CNewUIMoveCommandWindow::RefreshDataAndLayout()
 {
     m_listMoveInfoData = CMoveCommandData::GetInstance()->GetMoveCommandDatalist();
+    // Sorted by the required resets, then by the required level (stable, keeps the file order otherwise).
+    m_listMoveInfoData.sort([](const CMoveCommandData::MOVEINFODATA* left, const CMoveCommandData::MOVEINFODATA* right)
+    {
+        const auto leftResets = GetRequiredResets(left);
+        const auto rightResets = GetRequiredResets(right);
+        if (leftResets != rightResets)
+        {
+            return leftResets < rightResets;
+        }
+
+        return left->_ReqInfo.iReqLevel < right->_ReqInfo.iReqLevel;
+    });
     g_pRenderText->SetFont(g_hFont);
     const int measuredFontHeight = g_pRenderText->MeasureText(L"Q", 1).cy;
     m_iRealFontHeight = measuredFontHeight > 0 ? measuredFontHeight + 2 : kDefaultRowHeight;
@@ -238,29 +276,11 @@ DWORD SEASON3B::CNewUIMoveCommandWindow::GetMoveCommandKey()
 
 void SEASON3B::CNewUIMoveCommandWindow::SetStrifeMap()
 {
-    std::list<CMoveCommandData::MOVEINFODATA*>::iterator li;
-
-    if (!g_ServerListManager->IsNonPvP())
+    // This server has no Gens system, so no map of the warp list is a Gens battle zone.
+    // Vulcanus (index 42) is a regular hunting map here, see GameLogic/Travel/TravelRequirements.h.
+    for (auto* moveInfo : m_listMoveInfoData)
     {
-        int anStrifeIndex[1] = { 42 };
-        int i;
-        for (li = m_listMoveInfoData.begin(); li != m_listMoveInfoData.end(); advance(li, 1))
-        {
-            (*li)->_bStrife = false;
-            for (i = 0; i < 1; ++i)
-            {
-                if ((*li)->_ReqInfo.index == anStrifeIndex[i])
-                {
-                    (*li)->_bStrife = true;
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        for (li = m_listMoveInfoData.begin(); li != m_listMoveInfoData.end(); advance(li, 1))
-            (*li)->_bStrife = false;
+        moveInfo->_bStrife = false;
     }
 }
 
@@ -288,7 +308,8 @@ void SEASON3B::CNewUIMoveCommandWindow::SettingCanMoveMap()
             iReqLevel = int(float(iReqLevel) * 2.f / 3.f);
         }
 
-        if (iLevel >= iReqLevel && (int)iZen >= iReqZen && (int)Hero->PK < PVP_MURDERER1)
+        const bool hasRequiredResets = CharacterAttribute->Resets >= GetRequiredResets(moveInfo);
+        if (iLevel >= iReqLevel && hasRequiredResets && (int)iZen >= iReqZen && (int)Hero->PK < PVP_MURDERER1)
         {
             ITEM* pEquipedRightRing = &CharacterMachine->Equipment[EQUIPMENT_RING_RIGHT];
             ITEM* pEquipedLeftRing = &CharacterMachine->Equipment[EQUIPMENT_RING_LEFT];
@@ -329,10 +350,6 @@ void SEASON3B::CNewUIMoveCommandWindow::SettingCanMoveMap()
                 {
                     moveInfo->_bCanMove = true;
                 }
-            }
-            else if ((g_ServerListManager->IsNonPvP() == true) && (wcscmp(moveInfo->_ReqInfo.szMainMapName, I18N::Game::Vulcanus) == 0))
-            {
-                moveInfo->_bCanMove = false;
             }
             else
             {
@@ -547,6 +564,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::Render()
         const int itemY = m_layout.listTop + m_iRealFontHeight * visibleIndex;
 
         iReqLevel = (*li)->_ReqInfo.iReqLevel;
+        const std::uint32_t requiredResets = GetRequiredResets(*li);
         if ((gCharacterManager.GetBaseClass(CharacterAttribute->Class) == CLASS_DARK || gCharacterManager.GetBaseClass(CharacterAttribute->Class) == CLASS_DARK_LORD
             || gCharacterManager.GetBaseClass(CharacterAttribute->Class) == CLASS_RAGEFIGHTER)
             && (iReqLevel != 400))
@@ -561,7 +579,7 @@ bool SEASON3B::CNewUIMoveCommandWindow::Render()
             if ((*li)->_bStrife)
                 g_pRenderText->RenderText(m_StrifePos.x, itemY, I18N::Game::Battle2987, 0, 0, RT3_WRITE_CENTER);
             g_pRenderText->RenderText(m_MapNamePos.x, itemY, (*li)->_ReqInfo.szMainMapName, 0, 0, RT3_WRITE_CENTER);
-            _itow(iReqLevel, szText, 10);
+            FormatRequirement(szText, std::size(szText), iReqLevel, requiredResets);
             g_pRenderText->RenderText(m_ReqLevelPos.x, itemY, szText, 0, 0, RT3_WRITE_CENTER);
             _itow((*li)->_ReqInfo.iReqZen, szText, 10);
             g_pRenderText->RenderText(m_ReqZenPos.x, itemY, szText, 0, 0, RT3_WRITE_CENTER);
@@ -581,8 +599,8 @@ bool SEASON3B::CNewUIMoveCommandWindow::Render()
 
             g_pRenderText->RenderText(m_MapNamePos.x, itemY, (*li)->_ReqInfo.szMainMapName, 0, 0, RT3_WRITE_CENTER);
 
-            _itow(iReqLevel, szText, 10);
-            if (iReqLevel > iLevel)
+            FormatRequirement(szText, std::size(szText), iReqLevel, requiredResets);
+            if (iReqLevel > iLevel || CharacterAttribute->Resets < requiredResets)
             {
                 g_pRenderText->SetTextColor(255, 51, 26, 255);
             }

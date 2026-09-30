@@ -12988,4 +12988,7 @@
   <data name="HP/MP %ls  DMG/DEF %ls" xml:space="preserve">
     <value>HP/MP %ls  DMG/DEF %ls</value>
   </data>
+  <data name="Only characters with %u or more resets can enter." xml:space="preserve">
+    <value>Only characters with %u or more resets can enter.</value>
+  </data>
 </root>

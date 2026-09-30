@@ -36,6 +36,7 @@
 #include "GameLogic/Items/PersonalShopTitleImp.h"
 #include "GameLogic/Quests/CSQuest.h"
 #include "GameLogic/Items/CSItemOption.h"
+#include "GameLogic/Travel/TravelRequirements.h"
 #include "GameLogic/NPCs/npcBreeder.h"
 #include "GameLogic/Pets/GIPetManager.h"
 #include "Character/CSParts.h"
@@ -2686,12 +2687,14 @@ void CheckGate()
                 {
                     bool Success = false;
                     int Level;
+                    const int gateLevel = GameLogic::Travel::GetGateLevelRequirement(gt->Map, gs->Level);
+                    const std::uint32_t requiredResets = GameLogic::Travel::GetRequiredResetsForMap(gt->Map);
 
                     if (gCharacterManager.GetBaseClass(Hero->Class) == CLASS_DARK || gCharacterManager.GetBaseClass(Hero->Class) == CLASS_DARK_LORD
                         || gCharacterManager.GetBaseClass(Hero->Class) == CLASS_RAGEFIGHTER)
-                        Level = gs->Level * 2 / 3;
+                        Level = gateLevel * 2 / 3;
                     else
-                        Level = gs->Level;
+                        Level = gateLevel;
 
                     if (i == 28)
                     {
@@ -2731,6 +2734,13 @@ void CheckGate()
                         else if ((62 <= i && i <= 65) && (CharacterMachine->Equipment[EQUIPMENT_HELPER].Type == ITEM_HORN_OF_UNIRIA))
                         {
                             g_pSystemLogBox->AddText(I18N::Game::YouCannotWarpWhileRidingOnAUnicorn, SEASON3B::TYPE_ERROR_MESSAGE);
+                        }
+                        else if (CharacterAttribute->Resets < requiredResets)
+                        {
+                            LoadingWorld = 50;
+                            wchar_t Text[100];
+                            mu_swprintf(Text, I18N::Game::OnlyCharactersWithUOrMoreResetsCanEnter, requiredResets);
+                            g_pSystemLogBox->AddText(Text, SEASON3B::TYPE_ERROR_MESSAGE);
                         }
                         else if (CharacterAttribute->Level < Level)
                         {

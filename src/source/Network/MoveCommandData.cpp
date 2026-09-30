@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "MoveCommandData.h"
+#include "GameLogic/Travel/TravelRequirements.h"
 
 using namespace SEASON3B;
 
@@ -51,7 +52,7 @@ bool CMoveCommandData::Create(const std::wstring& filename)
         BuxConvert((BYTE*)&moveReqInfo, sizeof moveReqInfo);
         pMoveInfoData->_ReqInfo.index = moveReqInfo.index;
         pMoveInfoData->_ReqInfo.iGateNum = moveReqInfo.iGateNum;
-        pMoveInfoData->_ReqInfo.iReqLevel = moveReqInfo.iReqLevel;
+        pMoveInfoData->_ReqInfo.iReqLevel = GameLogic::Travel::GetWarpLevelRequirement(moveReqInfo.index, moveReqInfo.iReqLevel);
         pMoveInfoData->_ReqInfo.iReqZen = moveReqInfo.iReqZen;
         pMoveInfoData->_ReqInfo.m_iReqMaxLevel = moveReqInfo.m_iReqMaxLevel;
         CMultiLanguage::ConvertFromUtf8(pMoveInfoData->_ReqInfo.szMainMapName, moveReqInfo.szMainMapName,
