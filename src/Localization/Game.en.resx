@@ -12991,4 +12991,25 @@
   <data name="Only characters with %u or more resets can enter." xml:space="preserve">
     <value>Only characters with %u or more resets can enter.</value>
   </data>
+  <data name="Set Guard" xml:space="preserve">
+    <value>Set Guard</value>
+  </data>
+  <data name="Set Guard (%ls Set, %d parts): -%.1f%% to -%.1f%% at +15" xml:space="preserve">
+    <value>Set Guard (%ls Set, %d parts): -%.1f%% to -%.1f%% at +15</value>
+  </data>
+  <data name="Set Guard (%ls Set): %d/%d parts" xml:space="preserve">
+    <value>Set Guard (%ls Set): %d/%d parts</value>
+  </data>
+  <data name="Full set: incoming damage -%.1f%%" xml:space="preserve">
+    <value>Full set: incoming damage -%.1f%%</value>
+  </data>
+  <data name="Set Guard (%ls Set): %d/%d parts, lowest +%d" xml:space="preserve">
+    <value>Set Guard (%ls Set): %d/%d parts, lowest +%d</value>
+  </data>
+  <data name="Incoming damage -%.1f%%" xml:space="preserve">
+    <value>Incoming damage -%.1f%%</value>
+  </data>
+  <data name="Next step at +%d: -%.1f%%" xml:space="preserve">
+    <value>Next step at +%d: -%.1f%%</value>
+  </data>
 </root>

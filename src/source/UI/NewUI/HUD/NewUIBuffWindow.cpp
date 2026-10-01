@@ -9,6 +9,7 @@
 #include "Engine/Object/ZzzCharacter.h"
 #include "Render/Textures/ZzzTexture.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "GameLogic/Items/SetGuard.h"
 #include "UI/Legacy/UIControls.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 
@@ -286,6 +287,25 @@ bool SEASON3B::CNewUIBuffWindow::Render()
     return true;
 }
 
+namespace
+{
+    // Set Guard is not a server buff: the client shows it like a buff while a complete armor set is equipped.
+    void RenderSetGuardTooltip(float x, float y)
+    {
+        int TextNum = 0;
+        ::memset(TextListColor, 0, sizeof(int) * 30);
+        ::memset(TextBold, 0, sizeof(int) * 30);
+
+        mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::SetGuard);
+        TextListColor[TextNum] = TEXT_COLOR_BLUE;
+        TextBold[TextNum] = true;
+        ++TextNum;
+
+        TextNum = GameLogic::Items::SetGuard::AppendBuffTooltip(TextNum);
+        RenderTipTextList(x, y, TextNum, 0);
+    }
+}
+
 void SEASON3B::CNewUIBuffWindow::RenderBuffStatus(BUFF_RENDER renderstate)
 {
     OBJECT* pHeroObject = &Hero->Object;
@@ -328,6 +348,21 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffStatus(BUFF_RENDER renderstate)
         if (++buffwidthcount >= BUFF_MAX_LINE_COUNT) {
             buffwidthcount = 0;
             ++buffheightcount;
+        }
+    }
+
+    if (GameLogic::Items::SetGuard::GetHeroState().IsComplete)
+    {
+        x = m_Pos.x + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
+        y = m_Pos.y + (buffheightcount * (BUFF_IMG_HEIGHT + BUFF_IMG_SPACE));
+        if (renderstate == BUFF_RENDER_ICON)
+        {
+            eBuffState icon = eBuff_Defense;
+            RenderBuffIcon(icon, x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT);
+        }
+        else if (renderstate == BUFF_RENDER_TOOLTIP && SEASON3B::CheckMouseIn(x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT))
+        {
+            RenderSetGuardTooltip(x + (BUFF_IMG_WIDTH / 2), y + BUFF_IMG_WIDTH);
         }
     }
 }
