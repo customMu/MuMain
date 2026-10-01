@@ -5796,20 +5796,28 @@ BOOL ReceiveDieExpLarge(const BYTE* ReceiveBuffer, BOOL bEncrypted)
     killedObject->Dead = 1;
     killedObject->Movement = false;
 
+    // The server sends these with every kill; show each of them at most once a minute instead of flooding the log.
+    static ULONGLONG lastExperienceNoticeTick[3] = {};
+    const auto showExperienceNotice = [](const int slot, const wchar_t* text)
+    {
+        const ULONGLONG now = GetTickCount64();
+        if (lastExperienceNoticeTick[slot] == 0 || now - lastExperienceNoticeTick[slot] >= 60000)
+        {
+            lastExperienceNoticeTick[slot] = now;
+            g_pSystemLogBox->AddText(text, SEASON3B::TYPE_SYSTEM_MESSAGE);
+        }
+    };
+
     switch (experienceType)
     {
     case eExperienceType_MaxLevelReached:
-        // TODO: show message "You already reached maximum Level."
-        g_pSystemLogBox->AddText(L"You already reached maximum Level.", SEASON3B::TYPE_SYSTEM_MESSAGE);
+        showExperienceNotice(0, L"You already reached maximum Level.");
         return TRUE;
     case eExperienceType_MaxMasterLevelReached:
-        // TODO: show message "You already reached maximum master Level."
-        g_pSystemLogBox->AddText(L"You already reached maximum master Level.", SEASON3B::TYPE_SYSTEM_MESSAGE);
+        showExperienceNotice(1, L"You already reached maximum master Level.");
         return TRUE;
     case eExperienceType_MonsterLevelTooLowForMasterExperience:
-        // TODO: You need to kill stronger monsters to gain master experience.
-        g_pSystemLogBox->AddText(L"You need to kill stronger monsters to gain master experience.",
-                                 SEASON3B::TYPE_SYSTEM_MESSAGE);
+        showExperienceNotice(2, L"You need to kill stronger monsters to gain master experience.");
         return TRUE;
     }
 
