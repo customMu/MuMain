@@ -48,7 +48,7 @@ namespace
             return 0;
         }
 
-        return GameLogic::Travel::GetRequiredResetsForMap(GateAttribute[gateNumber].Map);
+        return GameLogic::Travel::GetRequiredResetsForWarp(moveInfo->_ReqInfo.index, GateAttribute[gateNumber].Map);
     }
 
     // The required level, followed by the required resets if the target map has any ("80/6R").

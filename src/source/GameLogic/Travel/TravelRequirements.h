@@ -16,7 +16,7 @@ namespace GameLogic::Travel
 
     struct MapResetRequirement
     {
-        int map;
+        int map; // map number (MapResetRequirements) or warp index (WarpResetRequirements)
         std::uint32_t resets;
     };
 
@@ -26,23 +26,67 @@ namespace GameLogic::Travel
         int level;
     };
 
+    // Ladder of the maps by resets (session 8): a new zone every reset up to 10, then every 5.
+    // A map needs the resets of its earliest zone; later zones of a map are reached by walking
+    // (the monsters are the limit) or by a warp with its own requirement (WarpResetRequirements).
     inline constexpr MapResetRequirement MapResetRequirements[] =
     {
         { 7, 1 },   // Atlans
-        { 4, 1 },   // Lost Tower
+        { 4, 2 },   // Lost Tower
+        { 25, 2 },  // Kalima 2
+        { 26, 5 },  // Kalima 3
         { 8, 6 },   // Tarkan
-        { 10, 6 },  // Icarus
-        { 31, 6 },  // Land of Trials
-        { 33, 6 },  // Aida
-        { 37, 6 },  // Kanturu Ruins
+        { 33, 7 },  // Aida
+        { 10, 8 },  // Icarus
+        { 31, 8 },  // Land of Trials
+        { 27, 8 },  // Kalima 4
+        { 37, 9 },  // Kanturu Ruins
         { 80, 10 }, // Karutan 1
-        { 34, 20 }, // Crywolf Fortress
+        { 34, 10 }, // Crywolf Fortress (the entrance of Barracks of Balgass, 3rd class quest)
+        { 41, 10 }, // Barracks of Balgass
+        { 42, 10 }, // Balgass Refuge
+        { 28, 10 }, // Kalima 5
         { 81, 20 }, // Karutan 2
+        { 29, 20 }, // Kalima 6
         { 57, 30 }, // Raklion
         { 58, 30 }, // Raklion boss room
+        { 36, 35 }, // Kalima 7
         { 38, 50 }, // Kanturu Relics - postponed (to be reworked as a high-end map)
         { 56, 50 }, // Swamp of Calmness - postponed (to be reworked as a high-end map)
         { 63, 50 }, // Vulcanus - postponed (to be reworked as a high-end map)
+    };
+
+    // Resets per warp list entry (server: plugin "Warp requirements by resets"); the requirement of the
+    // target map applies too, the higher one counts.
+    inline constexpr MapResetRequirement WarpResetRequirements[] =
+    {
+        { 9, 1 },   // Dungeon2
+        { 10, 2 },  // Dungeon3
+        { 11, 1 },  // Atlans
+        { 12, 3 },  // Atlans2
+        { 13, 4 },  // Atlans3
+        { 14, 2 },  // LostTower
+        { 15, 2 },  // LostTower2
+        { 16, 3 },  // LostTower3
+        { 17, 3 },  // LostTower4
+        { 18, 4 },  // LostTower5
+        { 19, 4 },  // LostTower6
+        { 20, 5 },  // LostTower7
+        { 21, 6 },  // Tarkan
+        { 22, 7 },  // Tarkan2
+        { 23, 8 },  // Icarus
+        { 25, 7 },  // Aida1
+        { 27, 15 }, // Aida2
+        { 28, 9 },  // KanturuRuins1
+        { 29, 10 }, // KanturuRuins2
+        { 45, 25 }, // KanturuRuins3
+        { 46, 10 }, // Karutan1
+        { 47, 20 }, // Karutan2
+        { 34, 30 }, // Raklion
+        { 48, 30 }, // LaCleon
+        { 30, 50 }, // KanturuRelics
+        { 33, 50 }, // PeaceSwamp
+        { 42, 50 }, // Vulcanus
     };
 
     // Close to the original levels, slightly lower: after a reset the character climbs through
@@ -96,6 +140,21 @@ namespace GameLogic::Travel
         }
 
         return 0;
+    }
+
+    // Required resets of a warp list entry: the higher of the warp and its target map.
+    inline std::uint32_t GetRequiredResetsForWarp(const int warpIndex, const int targetMap)
+    {
+        std::uint32_t resets = GetRequiredResetsForMap(targetMap);
+        for (const auto& requirement : WarpResetRequirements)
+        {
+            if (requirement.map == warpIndex && requirement.resets > resets)
+            {
+                resets = requirement.resets;
+            }
+        }
+
+        return resets;
     }
 
     inline int GetWarpLevelRequirement(const int warpIndex, const int levelFromClientData)
