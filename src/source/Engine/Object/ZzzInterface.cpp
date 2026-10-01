@@ -46,6 +46,7 @@
 #include "GameLogic/Events/Event.h"
 
 #include "UI/NewUI/NewUISystem.h"
+#include "GameLogic/Commands/ChatCommandCatalog.h"
 #include "GameLogic/Events/w_CursedTemple.h"
 #include "UI/Legacy/UIControls.h"
 #include "GameLogic/Social/PartyManager.h"
@@ -2549,6 +2550,32 @@ void Attack(CHARACTER* c)
         MouseRButtonPush = false;
         MouseRButton = false;
         MouseRButtonPress = 0;
+
+        return;
+    }
+
+    // Shift + right click on a monster: the server writes the combat numbers into the chat
+    // (/chance <monster id>, CombatInfoChatCommandPlugIn; the server has a 15 s cooldown and says how long to wait).
+    if (MouseRButtonPush && Core::Input::IsKeyDown(VK_SHIFT)
+        && SelectedCharacter >= 0 && SelectedCharacter < MAX_CHARACTERS_CLIENT
+        && IsMonster(&CharactersClient[SelectedCharacter]))
+    {
+        MouseRButtonPop = false;
+        MouseRButtonPush = false;
+        MouseRButton = false;
+        MouseRButtonPress = 0;
+
+        static ULONGLONG lastCombatInfoRequest = 0;
+        const ULONGLONG now = GetTickCount64();
+        if (now - lastCombatInfoRequest >= 1000)
+        {
+            lastCombatInfoRequest = now;
+            // the selected skill too, so the server shows the active skill and not the strongest one
+            wchar_t command[48];
+            mu_swprintf_s(command, L"/chance %d %d", CharactersClient[SelectedCharacter].Key,
+                          static_cast<int>(CharacterAttribute->Skill[Hero->CurrentSkill]));
+            GameLogic::Commands::ChatCommandCatalog::Execute(command);
+        }
 
         return;
     }
