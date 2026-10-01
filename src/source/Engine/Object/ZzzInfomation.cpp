@@ -3226,21 +3226,16 @@ void CHARACTER_MACHINE::CalculateSuccessfulBlocking()
 
     int CharacterClass = gCharacterManager.GetBaseClass(Character.Class);
 
-    if (CharacterClass == CLASS_ELF || CharacterClass == CLASS_SUMMONER)
+    // Server data (class-defense-balance.sql): Agility -> Defense Rate (PvM); the Elf is the dodge class.
+    switch (CharacterClass)
     {
-        Character.SuccessfulBlocking = Dexterity / 4;
-    }
-    else if (CharacterClass == CLASS_DARK_LORD)
-    {
-        Character.SuccessfulBlocking = Dexterity / 7;
-    }
-    else if (CharacterClass == CLASS_RAGEFIGHTER)
-    {
-        Character.SuccessfulBlocking = Dexterity / 10;
-    }
-    else
-    {
-        Character.SuccessfulBlocking = Dexterity / 3;
+    case CLASS_ELF: Character.SuccessfulBlocking = Dexterity; break;
+    case CLASS_DARK:
+    case CLASS_SUMMONER: Character.SuccessfulBlocking = Dexterity / 3; break;
+    case CLASS_WIZARD: Character.SuccessfulBlocking = Dexterity / 4; break;
+    case CLASS_KNIGHT: Character.SuccessfulBlocking = Dexterity / 5; break;
+    case CLASS_DARK_LORD: Character.SuccessfulBlocking = Dexterity / 7; break;
+    default: Character.SuccessfulBlocking = Dexterity / 10; break; // Rage Fighter
     }
 
     ITEM* Left = &Equipment[EQUIPMENT_WEAPON_LEFT];
@@ -3281,34 +3276,18 @@ void CHARACTER_MACHINE::CalculateDefense()
 
     int CharacterClass = gCharacterManager.GetBaseClass(Character.Class);
 
-    if (CharacterClass == CLASS_ELF)
+    // Server data (class-defense-balance.sql): Agility -> Base Defense is the original coefficient x0.3
+    // (DK 1/3 -> 1/10). The window shows the base defense; a monster hit is reduced by a class share of it
+    // (Final Defense = Base Defense x 0.1625 .. 0.25).
+    switch (CharacterClass)
     {
-        Character.Defense = Dexterity / 10;
-    }
-    else if (CharacterClass == CLASS_KNIGHT)
-    {
-        // Server data: Agility -> Base Defense of the Dark Knight classes is 1/18 (dk-defense-test.sql).
-        Character.Defense = Dexterity / 18;
-    }
-    else if (CharacterClass == CLASS_SUMMONER)
-    {
-        Character.Defense = Dexterity / 3;
-    }
-    else if (CharacterClass == CLASS_WIZARD)
-    {
-        Character.Defense = Dexterity / 4;
-    }
-    else if (CharacterClass == CLASS_DARK_LORD)
-    {
-        Character.Defense = Dexterity / 7;
-    }
-    else if (CharacterClass == CLASS_RAGEFIGHTER)
-    {
-        Character.Defense = Dexterity / 8;
-    }
-    else
-    {
-        Character.Defense = Dexterity / 5;
+    case CLASS_KNIGHT: Character.Defense = Dexterity / 10; break;
+    case CLASS_WIZARD:
+    case CLASS_SUMMONER: Character.Defense = Dexterity * 3 / 40; break;
+    case CLASS_DARK: Character.Defense = Dexterity * 3 / 50; break;
+    case CLASS_DARK_LORD: Character.Defense = Dexterity * 3 / 70; break;
+    case CLASS_RAGEFIGHTER: Character.Defense = Dexterity * 3 / 80; break;
+    default: Character.Defense = Dexterity * 3 / 100; break; // Elf
     }
 
     WORD    Defense = 0;
