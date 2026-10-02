@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameLogic/Combat/SkillExecution.h"
+#include "GameLogic/Items/PotionCooldown.h"
 
 #include <thread>
 #include <atomic>
@@ -122,12 +123,116 @@ namespace MUHelper
 
         m_iLoopCounter = 0;
 
+        m_iSessionKills = 0;
+        m_iSessionExperience = 0;
+        m_iSessionMasterExperience = 0;
+        m_iSessionZen = 0;
+        m_iSessionDamageDealt = 0;
+        m_iSessionHitsDealt = 0;
+        m_iSessionMissesDealt = 0;
+        m_iSessionDamageTaken = 0;
+        m_iSessionHitsTaken = 0;
+        m_iSessionMissesTaken = 0;
+        m_iSessionDeaths = 0;
+        for (auto& potions : m_aiSessionPotions)
+        {
+            potions = 0;
+        }
+
+        m_iSessionPotionCost = 0;
+        for (auto& jewels : m_aiSessionJewels)
+        {
+            jewels = 0;
+        }
+
+        {
+            std::lock_guard lock(m_lastDeathMutex);
+            m_strLastDeathTime.clear();
+            m_strLastDeathKiller.clear();
+        }
+
+        m_ullSessionStart = GetTickCount64();
+        m_ullSessionStop = 0;
+
         m_bActive = true;
         g_ConsoleDebug->Write(MCD_NORMAL, L"[MU Helper] Started");
     }
 
+    const std::array<int, CMuHelper::JewelTypeCount>& CMuHelper::GetJewelTypes()
+    {
+        static const std::array<int, JewelTypeCount> types =
+        {
+            ITEM_POTION + 13,   // Jewel of Bless
+            ITEM_POTION + 14,   // Jewel of Soul
+            ITEM_WING + 15,     // Jewel of Chaos
+            ITEM_POTION + 16,   // Jewel of Life
+            ITEM_POTION + 22,   // Jewel of Creation
+            ITEM_POTION + 31,   // Jewel of Guardian
+            ITEM_POTION + 41,   // Gemstone
+            ITEM_POTION + 42,   // Jewel of Harmony
+            ITEM_POTION + 43,   // Lower Refine Stone
+            ITEM_POTION + 44,   // Higher Refine Stone
+        };
+        return types;
+    }
+
+    void CMuHelper::RecordPickedItem(int iItemType, int iCount)
+    {
+        if (!m_bActive)
+        {
+            return;
+        }
+
+        const auto& types = GetJewelTypes();
+        for (int i = 0; i < JewelTypeCount; ++i)
+        {
+            if (types[i] == iItemType)
+            {
+                m_aiSessionJewels[i] += iCount;
+                return;
+            }
+        }
+    }
+
+    void CMuHelper::RecordDeath(const wchar_t* szKiller)
+    {
+        if (!m_bActive)
+        {
+            return;
+        }
+
+        ++m_iSessionDeaths;
+
+        SYSTEMTIME now;
+        GetLocalTime(&now);
+        wchar_t szTime[16];
+        swprintf(szTime, std::size(szTime), L"%02d:%02d:%02d", now.wHour, now.wMinute, now.wSecond);
+
+        std::lock_guard lock(m_lastDeathMutex);
+        m_strLastDeathTime = szTime;
+        m_strLastDeathKiller = (szKiller != nullptr && szKiller[0] != L'\0') ? szKiller : L"?";
+    }
+
+    bool CMuHelper::GetLastDeath(std::wstring& time, std::wstring& killer) const
+    {
+        std::lock_guard lock(m_lastDeathMutex);
+        if (m_strLastDeathTime.empty())
+        {
+            return false;
+        }
+
+        time = m_strLastDeathTime;
+        killer = m_strLastDeathKiller;
+        return true;
+    }
+
     void CMuHelper::Stop()
     {
+        if (m_bActive)
+        {
+            m_ullSessionStop = GetTickCount64();
+        }
+
         m_bActive = false;
         g_ConsoleDebug->Write(MCD_NORMAL, L"[MU Helper] Stopped");
     }
@@ -575,7 +680,9 @@ namespace MUHelper
             if (iRemaining <= m_config.iPotionThreshold)
             {
                 int iPotionIndex = g_pMyInventory->FindHealingItemIndex();
-                if (iPotionIndex != -1)
+                const ITEM* pPotion = iPotionIndex != -1 ? g_pMyInventory->FindItem(iPotionIndex) : nullptr;
+                if (iPotionIndex != -1
+                    && (pPotion == nullptr || GameLogic::Items::GetPotionCooldownFraction(pPotion->Type) <= 0.f))
                 {
                     SendRequestUse(iPotionIndex, 0);
                 }

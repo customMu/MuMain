@@ -83,6 +83,7 @@
 #include "Dotnet/Connection.h"
 
 #include "MUHelper/MuHelper.h"
+#include "GameLogic/Items/PotionCooldown.h"
 
 #define MAX_DEBUG_MAX 10
 
@@ -1601,6 +1602,42 @@ void ReceiveMuHelperStatusUpdate(std::span<const BYTE> ReceiveBuffer)
     g_ConsoleDebug->Write(MCD_RECEIVE, L"0x51 [ReceiveMuHelperStatusUpdate]");
 }
 
+// MU Helper statistics: set when a picked up item was added to an existing stack; the next durability update counts it.
+static bool g_bPendingStackedPickup = false;
+
+// MU Helper statistics: health/mana potions consumed (prices as in ItemValue, session 9: 40/120/300).
+static void RecordHelperPotionUse(const ITEM* pItem, int count)
+{
+    // The same consumption can be reported twice (stats update with the slot, then the durability update);
+    // with the 3 s cooldown a second potion of the same kind within 1 s is impossible.
+    if (GameLogic::Items::GetPotionCooldownFraction(pItem->Type) > 2.f / 3.f)
+    {
+        return;
+    }
+
+    // the server consumed a potion: its cooldown starts (shown on the item hotkeys, respected by the MU Helper)
+    GameLogic::Items::RecordPotionCooldown(pItem->Type);
+
+    static constexpr int PotionPrice[3] = { 40, 120, 300 };
+    bool mana;
+    int size;
+    switch (pItem->Type)
+    {
+    case ITEM_SMALL_HEALING_POTION: mana = false; size = 0; break;
+    case ITEM_MEDIUM_HEALING_POTION: mana = false; size = 1; break;
+    case ITEM_LARGE_HEALING_POTION: mana = false; size = 2; break;
+    case ITEM_SMALL_MANA_POTION: mana = true; size = 0; break;
+    case ITEM_MEDIUM_MANA_POTION: mana = true; size = 1; break;
+    case ITEM_LARGE_MANA_POTION: mana = true; size = 2; break;
+    default: return;
+    }
+
+    for (int i = 0; i < count; ++i)
+    {
+        MUHelper::g_MuHelper.RecordPotion(mana, size, PotionPrice[size]);
+    }
+}
+
 void ReceiveDeleteInventory(const BYTE* ReceiveBuffer)
 {
     auto Data = (LPPHEADER_DEFAULT_SUBCODE)ReceiveBuffer;
@@ -1613,6 +1650,15 @@ void ReceiveDeleteInventory(const BYTE* ReceiveBuffer)
         }
         else if (IsMainInventorySlot(itemindex))
         {
+            if (Data->Value)
+            {
+                // the last potion of a stack was consumed
+                if (const ITEM* pItem = g_pMyInventory->FindItem(itemindex))
+                {
+                    RecordHelperPotionUse(pItem, 1);
+                }
+            }
+
             g_pMyInventory->DeleteItem(itemindex);
         }
         else if (IsInventoryExtensionSlot(itemindex))
@@ -3546,6 +3592,16 @@ void ReceiveAttackDamageExtended(const BYTE* ReceiveBuffer)
     else
     {
         c->ShieldStatus = static_cast<float>(Data->HealthStatus) / 250.f;
+    }
+
+    // MU Helper statistics: hits on the hero are taken (0 = the monster missed), hits on monsters are the hero's.
+    if (Key == HeroKey)
+    {
+        MUHelper::g_MuHelper.AddHitTaken(static_cast<int64_t>(Damage) + ShieldDamage);
+    }
+    else if (IsMonster(c))
+    {
+        MUHelper::g_MuHelper.AddHitDealt(static_cast<int64_t>(Damage) + ShieldDamage);
     }
 
     if (gMapManager.InChaosCastle())
@@ -5717,6 +5773,10 @@ BOOL ReceiveDieExp(const BYTE* ReceiveBuffer, BOOL bEncrypted)
     c->Dead = 1;
     c->Movement = false;
 
+    // Every experience packet is one kill which rewarded this character.
+    MUHelper::g_MuHelper.RecordKill();
+    MUHelper::g_MuHelper.AddExperience(Exp, gCharacterManager.IsMasterExperienceActive(CharacterAttribute->Class, CharacterAttribute->Level));
+
     if (gCharacterManager.IsMasterExperienceActive(CharacterAttribute->Class, CharacterAttribute->Level) == true)
     {
         g_pMainFrame->SetPreExp_Wide(Master_Level_Data.lMasterLevel_Experince);
@@ -5795,6 +5855,10 @@ BOOL ReceiveDieExpLarge(const BYTE* ReceiveBuffer, BOOL bEncrypted)
 
     killedObject->Dead = 1;
     killedObject->Movement = false;
+
+    // Every experience packet is one kill which rewarded this character (also at the maximum level).
+    MUHelper::g_MuHelper.RecordKill();
+    MUHelper::g_MuHelper.AddExperience(addedExperience, experienceType == eExperienceType_Master);
 
     // The server sends these with every kill; show each of them at most once a minute instead of flooding the log.
     static ULONGLONG lastExperienceNoticeTick[3] = {};
@@ -5932,6 +5996,12 @@ void ReceiveDie(const BYTE* ReceiveBuffer, int Size)
     OBJECT* o = &c->Object;
     c->Dead = 1;
     c->Movement = false;
+
+    if (c == Hero)
+    {
+        const int killerIndex = FindCharacterIndex(((int)(Data->TKeyH) << 8) + Data->TKeyL);
+        MUHelper::g_MuHelper.RecordDeath(killerIndex < MAX_CHARACTERS_CLIENT ? CharactersClient[killerIndex].ID : nullptr);
+    }
 
     WORD SkillType = ((int)(Data->MagicH) << 8) + Data->MagicL;
 
@@ -6125,6 +6195,7 @@ void ReceiveGetItem(std::span<const BYTE> ReceiveBuffer)
 
             if (getGold > 0)
             {
+                MUHelper::g_MuHelper.AddZen(getGold);
                 mu_swprintf(szMessage, L"%d %ls %ls", getGold, I18N::Game::Zen, I18N::Game::Obtained);
                 g_pSystemLogBox->AddText(szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
             }
@@ -6181,6 +6252,16 @@ void ReceiveGetItem(std::span<const BYTE> ReceiveBuffer)
             };
             int level = pickedItem->Level;
             GetItemName(pickedItem->Type, level, szItem);
+            if (itemIndex == GET_ITEM_MULTI)
+            {
+                // added to an existing stack: the item type isn't known reliably here (the MU Helper doesn't set ItemKey);
+                // the following durability update of the stack tells it (ReceiveDurability)
+                g_bPendingStackedPickup = true;
+            }
+            else
+            {
+                MUHelper::g_MuHelper.RecordPickedItem(pickedItem->Type, 1);
+            }
 
             wchar_t szMessage[128];
             mu_swprintf(szMessage, L"%ls %ls", szItem, I18N::Game::Obtained);
@@ -7078,6 +7159,9 @@ void ReceiveStatsExtended(const BYTE* ReceiveBuffer)
         // todo: is that ever used?
         if (ITEM* pItem = g_pMyInventory->FindItem(Data->Index))
         {
+            // the server reports the consumed potion here (with its slot) before the durability update
+            RecordHelperPotionUse(pItem, 1);
+
             if (pItem->Durability > 0)
                 pItem->Durability--;
             if (pItem->Durability <= 0)
@@ -7165,6 +7249,18 @@ void ReceiveDurability(const BYTE* ReceiveBuffer)
 
         if (pItem)
         {
+            if (Data->KeyL && Data->KeyH < pItem->Durability)
+            {
+                RecordHelperPotionUse(pItem, pItem->Durability - Data->KeyH);
+            }
+            else if (!Data->KeyL && g_bPendingStackedPickup && Data->KeyH > pItem->Durability)
+            {
+                // a picked up item was added to this stack (see ReceiveGetItem, GET_ITEM_MULTI)
+                MUHelper::g_MuHelper.RecordPickedItem(pItem->Type, Data->KeyH - pItem->Durability);
+            }
+
+            g_bPendingStackedPickup = false;
+
             pItem->Durability = Data->KeyH;
             if (Data->KeyL)
             {

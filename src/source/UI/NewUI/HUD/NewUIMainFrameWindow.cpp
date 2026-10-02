@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include <algorithm>
 #include "I18N/All.h"
+#include "GameLogic/Items/PotionCooldown.h"
 
 #include "UI/NewUI/HUD/NewUIMainFrameWindow.h"	// self
 #include "UI/NewUI/Options/NewUIOptionWindow.h"
@@ -1316,6 +1317,23 @@ void SEASON3B::CNewUIItemHotKey::RenderItemCount()
         int iCount = GetHotKeyItemIndex(i, true);
         if (iCount > 0)
         {
+            // potion cooldown: the slot darkens and clears from top to bottom (like the skill delay)
+            // the type of the potion the slot would use (the slot type is -1 for the default Q = health, W = mana)
+            const ITEM* pSlotItem = g_pMyInventory->FindItem(GetHotKeyItemIndex(i));
+            const float cooldown = GameLogic::Items::GetPotionCooldownFraction(pSlotItem != nullptr ? pSlotItem->Type : m_iHotKeyItemType[i]);
+            if (cooldown > 0.f)
+            {
+                // this runs right after the 3D item models (depth test still on): without this the quad is hidden behind the potion model
+                DisableDepthTest();
+                EnableAlphaTest();
+                const float slotSize = 20.f;
+                RenderColorQuadARGB(10.f + (i * 38), 445.f + slotSize * (1.f - cooldown), slotSize, slotSize * cooldown, 0xA0000000u);
+
+                // seconds left, big in the middle of the slot (the quad can end up behind the 3D potion model)
+                const int secondsLeft = static_cast<int>(std::ceil(cooldown * GameLogic::Items::PotionCooldownMilliseconds / 1000.f));
+                SEASON3B::RenderNumber(16.f + (i * 38), 449.f, secondsLeft, 1.5f);
+            }
+
             x = 30 + (i * 38); y = 457; width = 8; height = 9;
             SEASON3B::RenderNumber(x, y, iCount);
         }

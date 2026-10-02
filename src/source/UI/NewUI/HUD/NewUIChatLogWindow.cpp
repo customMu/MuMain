@@ -2,6 +2,7 @@
 #include "I18N/All.h"
 
 #include "UI/NewUI/HUD/NewUIChatLogWindow.h"
+#include "UI/NewUI/HUD/NewUIHeroPositionInfo.h"
 #include "UI/NewUI/NewUIManager.h"
 #include "UI/NewUI/NewUISystem.h"
 #include "Audio/DSPlaySound.h"
@@ -1115,6 +1116,17 @@ bool SEASON3B::CNewUISystemLogWindow::RenderMessages()
 
     g_pRenderText->SetFont(g_hFont);
     const int rowHeight = std::max(1, static_cast<int>(g_pRenderText->MeasureText(L"Q", 1).cy * 1.2f));
+
+    // Keep the messages below the MU Helper statistics (top-left, under the position bar).
+    if (g_pNewUISystem->IsVisible(INTERFACE_HERO_POSITION_INFO))
+    {
+        const int firstLineY = fRenderPosY + rowHeight * iRenderStartLine;
+        const int helperStatsBottom = CNewUIHeroPositionInfo::GetHelperStatsBottom();
+        if (helperStatsBottom > 0 && firstLineY < helperStatsBottom + 2)
+        {
+            fRenderPosY += helperStatsBottom + 2 - firstLineY;
+        }
+    }
 
     EnableAlphaTest();
     for (int i = iRenderStartLine; i <= GetCurrentRenderEndLine(); i++)

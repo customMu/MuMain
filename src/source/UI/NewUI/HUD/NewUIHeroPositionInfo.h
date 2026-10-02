@@ -40,6 +40,10 @@ namespace SEASON3B
         bool Create(CNewUIManager* pNewUIMng, int x, int y);
         void Release();
 
+        // Bottom edge (screen y) of the MU Helper statistics drawn in the last frame, 0 if none;
+        // the system message log starts below it.
+        static int GetHelperStatsBottom() { return s_iHelperStatsBottom; }
+
         void SetPos(int x, int y);
 
         bool UpdateMouseEvent();
@@ -61,6 +65,9 @@ namespace SEASON3B
     private:
         void LoadImages();
         void UnloadImages();
+        void RenderHelperStats();
+
+        static inline int s_iHelperStatsBottom = 0;
     };
 }
 
