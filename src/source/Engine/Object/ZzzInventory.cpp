@@ -38,6 +38,10 @@
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/MixMgr.h"
 #include "GameLogic/Items/ItemRequirements.h"
+#include "GameLogic/Items/RepairPrice.h"
+#include "GameLogic/Items/ArmorRanks.h"
+#include "GameLogic/Items/WeaponRanks.h"
+#include "GameLogic/Items/ItemResetRequirements.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "UI/NewUI/Inventory/NewUIInventoryCtrl.h"
@@ -419,11 +423,15 @@ void SendRequestUse(int Index, int Target, bool addPoints)
         g_pSystemLogBox->AddText(I18N::Game::YouCannotUseYourItemsWhileUsingTheVaultOrWhileTrading, SEASON3B::TYPE_ERROR_MESSAGE);
         return;
     }
-    if (EnableUse > 0)
+    // EnableUse waits for the answer of the server; if none came within 1.5 s, don't stay locked
+    // (the MU Helper stopped drinking potions after a successful one).
+    static ULONGLONG lastUseRequest = 0;
+    if (EnableUse > 0 && GetTickCount64() - lastUseRequest < 1500)
     {
         return;
     }
 
+    lastUseRequest = GetTickCount64();
     EnableUse = 10;
     SocketClient->ToGameServer()->SendConsumeItemRequest(Index, Target, addPoints ? FruitUsage::AddPoints : FruitUsage::RemovePoints);
     g_ConsoleDebug->Write(MCD_SEND, L"0x26 [SendRequestUse(%d)]", Index);
@@ -1163,6 +1171,11 @@ void ConvertChaosTaxGold(DWORD Gold, wchar_t* Text)
 
 int64_t CalcRepairCost(int64_t ItemValue, int Durability, int MaxDurability, short Type, bool SelfRepair)
 {
+    if (GameLogic::Items::HasFlatRepairPrice(Type))
+    {
+        return GameLogic::Items::CalcFlatRepairPrice(Type, Durability, MaxDurability, SelfRepair);
+    }
+
     // Cap ItemValue at 400M
     int64_t repairGold = std::min<int64_t>(ItemValue, 400000000LL);
 
@@ -2612,6 +2625,20 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     }
 
     TextListColor[TextNum] = Color; TextBold[TextNum] = true; TextNum++;
+
+    // Grade (rank) of armor and weapons and the reset count it can be worn from (wiki §5); red if not reached yet
+    {
+        const int grade = GameLogic::Items::GetItemRank(ip->Type);
+        if (grade >= 1 && grade <= 8)
+        {
+            const int requiredResets = GameLogic::Items::GetItemRequiredResets(ip->Type);
+            mu_swprintf(TextList[TextNum], I18N::Game::GradeDFromDResets, grade, requiredResets);
+            TextListColor[TextNum] = static_cast<int>(CharacterAttribute->Resets) < requiredResets ? TEXT_COLOR_RED : TEXT_COLOR_YELLOW;
+            TextBold[TextNum] = false;
+            TextNum++;
+        }
+    }
+
     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
 
     if (ip->Type == ITEM_WEAPON_OF_ARCHANGEL)

@@ -37,6 +37,7 @@ extern bool SelectFlag;
 #include "Audio/DSPlaySound.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "UI/Scaling/UITransform.h"
+#include "GameLogic/Items/ItemResetRequirements.h"
 
 using namespace SEASON3B;
 
@@ -229,6 +230,10 @@ bool CNewUIMyInventory::IsEquipable(int iIndex, ITEM* pItem) const
     }
 
     if (bEquipable == false)
+        return false;
+
+    // armor and weapons are worn from the reset of their rank (server: item requirement "Resets")
+    if (static_cast<int>(CharacterAttribute->Resets) < GameLogic::Items::GetItemRequiredResets(pItem->Type))
         return false;
 
     bEquipable = false;

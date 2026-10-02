@@ -27,6 +27,8 @@
 #include "Character/CharacterManager.h"
 #include "GameLogic/Items/ItemRequirements.h"
 #include "GameLogic/Items/ArmorRanks.h"
+#include "GameLogic/Items/WeaponRanks.h"
+#include "GameLogic/Items/ItemResetRequirements.h"
 #include "GameLogic/Skills/SkillManager.h"
 
 CLASS_ATTRIBUTE     ClassAttribute[MAX_CLASS];
@@ -511,10 +513,49 @@ int GetExcellentAddValue(ITEM *ip)
     return 0;
 }
 
+// Weapon damage by rank, same as the server (ItemPowerUpFactory): base + level bonus in % of the base;
+// excellent items get the additional damage calculated from the ranked minimum damage on min and max.
+bool CalcRankedWeaponDamage(ITEM* ip, ITEM_ATTRIBUTE* p, int excelAddValue, bool maximum)
+{
+    const auto* weapon = GameLogic::Items::FindWeaponRank(ip->Type);
+    if (weapon == nullptr || weapon->DamageMin <= 0)
+    {
+        return false;
+    }
+
+    const int baseDamage = maximum ? weapon->DamageMax : weapon->DamageMin;
+    int damage = baseDamage + GameLogic::Items::WeaponRankLevelBonus(baseDamage, weapon->Rank, ip->Level);
+    if (ip->ExcellentFlags > 0 && p->Level)
+    {
+        damage += excelAddValue ? excelAddValue : weapon->DamageMin * 25 / p->Level + 5;
+    }
+
+    if (ip->AncientDiscriminator > 0)
+    {
+        damage += 5 + (GetDropLevel(p) / 40);
+    }
+
+    if (maximum)
+    {
+        ip->DamageMax = damage;
+    }
+    else
+    {
+        ip->DamageMin = damage;
+    }
+
+    return true;
+}
+
 void CalcDamageMin(ITEM* ip, ITEM_ATTRIBUTE* p, int excelAddValue)
 {
     //ITEM_ATTRIBUTE* p = &ItemAttribute[ip->Type];
     if (p->DamageMin <= 0)
+    {
+        return;
+    }
+
+    if (CalcRankedWeaponDamage(ip, p, excelAddValue, false))
     {
         return;
     }
@@ -550,6 +591,11 @@ void CalcDamageMin(ITEM* ip, ITEM_ATTRIBUTE* p, int excelAddValue)
 void CalcDamageMax(ITEM* ip, ITEM_ATTRIBUTE* p, int excelAddValue)
 {
     if (p->DamageMax <= 0)
+    {
+        return;
+    }
+
+    if (CalcRankedWeaponDamage(ip, p, excelAddValue, true))
     {
         return;
     }
@@ -1846,9 +1892,23 @@ int64_t ItemValue(ITEM* ip, int goldType)
     {
         Gold = p->Value * p->Value * 10 / 12;
 
-        if (ip->Type == ITEM_LARGE_HEALING_POTION || ip->Type == ITEM_LARGE_MANA_POTION)
+        // Health and mana potions: the server prices (Value 7/12/19 -> 40/120/300, session 9).
+        switch (ip->Type)
         {
-            Gold = 1500;
+        case ITEM_SMALL_HEALING_POTION:
+        case ITEM_SMALL_MANA_POTION:
+            Gold = 40;
+            break;
+        case ITEM_MEDIUM_HEALING_POTION:
+        case ITEM_MEDIUM_MANA_POTION:
+            Gold = 120;
+            break;
+        case ITEM_LARGE_HEALING_POTION:
+        case ITEM_LARGE_MANA_POTION:
+            Gold = 300;
+            break;
+        default:
+            break;
         }
 
         if (ip->Type >= ITEM_POTION && ip->Type <= ITEM_ANTIDOTE)
@@ -2254,6 +2314,10 @@ bool IsRequireEquipItem(ITEM* pItem)
     }
 
     if (bEquipable == false)
+        return false;
+
+    // armor and weapons are worn from the reset of their rank (server: item requirement "Resets")
+    if (static_cast<int>(CharacterAttribute->Resets) < GameLogic::Items::GetItemRequiredResets(pItem->Type))
         return false;
 
     // Requirements are checked against the base stats; the level requirement is ignored after the first reset
@@ -3151,6 +3215,21 @@ void CHARACTER_MACHINE::CalculateAttackRating()
     g_csItemOption.PlusSpecial(&Character.AttackRating, AT_SET_OPTION_IMPROVE_ATTACKING_PERCENT);
 
     Character.AttackRating += g_SocketItemMgr.m_StatusBonus.m_iAttackRateBonus;
+
+    // Weapons by rank give attack rate, in both hands (same as the server).
+    for (const int slot : { EQUIPMENT_WEAPON_RIGHT, EQUIPMENT_WEAPON_LEFT })
+    {
+        const auto& weapon = CharacterMachine->Equipment[slot];
+        if (weapon.Type == -1 || weapon.Durability <= 0)
+        {
+            continue;
+        }
+
+        if (const auto* rankedWeapon = GameLogic::Items::FindWeaponRank(weapon.Type))
+        {
+            Character.AttackRating = static_cast<WORD>(std::min(0xFFFF, Character.AttackRating + rankedWeapon->AttackRate));
+        }
+    }
 }
 
 void CHARACTER_MACHINE::CalculateAttackRatingPK()

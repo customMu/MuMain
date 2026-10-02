@@ -13012,4 +13012,37 @@
   <data name="Next step at +%d: -%.1f%%" xml:space="preserve">
     <value>Next step at +%d: -%.1f%%</value>
   </data>
+  <data name="Helper %ls  Kills %ls (%ls/h)" xml:space="preserve">
+    <value>Helper %ls  Kills %ls (%ls/h)</value>
+  </data>
+  <data name="Helper stopped %ls  Kills %ls (%ls/h)" xml:space="preserve">
+    <value>Helper stopped %ls  Kills %ls (%ls/h)</value>
+  </data>
+  <data name="EXP %ls (%ls/h)" xml:space="preserve">
+    <value>EXP %ls (%ls/h)</value>
+  </data>
+  <data name="Master EXP %ls (%ls/h)" xml:space="preserve">
+    <value>Master EXP %ls (%ls/h)</value>
+  </data>
+  <data name="Zen %ls (%ls/h), helper cost %ls" xml:space="preserve">
+    <value>Zen %ls (%ls/h), helper cost %ls</value>
+  </data>
+  <data name="Damage %ls (%ls/s, %ls/h), hits %d%%" xml:space="preserve">
+    <value>Damage %ls (%ls/s, %ls/h), hits %d%%</value>
+  </data>
+  <data name="Taken %ls (%ls/s), monsters missed %d%%" xml:space="preserve">
+    <value>Taken %ls (%ls/s), monsters missed %d%%</value>
+  </data>
+  <data name="Grade %d (from %d resets)" xml:space="preserve">
+    <value>Grade %d (from %d resets)</value>
+  </data>
+  <data name="Jewels: %ls" xml:space="preserve">
+    <value>Jewels: %ls</value>
+  </data>
+  <data name="Last death %ls by %ls" xml:space="preserve">
+    <value>Last death %ls by %ls</value>
+  </data>
+  <data name="Potions HP %d/%d/%d, MP %d/%d/%d" xml:space="preserve">
+    <value>Potions HP %d/%d/%d, MP %d/%d/%d</value>
+  </data>
 </root>
