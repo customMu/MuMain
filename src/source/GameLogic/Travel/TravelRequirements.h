@@ -129,6 +129,48 @@ namespace GameLogic::Travel
         { 57, 250 }, // Raklion
     };
 
+    // Warps which are not in the client file Movereq.bmd (server: config."WarpInfo", warp-list-extra.sql).
+    // The client Gate.bmd has no gates of these maps, so the target map is given here.
+    struct ExtraWarp
+    {
+        int index;
+        const wchar_t* name;
+        int level;
+        int zen;
+        int map;
+    };
+
+    inline constexpr ExtraWarp ExtraWarps[] =
+    {
+        { 44, L"LorenMarket", 10, 18000, 79 },
+        { 50, L"Crywolf", 250, 10000, 34 },
+        { 51, L"Barracks", 350, 12000, 41 },
+        { 52, L"Refuge", 350, 12000, 42 },
+        { 53, L"LandOfTrials", 150, 10000, 31 },
+        { 54, L"Kalima1", 40, 3000, 24 },
+        { 55, L"Kalima2", 120, 5000, 25 },
+        { 56, L"Kalima3", 170, 7000, 26 },
+        { 57, L"Kalima4", 220, 9000, 27 },
+        { 58, L"Kalima5", 270, 11000, 28 },
+        { 59, L"Kalima6", 320, 13000, 29 },
+        { 60, L"Kalima7", 350, 15000, 36 },
+        { 61, L"ValleyOfLoren", 10, 5000, 30 },
+    };
+
+    // Target map of a warp from ExtraWarps, -1 if the warp is from Movereq.bmd (then Gate.bmd tells the map).
+    inline int GetExtraWarpTargetMap(const int warpIndex)
+    {
+        for (const auto& warp : ExtraWarps)
+        {
+            if (warp.index == warpIndex)
+            {
+                return warp.map;
+            }
+        }
+
+        return -1;
+    }
+
     inline std::uint32_t GetRequiredResetsForMap(const int map)
     {
         for (const auto& requirement : MapResetRequirements)

@@ -42,6 +42,11 @@ namespace
 
     std::uint32_t GetRequiredResets(const CMoveCommandData::MOVEINFODATA* moveInfo)
     {
+        if (const int extraWarpMap = GameLogic::Travel::GetExtraWarpTargetMap(moveInfo->_ReqInfo.index); extraWarpMap >= 0)
+        {
+            return GameLogic::Travel::GetRequiredResetsForWarp(moveInfo->_ReqInfo.index, extraWarpMap);
+        }
+
         const int gateNumber = moveInfo->_ReqInfo.iGateNum;
         if (GateAttribute == nullptr || gateNumber < 0 || gateNumber >= MAX_GATES)
         {

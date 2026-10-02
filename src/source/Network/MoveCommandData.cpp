@@ -64,6 +64,25 @@ bool CMoveCommandData::Create(const std::wstring& filename)
     }
     fclose(fp);
 
+    // warps of this server which are not in Movereq.bmd
+    for (const auto& warp : GameLogic::Travel::ExtraWarps)
+    {
+        if (GetMoveCommandDataByIndex(warp.index) != nullptr)
+        {
+            continue;
+        }
+
+        auto* pMoveInfoData = new MOVEINFODATA{};
+        pMoveInfoData->_ReqInfo.index = warp.index;
+        pMoveInfoData->_ReqInfo.iGateNum = -1;
+        pMoveInfoData->_ReqInfo.iReqLevel = warp.level;
+        pMoveInfoData->_ReqInfo.iReqZen = warp.zen;
+        pMoveInfoData->_ReqInfo.m_iReqMaxLevel = 0;
+        wcsncpy_s(pMoveInfoData->_ReqInfo.szMainMapName, warp.name, _TRUNCATE);
+        wcsncpy_s(pMoveInfoData->_ReqInfo.szSubMapName, warp.name, _TRUNCATE);
+        m_listMoveInfoData.push_back(pMoveInfoData);
+    }
+
     return true;
 }
 
