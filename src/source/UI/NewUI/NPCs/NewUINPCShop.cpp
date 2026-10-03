@@ -12,7 +12,7 @@
 #include "GameLogic/Items/SellConfirmation.h"
 
 #include "GameLogic/Social/GambleSystem.h"
-#include "GameLogic/Items/KundunSymbols.h"
+#include "GameLogic/Items/KundunEssence.h"
 
 using namespace SEASON3B;
 
@@ -258,9 +258,9 @@ void SEASON3B::CNewUINPCShop::RenderButton()
 
 void SEASON3B::CNewUINPCShop::RenderRepairMoney()
 {
-    if (GameLogic::Items::KundunSymbols::IsSymbolShopOpen())
+    if (GameLogic::Items::KundunEssence::IsEssenceShopOpen())
     {
-        RenderSymbolBalance();
+        RenderEssenceBalance();
         return;
     }
 
@@ -278,16 +278,18 @@ void SEASON3B::CNewUINPCShop::RenderRepairMoney()
     }
 }
 
-// The symbol shop sells for Symbols of Kundun, so the balance is shown instead of the repair costs.
-void SEASON3B::CNewUINPCShop::RenderSymbolBalance()
+// The essence shop sells for Kundun Essence, so the balance is shown instead of the repair costs.
+void SEASON3B::CNewUINPCShop::RenderEssenceBalance()
 {
     RenderImage(IMAGE_NPCSHOP_REPAIR_MONEY, m_Pos.x + 10, m_Pos.y + 355, 170.f, 24.f);
     g_pRenderText->SetBgColor(255, 255, 255, 0);
     g_pRenderText->SetTextColor(255, 220, 150, 255);
     g_pRenderText->SetFont(g_hFontBold);
 
+    wchar_t amount[64];
+    ConvertGold(GameLogic::Items::KundunEssence::GetBalance(), amount);
     wchar_t strText[256];
-    mu_swprintf(strText, I18N::Game::SymbolsOfKundunU, GameLogic::Items::KundunSymbols::GetBalance());
+    mu_swprintf(strText, I18N::Game::EssenceLs, amount);
     g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + 362, strText);
 }
 

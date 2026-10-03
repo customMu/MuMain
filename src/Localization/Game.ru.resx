@@ -12893,13 +12893,28 @@
   <data name="Split stack: how many? (Total: %d)" xml:space="preserve">
     <value>Разделить стек: сколько отделить? (Всего: %d)</value>
   </data>
-  <data name="Symbols of Kundun: %u" xml:space="preserve">
-    <value>Символы Кундуна: %u</value>
-  </data>
-  <data name="Price: %u Symbols of Kundun" xml:space="preserve">
-    <value>Цена: %u Символов Кундуна</value>
-  </data>
   <data name="Not for sale" xml:space="preserve">
     <value>Не продаётся</value>
+  </data>
+  <data name="Essence: %ls" xml:space="preserve">
+    <value>Эссенция: %ls</value>
+  </data>
+  <data name="Price: %u Kundun Essence" xml:space="preserve">
+    <value>Цена: %u Эссенции Кундуна</value>
+  </data>
+  <data name="Drop: free" xml:space="preserve">
+    <value>Дроп: свободный</value>
+  </data>
+  <data name="Drop: random" xml:space="preserve">
+    <value>Дроп: случайный</value>
+  </data>
+  <data name="Drop: in turn" xml:space="preserve">
+    <value>Дроп: по очереди</value>
+  </data>
+  <data name="Drop mode of the party (only the party master can change it)" xml:space="preserve">
+    <value>Режим дропа пати (менять может только лидер)</value>
+  </data>
+  <data name="Kundun" xml:space="preserve">
+    <value>Кундун</value>
   </data>
 </root>

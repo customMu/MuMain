@@ -194,7 +194,6 @@ namespace SEASON3B
         void RenderEquippedItem();
         void RenderButtons();
         void RenderInventoryDetails() const;
-        void RenderKundunSymbolsTip() const;
 
         bool EquipmentWindowProcess();
         bool InventoryProcess() const;

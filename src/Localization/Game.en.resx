@@ -13045,13 +13045,28 @@
   <data name="Potions HP %d/%d/%d, MP %d/%d/%d" xml:space="preserve">
     <value>Potions HP %d/%d/%d, MP %d/%d/%d</value>
   </data>
-  <data name="Symbols of Kundun: %u" xml:space="preserve">
-    <value>Symbols of Kundun: %u</value>
-  </data>
-  <data name="Price: %u Symbols of Kundun" xml:space="preserve">
-    <value>Price: %u Symbols of Kundun</value>
-  </data>
   <data name="Not for sale" xml:space="preserve">
     <value>Not for sale</value>
+  </data>
+  <data name="Essence: %ls" xml:space="preserve">
+    <value>Essence: %ls</value>
+  </data>
+  <data name="Price: %u Kundun Essence" xml:space="preserve">
+    <value>Price: %u Kundun Essence</value>
+  </data>
+  <data name="Drop: free" xml:space="preserve">
+    <value>Drop: free</value>
+  </data>
+  <data name="Drop: random" xml:space="preserve">
+    <value>Drop: random</value>
+  </data>
+  <data name="Drop: in turn" xml:space="preserve">
+    <value>Drop: in turn</value>
+  </data>
+  <data name="Drop mode of the party (only the party master can change it)" xml:space="preserve">
+    <value>Drop mode of the party (only the party master can change it)</value>
+  </data>
+  <data name="Kundun" xml:space="preserve">
+    <value>Kundun</value>
   </data>
 </root>

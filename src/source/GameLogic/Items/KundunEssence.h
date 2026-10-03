@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <span>
 
-namespace GameLogic::Items::KundunSymbols
+namespace GameLogic::Items::KundunEssence
 {
-    // Symbols of Kundun are a currency of this server (plugin "Symbols of Kundun currency"):
-    // picked up symbols go into a counter of the character instead of the inventory, and the
-    // symbol shop npc (Delgado) sells for symbols instead of zen. The server sends the balance
-    // and, when a merchant store opens, the symbol prices of its slots (none for a zen shop).
+    // The Kundun Essence is a currency of this server (plugin "Kundun Essence currency"): a counter
+    // of the character which is earned in the Kalima instance and the chamber of Kundun. The essence
+    // shop npc (Delgado) sells for essence instead of zen. The server sends the balance and, when a
+    // merchant store opens, the essence prices of its slots (none for a zen shop).
     inline constexpr int MaximumShopSlots = 120;
 
     struct ShopPrice
@@ -23,6 +23,6 @@ namespace GameLogic::Items::KundunSymbols
 
     // An empty list means the opened shop sells for zen.
     void SetShopPrices(std::span<const ShopPrice> prices);
-    bool IsSymbolShopOpen();
+    bool IsEssenceShopOpen();
     bool TryGetShopPrice(int slot, std::uint32_t& price);
 }

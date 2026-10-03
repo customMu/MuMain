@@ -4923,7 +4923,16 @@ enum EMonsterType : int
     MONSTER_CAPTURED_STONE_STATUE_9 = 667,
     MONSTER_CAPTURED_STONE_STATUE_10 = 668,
 
-    MONSTER_END = 668
+    // The real Kundun of the chamber of Kundun 1-7 (custom monsters of this server).
+    MONSTER_KUNDUN_1 = 700,
+    MONSTER_KUNDUN_2 = 701,
+    MONSTER_KUNDUN_3 = 702,
+    MONSTER_KUNDUN_4 = 703,
+    MONSTER_KUNDUN_5 = 704,
+    MONSTER_KUNDUN_6 = 705,
+    MONSTER_KUNDUN_7 = 706,
+
+    MONSTER_END = 706
 };
 
 enum

@@ -1,16 +1,18 @@
 #include "stdafx.h"
-#include "Network/Server/KundunSymbolsPackets.h"
+#include "Network/Server/KalimaPackets.h"
 
 #include <vector>
 
-#include "GameLogic/Items/KundunSymbols.h"
+#include "GameLogic/Items/KundunEssence.h"
+#include "Network/Server/WSclient.h"
 
-namespace Network::Server::KundunSymbols
+namespace Network::Server::KalimaPackets
 {
     namespace
     {
         constexpr std::uint8_t BalanceSubCode = 0x01;
         constexpr std::uint8_t ShopPricesSubCode = 0x02;
+        constexpr std::uint8_t DropModeSubCode = 0x03;
 
         constexpr std::uint8_t C1Header = 0xC1;
         constexpr std::size_t C1SubCodeOffset = 3;
@@ -20,6 +22,8 @@ namespace Network::Server::KundunSymbols
         constexpr std::size_t PriceCountOffset = 5;
         constexpr std::size_t PriceEntriesOffset = 6;
         constexpr std::size_t PriceEntrySize = 5;
+        constexpr std::size_t DropModeOffset = 4;
+        constexpr std::size_t DropModePacketSize = 5;
 
         std::uint32_t ReadUInt32LittleEndian(const std::span<const std::uint8_t> data)
         {
@@ -36,7 +40,7 @@ namespace Network::Server::KundunSymbols
                 return;
             }
 
-            GameLogic::Items::KundunSymbols::SetBalance(ReadUInt32LittleEndian(packet.subspan(BalanceOffset)));
+            GameLogic::Items::KundunEssence::SetBalance(ReadUInt32LittleEndian(packet.subspan(BalanceOffset)));
         }
 
         void ReceiveShopPrices(const std::span<const std::uint8_t> packet)
@@ -52,7 +56,7 @@ namespace Network::Server::KundunSymbols
                 return;
             }
 
-            std::vector<GameLogic::Items::KundunSymbols::ShopPrice> prices;
+            std::vector<GameLogic::Items::KundunEssence::ShopPrice> prices;
             prices.reserve(count);
             for (std::size_t i = 0; i < count; ++i)
             {
@@ -60,7 +64,17 @@ namespace Network::Server::KundunSymbols
                 prices.push_back({ entry[0], ReadUInt32LittleEndian(entry.subspan(1)) });
             }
 
-            GameLogic::Items::KundunSymbols::SetShopPrices(prices);
+            GameLogic::Items::KundunEssence::SetShopPrices(prices);
+        }
+
+        void ReceiveDropMode(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < DropModePacketSize)
+            {
+                return;
+            }
+
+            GameLogic::Social::PartyDropMode::SetMode(static_cast<GameLogic::Social::PartyDropMode::Mode>(packet[DropModeOffset]));
         }
     }
 
@@ -81,8 +95,26 @@ namespace Network::Server::KundunSymbols
         case ShopPricesSubCode:
             ReceiveShopPrices(packet);
             break;
+        case DropModeSubCode:
+            if (isC1)
+            {
+                ReceiveDropMode(packet);
+            }
+
+            break;
         default:
             break;
         }
+    }
+
+    void SendPartyDropMode(const GameLogic::Social::PartyDropMode::Mode mode)
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeSubCode, static_cast<BYTE>(mode) };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 }

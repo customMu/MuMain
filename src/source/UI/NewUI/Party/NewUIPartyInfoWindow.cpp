@@ -10,6 +10,8 @@
 #include "Audio/DSPlaySound.h"
 #include "GameLogic/Events/w_CursedTemple.h"
 #include "World/MapInfra/MapManager.h"
+#include "GameLogic/Social/PartyDropMode.h"
+#include "Network/Server/KalimaPackets.h"
 
 using namespace SEASON3B;
 
@@ -18,6 +20,7 @@ CNewUIPartyInfoWindow::CNewUIPartyInfoWindow()
     m_pNewUIMng = NULL;
     m_Pos.x = m_Pos.y = 0;
     m_bParty = false;
+    m_iShownDropMode = -1;
 }
 
 CNewUIPartyInfoWindow::~CNewUIPartyInfoWindow()
@@ -67,6 +70,30 @@ void CNewUIPartyInfoWindow::InitButtons()
         m_BtnPartyExit[i].ChangeButtonImgState(true, IMAGE_PARTY_EXIT);
         m_BtnPartyExit[i].ChangeButtonInfo(m_Pos.x + 159, m_Pos.y + 63 + iVal, 13, 13);
     }
+
+    m_BtnDropMode.ChangeTextBackColor(RGBA(255, 255, 255, 0));
+    m_BtnDropMode.ChangeButtonImgState(true, CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, true);
+    m_BtnDropMode.ChangeButtonInfo(m_Pos.x + DropModeButtonX, m_Pos.y + DropModeButtonY, DropModeButtonWidth, DropModeButtonHeight);
+    m_BtnDropMode.ChangeImgColor(BUTTON_STATE_UP, RGBA(255, 255, 255, 255));
+    m_BtnDropMode.ChangeImgColor(BUTTON_STATE_DOWN, RGBA(255, 255, 255, 255));
+    m_BtnDropMode.ChangeToolTipText(&I18N::Game::DropModeOfThePartyOnlyThePartyMasterCanChangeIt, true);
+    m_iShownDropMode = -1;
+    UpdateDropModeButton();
+}
+
+void CNewUIPartyInfoWindow::UpdateDropModeButton()
+{
+    const auto mode = GameLogic::Social::PartyDropMode::GetMode();
+    if (m_iShownDropMode != static_cast<int>(mode))
+    {
+        m_iShownDropMode = static_cast<int>(mode);
+        m_BtnDropMode.ChangeText(GameLogic::Social::PartyDropMode::GetModeText(mode));
+    }
+}
+
+bool CNewUIPartyInfoWindow::IsPartyMaster() const
+{
+    return PartyNumber > 0 && !wcscmp(Party[0].Name, Hero->ID);
 }
 
 void CNewUIPartyInfoWindow::OpenningProcess()
@@ -87,6 +114,15 @@ bool CNewUIPartyInfoWindow::BtnProcess()
     if (m_BtnExit.UpdateMouseEvent() == true)
     {
         g_pNewUISystem->Hide(SEASON3B::INTERFACE_PARTY);
+        return true;
+    }
+
+    if (IsVisible() && m_bParty && GameLogic::Social::PartyDropMode::IsKnown() && m_BtnDropMode.UpdateMouseEvent())
+    {
+        // The server checks the party master, too, and tells the others that they can't change it.
+        const auto next = GameLogic::Social::PartyDropMode::GetNextMode(GameLogic::Social::PartyDropMode::GetMode());
+        Network::Server::KalimaPackets::SendPartyDropMode(next);
+        PlayBuffer(SOUND_CLICK01);
         return true;
     }
 
@@ -184,6 +220,13 @@ bool CNewUIPartyInfoWindow::Render()
             }
 
             RenderMemberStatue(i, pMember, bExitBtnRender);
+        }
+
+        if (GameLogic::Social::PartyDropMode::IsKnown())
+        {
+            UpdateDropModeButton();
+            m_BtnDropMode.ChangeTextColor(IsPartyMaster() ? RGBA(255, 255, 255, 255) : RGBA(170, 170, 170, 255));
+            m_BtnDropMode.Render();
         }
     }
     else
@@ -301,6 +344,8 @@ void CNewUIPartyInfoWindow::SetPos(int x, int y)
         int iVal = i * 71;
         m_BtnPartyExit[i].ChangeButtonInfo(m_Pos.x + 159, m_Pos.y + 63 + iVal, 13, 13);
     }
+
+    m_BtnDropMode.ChangeButtonInfo(m_Pos.x + DropModeButtonX, m_Pos.y + DropModeButtonY, DropModeButtonWidth, DropModeButtonHeight);
 }
 
 void CNewUIPartyInfoWindow::SetParty(bool bParty)

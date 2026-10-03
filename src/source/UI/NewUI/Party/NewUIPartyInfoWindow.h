@@ -49,6 +49,12 @@ namespace SEASON3B
             PARTY_INFO_WINDOW_HEIGHT = 429,
         };
 
+        // The drop mode button, right of the exit button.
+        static constexpr int DropModeButtonX = 60;
+        static constexpr int DropModeButtonY = 392;
+        static constexpr int DropModeButtonWidth = 108;
+        static constexpr int DropModeButtonHeight = 29;
+
     private:
         CNewUIManager* m_pNewUIMng;
         POINT						m_Pos;
@@ -56,6 +62,8 @@ namespace SEASON3B
         // Exit Button
         CNewUIButton				m_BtnExit;							// 파티창 나가기버튼
         CNewUIButton				m_BtnPartyExit[MAX_PARTYS];			// 파티탈퇴버튼
+        CNewUIButton				m_BtnDropMode;						// drop mode of the party (custom feature of this server)
+        int							m_iShownDropMode;
 
         int							m_iSelectedCharID;		// Party List에서 캐릭터 ID를 선택 (default : -1)
 
@@ -91,6 +99,8 @@ namespace SEASON3B
         void UnloadImages();
 
         void InitButtons();
+        void UpdateDropModeButton();
+        bool IsPartyMaster() const;
         void RenderGroupBox(int iPosX, int iPosY, int iWidth, int iHeight, int iTitleWidth = 60, int iTitleHeight = 20);
 
         void RenderMemberStatue(int iIndex, PARTY_t* pMember, bool bExitBtnRender = false);

@@ -1,9 +1,9 @@
 #include "stdafx.h"
-#include "GameLogic/Items/KundunSymbols.h"
+#include "GameLogic/Items/KundunEssence.h"
 
 #include <array>
 
-namespace GameLogic::Items::KundunSymbols
+namespace GameLogic::Items::KundunEssence
 {
     namespace
     {
@@ -11,7 +11,7 @@ namespace GameLogic::Items::KundunSymbols
 
         std::uint32_t g_Balance = 0;
         bool g_IsBalanceKnown = false;
-        bool g_IsSymbolShopOpen = false;
+        bool g_IsEssenceShopOpen = false;
         std::array<std::uint32_t, MaximumShopSlots> g_ShopPrices{};
     }
 
@@ -34,7 +34,7 @@ namespace GameLogic::Items::KundunSymbols
     void SetShopPrices(const std::span<const ShopPrice> prices)
     {
         g_ShopPrices.fill(NotForSale);
-        g_IsSymbolShopOpen = !prices.empty();
+        g_IsEssenceShopOpen = !prices.empty();
         for (const auto& entry : prices)
         {
             if (entry.slot < MaximumShopSlots)
@@ -44,14 +44,14 @@ namespace GameLogic::Items::KundunSymbols
         }
     }
 
-    bool IsSymbolShopOpen()
+    bool IsEssenceShopOpen()
     {
-        return g_IsSymbolShopOpen;
+        return g_IsEssenceShopOpen;
     }
 
     bool TryGetShopPrice(const int slot, std::uint32_t& price)
     {
-        if (!g_IsSymbolShopOpen || slot < 0 || slot >= MaximumShopSlots)
+        if (!g_IsEssenceShopOpen || slot < 0 || slot >= MaximumShopSlots)
         {
             return false;
         }

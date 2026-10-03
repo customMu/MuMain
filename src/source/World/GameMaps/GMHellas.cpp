@@ -22,6 +22,7 @@
 #include "GameLogic/Skills/SkillManager.h"
 #include "Camera/CameraProjection.h"
 #include "I18N/All.h"
+#include "I18N/All.h"
 
 extern  int  WaterTextureNumber;
 extern	wchar_t TextList[50][100];
@@ -923,6 +924,24 @@ CHARACTER* CreateHellasMonster(EMonsterType Type, int PositionX, int PositionY, 
         wcscpy(c->ID, L"진짜쿤둔");
         o->LifeTime = 100;
         break;
+
+    case MONSTER_KUNDUN_1:
+    case MONSTER_KUNDUN_2:
+    case MONSTER_KUNDUN_3:
+    case MONSTER_KUNDUN_4:
+    case MONSTER_KUNDUN_5:
+    case MONSTER_KUNDUN_6:
+    case MONSTER_KUNDUN_7:
+        // The real Kundun of the chamber of Kundun: the model of the Illusion 7, bigger and with a red aura.
+        OpenMonsterModel(MONSTER_MODEL_ILLUSION_OF_KUNDUN);
+        c = CreateCharacter(Key, MODEL_ILLUSION_OF_KUNDUN, PositionX, PositionY);
+        c->Weapon[1].Type = MODEL_STAFF_OF_KUNDUN;
+        c->Weapon[1].Level = 0;
+        c->Object.Scale = 2.0f + 0.1f * static_cast<float>(Type - MONSTER_KUNDUN_1);
+        o = &c->Object;
+        wcscpy_s(c->ID, MAX_MONSTER_NAME + 1, I18N::Game::Kundun);
+        o->LifeTime = 100;
+        break;
     }
 
     return c;
@@ -1056,6 +1075,13 @@ bool SetCurrentAction_HellasMonster(CHARACTER* c, OBJECT* o)
         return true;
 
     case MONSTER_ILLUSION_OF_KUNDUN_7:
+    case MONSTER_KUNDUN_1:
+    case MONSTER_KUNDUN_2:
+    case MONSTER_KUNDUN_3:
+    case MONSTER_KUNDUN_4:
+    case MONSTER_KUNDUN_5:
+    case MONSTER_KUNDUN_6:
+    case MONSTER_KUNDUN_7:
         SetAction(o, MONSTER01_ATTACK1 + rand() % 2);
         return true;
     }
@@ -1334,6 +1360,13 @@ bool AttackEffect_HellasMonster(CHARACTER* c, CHARACTER* tc, OBJECT* o, OBJECT* 
         }
         return true;
     case MONSTER_ILLUSION_OF_KUNDUN_7:
+    case MONSTER_KUNDUN_1:
+    case MONSTER_KUNDUN_2:
+    case MONSTER_KUNDUN_3:
+    case MONSTER_KUNDUN_4:
+    case MONSTER_KUNDUN_5:
+    case MONSTER_KUNDUN_6:
+    case MONSTER_KUNDUN_7:
         switch ((c->Skill))
         {
         case AT_SKILL_FIRE_SLASH:
@@ -1576,6 +1609,19 @@ bool RenderHellasMonsterVisual(CHARACTER* c, OBJECT* o, BMD* b)
         }
         else
         {
+            if (c->MonsterIndex >= MONSTER_KUNDUN_1 && c->MonsterIndex <= MONSTER_KUNDUN_7)
+            {
+                // the red aura of the real Kundun
+                const float aura = (float)sin(WorldTime * 0.002f) * 0.25f + 0.75f;
+                Vector(0, 0, 0, p);
+                Vector(aura * 1.0f, aura * 0.1f, aura * 0.05f, Light);
+                for (const int bone : { 4, 6, 8, 29, 49 })
+                {
+                    b->TransformPosition(o->BoneTransform[bone], p, Position, true);
+                    CreateSprite(BITMAP_LIGHT, Position, 5.f, Light, o, WorldTime);
+                }
+            }
+
             // 눈
             Luminosity = (float)sin(WorldTime * 0.003f) * 0.2f + 0.8f;
             Vector(0, 0, 0, p);

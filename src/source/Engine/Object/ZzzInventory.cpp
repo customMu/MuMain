@@ -13,7 +13,7 @@
 #include "Render/Textures/ZzzTexture.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "Engine/Object/ZzzInventory.h"
-#include "GameLogic/Items/KundunSymbols.h"
+#include "GameLogic/Items/KundunEssence.h"
 #include "GameLogic/Items/SetGuard.h"
 #include "Engine/AI/ZzzAI.h"
 #include "Render/Effects/ZzzEffect.h"
@@ -2066,14 +2066,14 @@ void GetSpecialOptionText(int Type, wchar_t* Text, WORD Option, BYTE Value, int 
 
 namespace
 {
-    // The symbol shop (a merchant store of this server) sells for Symbols of Kundun instead of zen.
-    bool RenderSymbolShopPrice(const ITEM* ip, std::span<wchar_t> text)
+    // The essence shop (a merchant store of this server) sells for Kundun Essence instead of zen.
+    bool RenderEssenceShopPrice(const ITEM* ip, std::span<wchar_t> text)
     {
         constexpr int NpcShopColumns = 8;
 
         std::uint32_t price = 0;
         const int slot = ip->y * NpcShopColumns + ip->x;
-        if (!GameLogic::Items::KundunSymbols::TryGetShopPrice(slot, price))
+        if (!GameLogic::Items::KundunEssence::TryGetShopPrice(slot, price))
         {
             return false;
         }
@@ -2084,7 +2084,7 @@ namespace
         }
         else
         {
-            mu_swprintf_s(text.data(), text.size(), I18N::Game::PriceUSymbolsOfKundun, price);
+            mu_swprintf_s(text.data(), text.size(), I18N::Game::PriceUKundunEssence, price);
         }
 
         return true;
@@ -2232,7 +2232,7 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     {
         wchar_t Text[100];
         {
-            if (Sell && RenderSymbolShopPrice(ip, TextList[TextNum]))
+            if (Sell && RenderEssenceShopPrice(ip, TextList[TextNum]))
             {
                 // priced in Symbols of Kundun
             }

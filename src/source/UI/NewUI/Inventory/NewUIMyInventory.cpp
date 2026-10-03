@@ -38,7 +38,7 @@ extern bool SelectFlag;
 #include "Engine/Object/ZzzInterface.h"
 #include "UI/Scaling/UITransform.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
-#include "GameLogic/Items/KundunSymbols.h"
+#include "GameLogic/Items/KundunEssence.h"
 
 using namespace SEASON3B;
 
@@ -721,7 +721,6 @@ bool CNewUIMyInventory::Render()
         m_pNewInventoryCtrl->Render();
 
     RenderEquippedItem();
-    RenderKundunSymbolsTip();
     DisableAlphaBlend();
     return true;
 }
@@ -1416,32 +1415,29 @@ void CNewUIMyInventory::RenderInventoryDetails() const
     wchar_t Text[256] = { 0, };
     ConvertGold(dwZen, Text);
 
+    // The Kundun Essence (a currency of this server) is shown in a line below the zen.
+    const bool showEssence = GameLogic::Items::KundunEssence::IsBalanceKnown();
+    constexpr int ZenY = 371;
+    constexpr int ZenWithEssenceY = 365;
+    constexpr int EssenceY = 377;
+
     g_pRenderText->SetTextColor(getGoldColor(dwZen));
-    g_pRenderText->RenderText((int)m_Pos.x + 50, (int)m_Pos.y + 371, Text);
+    g_pRenderText->RenderText((int)m_Pos.x + 50, (int)m_Pos.y + (showEssence ? ZenWithEssenceY : ZenY), Text);
+
+    if (showEssence)
+    {
+        wchar_t amount[64] = { 0, };
+        ConvertGold(GameLogic::Items::KundunEssence::GetBalance(), amount);
+        wchar_t essence[128] = { 0, };
+        mu_swprintf(essence, I18N::Game::EssenceLs, amount);
+        g_pRenderText->SetFont(g_hFont);
+        g_pRenderText->SetTextColor(200, 150, 255, 255);
+        g_pRenderText->RenderText((int)m_Pos.x + 50, (int)m_Pos.y + EssenceY, essence);
+    }
 
     g_pRenderText->SetFont(g_hFont);
 
     DisableAlphaBlend();
-}
-
-// The Symbols of Kundun (a currency of this server) are shown when the mouse is over the zen.
-void CNewUIMyInventory::RenderKundunSymbolsTip() const
-{
-    constexpr int MoneyX = 11;
-    constexpr int MoneyY = 364;
-    constexpr int MoneyWidth = 170;
-    constexpr int MoneyHeight = 26;
-    constexpr int TipOffsetY = 12;
-
-    if (!GameLogic::Items::KundunSymbols::IsBalanceKnown()
-        || !CheckMouseIn(m_Pos.x + MoneyX, m_Pos.y + MoneyY, MoneyWidth, MoneyHeight))
-    {
-        return;
-    }
-
-    wchar_t text[128];
-    mu_swprintf(text, I18N::Game::SymbolsOfKundunU, GameLogic::Items::KundunSymbols::GetBalance());
-    RenderTipText(m_Pos.x + MoneyX, m_Pos.y + MoneyY - TipOffsetY, text);
 }
 
 bool CNewUIMyInventory::EquipmentWindowProcess()
