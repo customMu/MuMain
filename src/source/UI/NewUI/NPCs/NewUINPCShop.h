@@ -116,6 +116,7 @@ namespace SEASON3B
         void RenderTexts();
         void RenderButton();
         void RenderRepairMoney();
+        void RenderSymbolBalance();
     };
 }
 

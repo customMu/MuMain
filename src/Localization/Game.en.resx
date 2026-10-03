@@ -13045,4 +13045,13 @@
   <data name="Potions HP %d/%d/%d, MP %d/%d/%d" xml:space="preserve">
     <value>Potions HP %d/%d/%d, MP %d/%d/%d</value>
   </data>
+  <data name="Symbols of Kundun: %u" xml:space="preserve">
+    <value>Symbols of Kundun: %u</value>
+  </data>
+  <data name="Price: %u Symbols of Kundun" xml:space="preserve">
+    <value>Price: %u Symbols of Kundun</value>
+  </data>
+  <data name="Not for sale" xml:space="preserve">
+    <value>Not for sale</value>
+  </data>
 </root>

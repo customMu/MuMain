@@ -12893,4 +12893,13 @@
   <data name="Split stack: how many? (Total: %d)" xml:space="preserve">
     <value>Разделить стек: сколько отделить? (Всего: %d)</value>
   </data>
+  <data name="Symbols of Kundun: %u" xml:space="preserve">
+    <value>Символы Кундуна: %u</value>
+  </data>
+  <data name="Price: %u Symbols of Kundun" xml:space="preserve">
+    <value>Цена: %u Символов Кундуна</value>
+  </data>
+  <data name="Not for sale" xml:space="preserve">
+    <value>Не продаётся</value>
+  </data>
 </root>

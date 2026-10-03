@@ -27,30 +27,25 @@ namespace GameLogic::Travel
     };
 
     // Ladder of the maps by resets (session 8): a new zone every reset up to 10, then every 5.
+    // Kalima 1-7 are no regular maps anymore: they are a daily instance, entered through Lugard in Lorencia.
     // A map needs the resets of its earliest zone; later zones of a map are reached by walking
     // (the monsters are the limit) or by a warp with its own requirement (WarpResetRequirements).
     inline constexpr MapResetRequirement MapResetRequirements[] =
     {
         { 7, 1 },   // Atlans
         { 4, 2 },   // Lost Tower
-        { 25, 2 },  // Kalima 2
-        { 26, 5 },  // Kalima 3
         { 8, 6 },   // Tarkan
         { 33, 7 },  // Aida
         { 10, 8 },  // Icarus
         { 31, 8 },  // Land of Trials
-        { 27, 8 },  // Kalima 4
         { 37, 9 },  // Kanturu Ruins
         { 80, 10 }, // Karutan 1
         { 34, 10 }, // Crywolf Fortress (the entrance of Barracks of Balgass, 3rd class quest)
         { 41, 10 }, // Barracks of Balgass
         { 42, 10 }, // Balgass Refuge
-        { 28, 10 }, // Kalima 5
         { 81, 20 }, // Karutan 2
-        { 29, 20 }, // Kalima 6
         { 57, 30 }, // Raklion
         { 58, 30 }, // Raklion boss room
-        { 36, 35 }, // Kalima 7
         { 38, 50 }, // Kanturu Relics - postponed (to be reworked as a high-end map)
         { 56, 50 }, // Swamp of Calmness - postponed (to be reworked as a high-end map)
         { 63, 50 }, // Vulcanus - postponed (to be reworked as a high-end map)
@@ -147,13 +142,6 @@ namespace GameLogic::Travel
         { 51, L"Barracks", 350, 12000, 41 },
         { 52, L"Refuge", 350, 12000, 42 },
         { 53, L"LandOfTrials", 150, 10000, 31 },
-        { 54, L"Kalima1", 40, 3000, 24 },
-        { 55, L"Kalima2", 120, 5000, 25 },
-        { 56, L"Kalima3", 170, 7000, 26 },
-        { 57, L"Kalima4", 220, 9000, 27 },
-        { 58, L"Kalima5", 270, 11000, 28 },
-        { 59, L"Kalima6", 320, 13000, 29 },
-        { 60, L"Kalima7", 350, 15000, 36 },
         { 61, L"ValleyOfLoren", 10, 5000, 30 },
     };
 

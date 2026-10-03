@@ -38,6 +38,7 @@ extern bool SelectFlag;
 #include "Engine/Object/ZzzInterface.h"
 #include "UI/Scaling/UITransform.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
+#include "GameLogic/Items/KundunSymbols.h"
 
 using namespace SEASON3B;
 
@@ -720,6 +721,7 @@ bool CNewUIMyInventory::Render()
         m_pNewInventoryCtrl->Render();
 
     RenderEquippedItem();
+    RenderKundunSymbolsTip();
     DisableAlphaBlend();
     return true;
 }
@@ -1420,6 +1422,26 @@ void CNewUIMyInventory::RenderInventoryDetails() const
     g_pRenderText->SetFont(g_hFont);
 
     DisableAlphaBlend();
+}
+
+// The Symbols of Kundun (a currency of this server) are shown when the mouse is over the zen.
+void CNewUIMyInventory::RenderKundunSymbolsTip() const
+{
+    constexpr int MoneyX = 11;
+    constexpr int MoneyY = 364;
+    constexpr int MoneyWidth = 170;
+    constexpr int MoneyHeight = 26;
+    constexpr int TipOffsetY = 12;
+
+    if (!GameLogic::Items::KundunSymbols::IsBalanceKnown()
+        || !CheckMouseIn(m_Pos.x + MoneyX, m_Pos.y + MoneyY, MoneyWidth, MoneyHeight))
+    {
+        return;
+    }
+
+    wchar_t text[128];
+    mu_swprintf(text, I18N::Game::SymbolsOfKundunU, GameLogic::Items::KundunSymbols::GetBalance());
+    RenderTipText(m_Pos.x + MoneyX, m_Pos.y + MoneyY - TipOffsetY, text);
 }
 
 bool CNewUIMyInventory::EquipmentWindowProcess()
