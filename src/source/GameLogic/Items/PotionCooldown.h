@@ -22,6 +22,44 @@ namespace GameLogic::Items
         return type >= ITEM_SMALL_MANA_POTION && type <= ITEM_LARGE_MANA_POTION;
     }
 
+    // What a potion recovers and from which reset it can be used, the same as the server
+    // (potion plugins: AdditionalRecover + TotalRecoverPercentage; potion-resets.sql; plugin "Account bound items").
+    struct PotionInfo
+    {
+        int Flat;
+        int Percent;
+        int RequiredResets;
+        bool AccountBound;
+    };
+
+    inline const PotionInfo* GetPotionInfo(const int type)
+    {
+        static constexpr PotionInfo Small{ 100, 5, 0, false };
+        static constexpr PotionInfo Medium{ 300, 10, 5, false };
+        static constexpr PotionInfo Large{ 1000, 15, 10, true };
+        switch (type)
+        {
+        case ITEM_SMALL_HEALING_POTION:
+        case ITEM_SMALL_MANA_POTION:
+            return &Small;
+        case ITEM_MEDIUM_HEALING_POTION:
+        case ITEM_MEDIUM_MANA_POTION:
+            return &Medium;
+        case ITEM_LARGE_HEALING_POTION:
+        case ITEM_LARGE_MANA_POTION:
+            return &Large;
+        default:
+            return nullptr;
+        }
+    }
+
+    // False for a potion of a later reset step; other items are always usable here.
+    inline bool CanUsePotion(const int type, const int resets)
+    {
+        const PotionInfo* info = GetPotionInfo(type);
+        return info == nullptr || resets >= info->RequiredResets;
+    }
+
     inline void RecordPotionCooldown(const int type)
     {
         if (IsHealthPotion(type))

@@ -39,6 +39,7 @@ extern bool SelectFlag;
 #include "UI/Scaling/UITransform.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
 #include "GameLogic/Items/KundunEssence.h"
+#include "GameLogic/Items/PotionCooldown.h"
 
 using namespace SEASON3B;
 
@@ -1904,6 +1905,11 @@ int CNewUIMyInventory::FindManaItemIndex() const
 {
     for (int i = ITEM_LARGE_MANA_POTION; i >= ITEM_SMALL_MANA_POTION; i--)
     {
+        if (!GameLogic::Items::CanUsePotion(i, static_cast<int>(CharacterAttribute->Resets)))
+        {
+            continue;
+        }
+
         const int iIndex = FindItemReverseIndex(i);
         if (iIndex != -1)
         {
@@ -1918,6 +1924,11 @@ int CNewUIMyInventory::FindHealingItemIndex() const
 {
     for (int i = ITEM_LARGE_HEALING_POTION; i >= ITEM_APPLE; i--)
     {
+        if (!GameLogic::Items::CanUsePotion(i, static_cast<int>(CharacterAttribute->Resets)))
+        {
+            continue;
+        }
+
         const int iIndex = FindItemReverseIndex(i);
         if (iIndex != -1)
         {

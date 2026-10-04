@@ -2,6 +2,7 @@
 //  GMHellas.cpp
 //////////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
+#include "GameLogic/Events/EventTiers.h"
 #include "UI/Legacy/UIWindows.h"
 #include "Render/Textures/ZzzOpenglUtil.h"
 #include "Render/Renderer/MuRenderer.h"
@@ -217,14 +218,18 @@ int RenderHellasItemInfo(ITEM* ip, int textNum)
             startIndex = NUM_HELLAS;
         }
 
-        int HeroLevel = CharacterAttribute->Level;
+        const int heroResets = static_cast<int>(CharacterAttribute->Resets);
         int ItemLevel = ip->Level;
+        const auto& tierResets = GameLogic::Events::EventTiers::KalimaMinimumResets;
+        (void)startIndex;
 
+        // The Lost Map is the pass to the chamber of Kundun; the levels go by resets (Kalima tiers).
         TextListColor[TextNum] = TEXT_COLOR_WHITE;
-        mu_swprintf(TextList[TextNum], L"%ls %ls       %ls    ", I18N::Game::Kalima, I18N::Game::Level, I18N::Game::MinLevel); TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-        for (int i = 0; i < NUM_HELLAS; i++)
+        mu_swprintf(TextList[TextNum], L"%ls %ls       %ls    ", I18N::Game::Kalima, I18N::Game::Level, I18N::Game::MinResets); TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        for (int i = 0; i < NUM_HELLAS && i < static_cast<int>(tierResets.size()); i++)
         {
-            mu_swprintf(TextList[TextNum], L"        %d             %3d~%3d     ", i + 1, g_iKalimaLevel[startIndex + i][0], std::min<int>(400, g_iKalimaLevel[startIndex + i][1]));
+            const int nextResets = i + 1 < static_cast<int>(tierResets.size()) ? tierResets[i + 1] - 1 : 50;
+            mu_swprintf(TextList[TextNum], L"        %d             %2d~%2d     ", i + 1, tierResets[i], nextResets);
 
             if (ItemLevel == i + 1)
             {
@@ -238,12 +243,12 @@ int RenderHellasItemInfo(ITEM* ip, int textNum)
         }
 
         mu_swprintf(TextList[TextNum], L"\n"); TextNum++;
-        mu_swprintf(TextList[TextNum], I18N::Game::MagicStoneWillAppearWhenYouThrowItInTheScreen);  TextListColor[TextNum] = TEXT_COLOR_DARKBLUE; TextNum++;
+        mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::PassToTheChamberOfKundunDavidInLorencia);  TextListColor[TextNum] = TEXT_COLOR_DARKBLUE; TextNum++;
 
-        if (HeroLevel < g_iKalimaLevel[startIndex][0])
+        if (ItemLevel >= 1 && ItemLevel <= static_cast<int>(tierResets.size()) && heroResets < tierResets[ItemLevel - 1])
         {
             mu_swprintf(TextList[TextNum], L"\n"); TextNum++;
-            mu_swprintf(TextList[TextNum], I18N::Game::OnlyAboveLevelDCanUse, g_iKalimaLevel[startIndex][0]);  TextListColor[TextNum] = TEXT_COLOR_DARKRED; TextNum++;
+            mu_swprintf(TextList[TextNum], I18N::Game::UsableFromDResets, tierResets[ItemLevel - 1]);  TextListColor[TextNum] = TEXT_COLOR_DARKRED; TextNum++;
         }
     }
     break;

@@ -1137,6 +1137,12 @@ int SEASON3B::CNewUIItemHotKey::GetHotKeyItemIndex(int iType, bool bItemCount)
     int iNumberofItems = g_pMyInventory->GetInventoryCtrl()->GetNumberOfItems();
     for (i = iStartItemType; i >= iEndItemType; --i)
     {
+        // potions of a later reset step are neither counted nor used
+        if (!GameLogic::Items::CanUsePotion(i, static_cast<int>(CharacterAttribute->Resets)))
+        {
+            continue;
+        }
+
         if (bItemCount)
         {
             for (j = 0; j < iNumberofItems; ++j)

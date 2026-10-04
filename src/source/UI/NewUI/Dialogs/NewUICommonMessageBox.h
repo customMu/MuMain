@@ -790,6 +790,16 @@ namespace SEASON3B
         static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
     };
 
+    // Confirmation before buying an item from an NPC shop which the hero can't use yet (resets of its grade or step).
+    class CResetMismatchBuyMsgBoxLayout : public TMsgBoxLayout<CNewUI3DItemCommonMsgBox>
+    {
+    public:
+        static void Prepare(int itemIndex, int itemCost, int requiredResets);
+        bool SetLayout();
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+    };
+
     class CEmpireGuardianMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
     {
     public:

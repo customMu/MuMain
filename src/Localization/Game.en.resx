@@ -13036,6 +13036,51 @@
   <data name="Grade %d (from %d resets)" xml:space="preserve">
     <value>Grade %d (from %d resets)</value>
   </data>
+  <data name="Recovers %d + %d%% of maximum HP" xml:space="preserve">
+    <value>Recovers %d + %d%% of maximum HP</value>
+  </data>
+  <data name="Recovers %d + %d%% of maximum mana" xml:space="preserve">
+    <value>Recovers %d + %d%% of maximum mana</value>
+  </data>
+  <data name="Chamber of Kundun %d" xml:space="preserve">
+    <value>Chamber of Kundun %d</value>
+  </data>
+  <data name="Phase %d of %d" xml:space="preserve">
+    <value>Phase %d of %d</value>
+  </data>
+  <data name="Kundun %d%%" xml:space="preserve">
+    <value>Kundun %d%%</value>
+  </data>
+  <data name="Kundun is defeated" xml:space="preserve">
+    <value>Kundun is defeated</value>
+  </data>
+  <data name="Kundun is invulnerable: kill the Illusions (%d left)" xml:space="preserve">
+    <value>Kundun is invulnerable: kill the Illusions (%d left)</value>
+  </data>
+  <data name="Kundun can be damaged" xml:space="preserve">
+    <value>Kundun can be damaged</value>
+  </data>
+  <data name="Last phase: healed %d%%, defense +%d%%, damage +%d%%" xml:space="preserve">
+    <value>Last phase: healed %d%%, defense +%d%%, damage +%d%%</value>
+  </data>
+  <data name="Min. Resets" xml:space="preserve">
+    <value>Min. Resets</value>
+  </data>
+  <data name="Pass to the chamber of Kundun (David in Lorencia)" xml:space="preserve">
+    <value>Pass to the chamber of Kundun (David in Lorencia)</value>
+  </data>
+  <data name="This item requires %d resets, you have %d. Buy it anyway?" xml:space="preserve">
+    <value>This item requires %d resets, you have %d. Buy it anyway?</value>
+  </data>
+  <data name="Usable from %d resets" xml:space="preserve">
+    <value>Usable from %d resets</value>
+  </data>
+  <data name="Bound to the account: only through the vault" xml:space="preserve">
+    <value>Bound to the account: only through the vault</value>
+  </data>
+  <data name="You need %d resets to use this potion." xml:space="preserve">
+    <value>You need %d resets to use this potion.</value>
+  </data>
   <data name="Jewels: %ls" xml:space="preserve">
     <value>Jewels: %ls</value>
   </data>

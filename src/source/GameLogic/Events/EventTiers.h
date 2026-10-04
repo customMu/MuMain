@@ -10,6 +10,9 @@ namespace GameLogic::Events::EventTiers
     inline constexpr std::array<int, 8> BloodCastleMinimumResets = { 0, 5, 10, 15, 22, 30, 38, 50 };
     inline constexpr std::array<int, 7> DevilSquareMinimumResets = { 0, 5, 10, 15, 22, 30, 38 };
 
+    // Kalima 1-7 and the chamber of Kundun 1-7 (plugin "Kalima instance", tiers): the minimum resets of the levels.
+    inline constexpr std::array<int, 7> KalimaMinimumResets = { 5, 10, 15, 22, 30, 38, 45 };
+
     // The index (0-based) of the level for the reset count.
     template <std::size_t N>
     int GetLevelIndex(const std::array<int, N>& minimumResets, const int resets)

@@ -43,6 +43,7 @@
 #include "GameLogic/Items/ArmorRanks.h"
 #include "GameLogic/Items/WeaponRanks.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
+#include "GameLogic/Items/PotionCooldown.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "UI/NewUI/Inventory/NewUIInventoryCtrl.h"
@@ -424,6 +425,24 @@ void SendRequestUse(int Index, int Target, bool addPoints)
         g_pSystemLogBox->AddText(I18N::Game::YouCannotUseYourItemsWhileUsingTheVaultOrWhileTrading, SEASON3B::TYPE_ERROR_MESSAGE);
         return;
     }
+    if (const ITEM* pItem = g_pMyInventory->FindItem(Index))
+    {
+        const GameLogic::Items::PotionInfo* potion = GameLogic::Items::GetPotionInfo(pItem->Type);
+        if (potion != nullptr && !GameLogic::Items::CanUsePotion(pItem->Type, static_cast<int>(CharacterAttribute->Resets)))
+        {
+            static ULONGLONG lastMessage = 0;
+            if (GetTickCount64() - lastMessage > 3000)
+            {
+                lastMessage = GetTickCount64();
+                wchar_t text[128];
+                mu_swprintf(text, I18N::Game::YouNeedDResetsToUseThisPotion, potion->RequiredResets);
+                g_pSystemLogBox->AddText(text, SEASON3B::TYPE_ERROR_MESSAGE);
+            }
+
+            return;
+        }
+    }
+
     // EnableUse waits for the answer of the server; if none came within 1.5 s, don't stay locked
     // (the MU Helper stopped drinking potions after a successful one).
     static ULONGLONG lastUseRequest = 0;
@@ -2670,6 +2689,25 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             TextListColor[TextNum] = static_cast<int>(CharacterAttribute->Resets) < requiredResets ? TEXT_COLOR_RED : TEXT_COLOR_YELLOW;
             TextBold[TextNum] = false;
             TextNum++;
+        }
+    }
+
+    // Potions: what they recover, from which reset they can be used, bound to the account
+    if (const GameLogic::Items::PotionInfo* potion = GameLogic::Items::GetPotionInfo(ip->Type))
+    {
+        mu_swprintf(TextList[TextNum], GameLogic::Items::IsManaPotion(ip->Type) ? I18N::Game::RecoversDDOfMaximumMana : I18N::Game::RecoversDDOfMaximumHP, potion->Flat, potion->Percent);
+        TextListColor[TextNum] = TEXT_COLOR_BLUE; TextBold[TextNum] = false; TextNum++;
+        if (potion->RequiredResets > 0)
+        {
+            mu_swprintf(TextList[TextNum], I18N::Game::UsableFromDResets, potion->RequiredResets);
+            TextListColor[TextNum] = static_cast<int>(CharacterAttribute->Resets) < potion->RequiredResets ? TEXT_COLOR_RED : TEXT_COLOR_YELLOW;
+            TextBold[TextNum] = false; TextNum++;
+        }
+
+        if (potion->AccountBound)
+        {
+            mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::BoundToTheAccountOnlyThroughTheVault);
+            TextListColor[TextNum] = TEXT_COLOR_DARKYELLOW; TextBold[TextNum] = false; TextNum++;
         }
     }
 

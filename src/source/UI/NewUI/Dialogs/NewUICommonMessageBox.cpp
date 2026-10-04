@@ -3790,6 +3790,68 @@ CALLBACK_RESULT SEASON3B::CGambleBuyMsgBoxLayout::OkBtnDown(class CNewUIMessageB
     return CALLBACK_BREAK;
 }
 
+namespace
+{
+    int s_resetMismatchItemIndex = -1;
+    int s_resetMismatchItemCost = 0;
+    int s_resetMismatchRequiredResets = 0;
+}
+
+void SEASON3B::CResetMismatchBuyMsgBoxLayout::Prepare(const int itemIndex, const int itemCost, const int requiredResets)
+{
+    s_resetMismatchItemIndex = itemIndex;
+    s_resetMismatchItemCost = itemCost;
+    s_resetMismatchRequiredResets = requiredResets;
+}
+
+bool SEASON3B::CResetMismatchBuyMsgBoxLayout::SetLayout()
+{
+    CNewUI3DItemCommonMsgBox* pMsgBox = GetMsgBox();
+    if (pMsgBox == nullptr || !pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+    {
+        return false;
+    }
+
+    ITEM* pItem = g_pNPCShop->GetStandbyItem();
+    if (pItem == nullptr)
+    {
+        return false;
+    }
+
+    static wchar_t text[160];
+    mu_swprintf(text, I18N::Game::ThisItemRequiresDResetsYouHaveDBuyItAnyway, s_resetMismatchRequiredResets, static_cast<int>(CharacterAttribute->Resets));
+    pMsgBox->Set3DItem(pItem);
+    pMsgBox->AddMsg(text);
+    pMsgBox->AddCallbackFunc(CResetMismatchBuyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CResetMismatchBuyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
+    pMsgBox->AddCallbackFunc(CResetMismatchBuyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    pMsgBox->AddCallbackFunc(CResetMismatchBuyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_PRESSKEY_ESC);
+    return true;
+}
+
+CALLBACK_RESULT SEASON3B::CResetMismatchBuyMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    if (BuyCost == 0 && s_resetMismatchItemIndex >= 0)
+    {
+        SocketClient->ToGameServer()->SendBuyItemFromNpcRequest(static_cast<BYTE>(s_resetMismatchItemIndex));
+        BuyCost = s_resetMismatchItemCost;
+        g_ConsoleDebug->Write(MCD_SEND, L"0x32 [SendRequestBuy(%d)]", s_resetMismatchItemIndex);
+    }
+
+    s_resetMismatchItemIndex = -1;
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CResetMismatchBuyMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    s_resetMismatchItemIndex = -1;
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
+}
+
 CALLBACK_RESULT SEASON3B::CGambleBuyMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
     PlayBuffer(SOUND_CLICK01);

@@ -13,6 +13,7 @@
 
 #include "GameLogic/Social/GambleSystem.h"
 #include "GameLogic/Items/KundunEssence.h"
+#include "GameLogic/Items/PurchaseRequirements.h"
 
 using namespace SEASON3B;
 
@@ -125,6 +126,15 @@ bool SEASON3B::CNewUINPCShop::UpdateMouseEvent()
 
                     return false;
                 }
+                const int requiredResets = GameLogic::Items::GetRequiredResetsToUse(pItem->Type, pItem->Level);
+                if (BuyCost == 0 && static_cast<int>(CharacterAttribute->Resets) < requiredResets)
+                {
+                    SEASON3B::CResetMismatchBuyMsgBoxLayout::Prepare(iIndex, ItemValue(pItem, 0), requiredResets);
+                    g_pNPCShop->SetStandbyItemKey(pItem->Key);
+                    SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CResetMismatchBuyMsgBoxLayout));
+                    return false;
+                }
+
                 if (BuyCost == 0)
                 {
                     SocketClient->ToGameServer()->SendBuyItemFromNpcRequest(iIndex);
