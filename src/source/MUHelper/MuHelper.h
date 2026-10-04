@@ -38,6 +38,8 @@ namespace MUHelper
 		void AddExperience(int64_t iExperience, bool bMaster) { if (m_bActive) (bMaster ? m_iSessionMasterExperience : m_iSessionExperience) += iExperience; }
 		void AddZen(int64_t iZen) { if (m_bActive) m_iSessionZen += iZen; }
 		bool HasSessionStats() const { return m_ullSessionStart != 0; }
+		// Clears the session statistics; the time starts again from now (also while the helper is stopped).
+		void ResetSessionStats();
 		uint64_t GetSessionMilliseconds() const { return (m_bActive ? GetTickCount64() : m_ullSessionStop.load()) - m_ullSessionStart; }
 		int GetSessionKills() const { return m_iSessionKills; }
 		int64_t GetSessionExperience() const { return m_iSessionExperience; }

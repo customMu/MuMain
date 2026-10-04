@@ -175,6 +175,13 @@ bool SEASON3B::CNewUIMiniMap::Render()
     if (m_bSuccess == false)
         return m_bSuccess;
 
+    // The chamber of Kundun is a closed arena: the minimap would show the whole Kalima map.
+    if (GameLogic::Events::KalimaSpots::IsArenaClosed())
+    {
+        g_pNewUISystem->Hide(SEASON3B::INTERFACE_MINI_MAP);
+        return true;
+    }
+
     EnableAlphaTest();
     RenderColor(0, 0, REFERENCE_WIDTH, 430, 0.85f, 1);
     DisableAlphaBlend();
@@ -254,6 +261,7 @@ void SEASON3B::CNewUIMiniMap::LoadImages(const wchar_t* Filename)
 {
     // A new map: its spots come from the server after the map was loaded.
     GameLogic::Travel::MinimapSpots::Clear();
+    GameLogic::Events::KalimaSpots::SetArenaClosed(false);
     GameLogic::Travel::MinimapWalk::Cancel();
 
     wchar_t Fname[300];

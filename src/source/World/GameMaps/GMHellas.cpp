@@ -633,7 +633,10 @@ int CreateBigMon(OBJECT* o)
 {
     if (gMapManager.InHellas() == false) return 0;
 
-    if (LastBigMonCreation < WorldTime - BigMonInterval)
+    // The giant Bahamut below the floor of Kalima is disabled: it was rendered without its texture
+    // (a flat yellow body crossing the screen). Returning 1 without Live keeps other boids from taking the slot.
+    constexpr bool EnableBigMon = false;
+    if (EnableBigMon && LastBigMonCreation < WorldTime - BigMonInterval)
     {
         LastBigMonCreation = WorldTime;
         o->Live = true;

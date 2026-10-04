@@ -19,6 +19,12 @@ namespace Network::Server::KalimaPackets
     //   C2 [size] FB 06 [count: u16] count x [x, y, level: u16, monsters, name length, name: UTF-8]
     //                                                                       - monster spots of the map for the minimap
     //   C1 [size] FB 07 [count] count x [x, y]                              - spots of the Kalima instance with living monsters
+    //   C1 07 FB 08 [killed packs] [packs] [boss: 0 not yet, 1 alive, 2 defeated] - progress of the Kalima instance
+    //   C1 07 FB 09 [x] [y] [radius in half fields]                         - closed arena of the chamber of Kundun
+    //   C2 [size] FB 0A [resets: u16] [level] [entries left] [entries per week] [seconds until reset: u32] [can re-enter]
+    //                   [has lost map] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
+    //                                                                       - entry dialog of the chamber of Kundun (keeper)
+    //   C1 04 FB 0B                                                         - enter the chamber of Kundun (client to server)
     inline constexpr std::uint8_t HeadCode = 0xFB;
 
     void ReceivePacket(std::span<const std::uint8_t> packet);
@@ -28,4 +34,7 @@ namespace Network::Server::KalimaPackets
 
     // Enters the Kalima instance after the entry dialog was confirmed.
     void SendKalimaEnterRequest();
+
+    // Enters the chamber of Kundun after the entry dialog of the keeper.
+    void SendChamberEnterRequest();
 }

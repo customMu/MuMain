@@ -4,7 +4,9 @@
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "GameLogic/Events/KalimaEntry.h"
+#include "GameLogic/Events/KundunChamberEntry.h"
 #include "Network/Server/KalimaPackets.h"
+#include "MUHelper/MuHelper.h"
 #include "Guild/NewUIGuildMakeWindow.h"
 #include "Guild/NewUIGuildInfoWindow.h"
 #include "UI/NewUI/Inventory/NewUIMyInventory.h"
@@ -1245,6 +1247,93 @@ bool CKalimaEntryMsgBoxLayout::SetLayout()
     return true;
 }
 
+bool CKundunChamberEntryMsgBoxLayout::SetLayout()
+{
+    CNewUICommonMessageBox* pMsgBox = GetMsgBox();
+    if (0 == pMsgBox)
+        return false;
+    if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+        return false;
+
+    const auto& info = GameLogic::Events::KundunChamberEntry::GetInfo();
+    wchar_t text[256];
+
+    pMsgBox->SetPos((SCREEN_WIDTH / 2) - (MSGBOX_WIDTH / 2), 50);
+    pMsgBox->AddMsg(I18N::Game::ChamberOfKundun, 0xFF49B0FF, MSGBOX_FONT_BOLD);
+    pMsgBox->AddMsg(L" ");
+    mu_swprintf_s(text, std::size(text), I18N::Game::YourResetsD, static_cast<int>(info.resets));
+    pMsgBox->AddMsg(text);
+    pMsgBox->AddMsg(L" ");
+
+    // All levels; the own one is selected (green, or red without its Lost Map), the others are grey.
+    for (const auto& tier : info.tiers)
+    {
+        if (tier.maximumResets == GameLogic::Events::KalimaEntry::OpenEnd)
+        {
+            mu_swprintf_s(text, std::size(text), I18N::Game::ChamberDDResetsLostMapD, static_cast<int>(tier.level), static_cast<int>(tier.minimumResets), static_cast<int>(tier.level));
+        }
+        else
+        {
+            mu_swprintf_s(text, std::size(text), I18N::Game::ChamberDDDResetsLostMapD, static_cast<int>(tier.level), static_cast<int>(tier.minimumResets), static_cast<int>(tier.maximumResets), static_cast<int>(tier.level));
+        }
+
+        const bool isOwn = tier.level == info.tierLevel;
+        const DWORD color = !isOwn ? 0xFF8C8C8C : (info.hasLostMap || info.canReenter ? 0xFF61F191 : 0xFF6464FF);
+        pMsgBox->AddMsg(text, color, isOwn ? MSGBOX_FONT_BOLD : MSGBOX_FONT_NORMAL);
+    }
+
+    pMsgBox->AddMsg(L" ");
+    if (info.canReenter)
+    {
+        pMsgBox->AddMsg(I18N::Game::YouCanGoBackIntoTheRunningChamberOfYourParty, 0xFF61F191);
+    }
+    else if (info.tierLevel == 0)
+    {
+        const int minimum = info.tiers.empty() ? 0 : static_cast<int>(info.tiers.front().minimumResets);
+        mu_swprintf_s(text, std::size(text), I18N::Game::YouNeedAtLeastDResetsForTheChamberOfKundun, minimum);
+        pMsgBox->AddMsg(text, 0xFF6464FF);
+    }
+    else
+    {
+        if (!info.hasLostMap)
+        {
+            mu_swprintf_s(text, std::size(text), I18N::Game::YouNeedALostMapDToEnter, static_cast<int>(info.tierLevel));
+            pMsgBox->AddMsg(text, 0xFF6464FF, MSGBOX_FONT_BOLD);
+        }
+
+        mu_swprintf_s(text, std::size(text), I18N::Game::EntriesLeftThisWeekDD, static_cast<int>(info.entriesLeft), static_cast<int>(info.entriesPerWeek));
+        pMsgBox->AddMsg(text, info.entriesLeft > 0 ? 0xFF61F191 : 0xFF6464FF, MSGBOX_FONT_BOLD);
+        if (info.entriesLeft == 0)
+        {
+            const int minutes = static_cast<int>(info.secondsUntilReset / 60);
+            mu_swprintf_s(text, std::size(text), I18N::Game::NewEntriesInDDDHDMin, minutes / 1440, minutes / 60 % 24, minutes % 60);
+            pMsgBox->AddMsg(text);
+        }
+    }
+
+    if (!GameLogic::Events::KundunChamberEntry::CanEnter())
+    {
+        pMsgBox->LockOkButton();
+    }
+
+    pMsgBox->AddCallbackFunc(CKundunChamberEntryMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CKundunChamberEntryMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    return true;
+}
+
+CALLBACK_RESULT CKundunChamberEntryMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    if (GameLogic::Events::KundunChamberEntry::CanEnter())
+    {
+        Network::Server::KalimaPackets::SendChamberEnterRequest();
+    }
+
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+
+    return CALLBACK_BREAK;
+}
+
 CALLBACK_RESULT CKalimaEntryMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
     if (GameLogic::Events::KalimaEntry::CanEnter())
@@ -1580,6 +1669,37 @@ int SEASON3B::CFenrirRepairMsgBox::GetSourceIndex()
 int SEASON3B::CFenrirRepairMsgBox::GetTargetIndex()
 {
     return m_iTargetIndex;
+}
+
+bool SEASON3B::CHelperStatsResetMsgBoxLayout::SetLayout()
+{
+    CNewUICommonMessageBox* pMsgBox = GetMsgBox();
+    if (0 == pMsgBox)
+        return false;
+    if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+        return false;
+
+    pMsgBox->AddMsg(I18N::Game::ResetTheMUHelperStatistics, RGBA(255, 255, 0, 255), MSGBOX_FONT_BOLD);
+    pMsgBox->AddCallbackFunc(CHelperStatsResetMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CHelperStatsResetMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
+    pMsgBox->AddCallbackFunc(CHelperStatsResetMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    pMsgBox->AddCallbackFunc(CHelperStatsResetMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_PRESSKEY_ESC);
+    return true;
+}
+
+CALLBACK_RESULT SEASON3B::CHelperStatsResetMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    MUHelper::g_MuHelper.ResetSessionStats();
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CHelperStatsResetMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
 }
 
 bool SEASON3B::CInfinityArrowCancelMsgBoxLayout::SetLayout()

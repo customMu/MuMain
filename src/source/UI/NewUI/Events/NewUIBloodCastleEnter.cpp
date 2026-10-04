@@ -9,6 +9,7 @@
 
 #include "Character/CharacterManager.h"
 #include "Audio/DSPlaySound.h"
+#include "GameLogic/Events/EventTiers.h"
 
 using namespace SEASON3B;
 
@@ -153,32 +154,9 @@ bool CNewUIEnterBloodCastle::UpdateKeyEvent()
 
 int CNewUIEnterBloodCastle::CheckLimitLV(int iIndex)
 {
-    int	iVal = 0;
-    int iRet = 0;
-
-    if (iIndex == 1)
-    {
-        iVal = 8;
-    }
-
-    int iLevel = CharacterAttribute->Level;
-
-    if (gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == false)
-    {
-        for (int iCastleLV = 0; iCastleLV < MAX_ENTER_GRADE - 1; ++iCastleLV)
-        {
-            if (iLevel >= m_iBloodCastleLimitLevel[iVal + iCastleLV][0]
-                && iLevel <= m_iBloodCastleLimitLevel[iVal + iCastleLV][1])
-            {
-                iRet = iCastleLV;
-                break;
-            }
-        }
-    }
-    else
-        iRet = MAX_ENTER_GRADE - 1;
-
-    return iRet;
+    // The level comes from the resets (server plugin "Events by resets"), not from the character level or class.
+    (void)iIndex;
+    return GameLogic::Events::EventTiers::GetLevelIndex(GameLogic::Events::EventTiers::BloodCastleMinimumResets, static_cast<int>(CharacterAttribute->Resets));
 }
 
 bool CNewUIEnterBloodCastle::Update()
@@ -274,20 +252,21 @@ void CNewUIEnterBloodCastle::OpenningProcess()
     m_BtnEnter[m_iNumActiveBtn].ChangeTextColor(m_dwBtnTextColor[ENTERBTN_ENABLE]);
 
     wchar_t sztext[255] = { 0, };
-
-    for (int i = 0; i < MAX_ENTER_GRADE - 1; i++)
+    const auto& minimumResets = GameLogic::Events::EventTiers::BloodCastleMinimumResets;
+    for (int i = 0; i < MAX_ENTER_GRADE && i < static_cast<int>(minimumResets.size()); i++)
     {
-        mu_swprintf(sztext, I18N::Game::CastleDLevelDD, i + 1
-            , m_iBloodCastleLimitLevel[(iLimitLVIndex * MAX_ENTER_GRADE) + i][0]
-            , m_iBloodCastleLimitLevel[(iLimitLVIndex * MAX_ENTER_GRADE) + i][1]);
+        if (i + 1 < static_cast<int>(minimumResets.size()))
+        {
+            mu_swprintf(sztext, I18N::Game::CastleDDDResets, i + 1, minimumResets[i], minimumResets[i + 1] - 1);
+        }
+        else
+        {
+            mu_swprintf(sztext, I18N::Game::CastleDDResets, i + 1, minimumResets[i]);
+        }
+
         m_BtnEnter[i].SetFont(g_hFontBold);
         m_BtnEnter[i].ChangeText(sztext);
     }
-
-    mu_swprintf(sztext, I18N::Game::CastleNoDMasterLevel, 8);
-
-    m_BtnEnter[MAX_ENTER_GRADE - 1].SetFont(g_hFontBold);
-    m_BtnEnter[MAX_ENTER_GRADE - 1].ChangeText(sztext);
 }
 
 void CNewUIEnterBloodCastle::ClosingProcess()

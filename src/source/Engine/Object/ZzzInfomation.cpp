@@ -1892,16 +1892,16 @@ int64_t ItemValue(ITEM* ip, int goldType)
     {
         Gold = p->Value * p->Value * 10 / 12;
 
-        // Health and mana potions: the server prices (Value 7/12/19 -> 40/120/300, session 9).
+        // Health and mana potions: the server prices (Value 14/24 -> 160/480; the large ones are sold for Kundun Essence).
         switch (ip->Type)
         {
         case ITEM_SMALL_HEALING_POTION:
         case ITEM_SMALL_MANA_POTION:
-            Gold = 40;
+            Gold = 160;
             break;
         case ITEM_MEDIUM_HEALING_POTION:
         case ITEM_MEDIUM_MANA_POTION:
-            Gold = 120;
+            Gold = 480;
             break;
         case ITEM_LARGE_HEALING_POTION:
         case ITEM_LARGE_MANA_POTION:

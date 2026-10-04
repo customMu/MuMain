@@ -9,6 +9,7 @@
 #include "Engine/Object/ZzzCharacter.h"
 #include "Character/CharacterManager.h"
 #include "Audio/DSPlaySound.h"
+#include "GameLogic/Events/EventTiers.h"
 
 using namespace SEASON3B;
 
@@ -210,37 +211,9 @@ float CNewUIEnterDevilSquare::GetLayerDepth()
 
 int CNewUIEnterDevilSquare::CheckLimitLV(int iIndex)
 {
-    int	iVal = 0;
-    int iRet = 0;
-
-    if (iIndex == 1)
-    {
-        iVal = 7;
-    }
-
-    int iLevel;
-    if (gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == true)
-        iLevel = Master_Level_Data.nMLevel;
-    else
-        iLevel = CharacterAttribute->Level;
-    //Master_Level_Data.nMLevel
-
-    if (gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == false)
-    {
-        for (int iCastleLV = 0; iCastleLV < MAX_ENTER_GRADE - 1; ++iCastleLV)
-        {
-            if (iLevel >= m_iDevilSquareLimitLevel[iVal + iCastleLV][0]
-                && iLevel <= m_iDevilSquareLimitLevel[iVal + iCastleLV][1])
-            {
-                iRet = iCastleLV;
-                break;
-            }
-        }
-    }
-    else
-        iRet = MAX_ENTER_GRADE - 1;
-
-    return iRet;
+    // The level comes from the resets (server plugin "Events by resets"), not from the character level or class.
+    (void)iIndex;
+    return GameLogic::Events::EventTiers::GetLevelIndex(GameLogic::Events::EventTiers::DevilSquareMinimumResets, static_cast<int>(CharacterAttribute->Resets));
 }
 
 void CNewUIEnterDevilSquare::OpenningProcess()
@@ -266,19 +239,21 @@ void CNewUIEnterDevilSquare::OpenningProcess()
     m_BtnEnter[m_iNumActiveBtn].ChangeTextColor(m_dwBtnTextColor[ENTERBTN_ENABLE]);
 
     wchar_t sztext[255] = { 0, };
-
-    for (int i = 0; i < MAX_ENTER_GRADE - 1; i++)
+    const auto& minimumResets = GameLogic::Events::EventTiers::DevilSquareMinimumResets;
+    for (int i = 0; i < MAX_ENTER_GRADE && i < static_cast<int>(minimumResets.size()); i++)
     {
-        mu_swprintf(sztext, I18N::Game::TheDSquareDDLevel, i + 1
-            , m_iDevilSquareLimitLevel[(iLimitLVIndex * (MAX_ENTER_GRADE)) + i][0]
-            , m_iDevilSquareLimitLevel[(iLimitLVIndex * (MAX_ENTER_GRADE)) + i][1]);
+        if (i + 1 < static_cast<int>(minimumResets.size()))
+        {
+            mu_swprintf(sztext, I18N::Game::SquareDDDResets, i + 1, minimumResets[i], minimumResets[i + 1] - 1);
+        }
+        else
+        {
+            mu_swprintf(sztext, I18N::Game::SquareDDResets, i + 1, minimumResets[i]);
+        }
+
         m_BtnEnter[i].SetFont(g_hFontBold);
         m_BtnEnter[i].ChangeText(sztext);
     }
-
-    mu_swprintf(sztext, I18N::Game::SquareNoDMasterLevel, 7);
-    m_BtnEnter[MAX_ENTER_GRADE - 1].SetFont(g_hFontBold);
-    m_BtnEnter[MAX_ENTER_GRADE - 1].ChangeText(sztext);
 }
 
 void CNewUIEnterDevilSquare::ClosingProcess()

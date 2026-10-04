@@ -13090,4 +13090,55 @@
   <data name="You need at least %d resets for Kalima." xml:space="preserve">
     <value>You need at least %d resets for Kalima.</value>
   </data>
+  <data name="Kalima: packs killed %d / %d" xml:space="preserve">
+    <value>Kalima: packs killed %d / %d</value>
+  </data>
+  <data name="Kalima: the Illusion of Kundun appeared" xml:space="preserve">
+    <value>Kalima: the Illusion of Kundun appeared</value>
+  </data>
+  <data name="Castle %d (%d-%d resets)" xml:space="preserve">
+    <value>Castle %d (%d-%d resets)</value>
+  </data>
+  <data name="Castle %d (%d+ resets)" xml:space="preserve">
+    <value>Castle %d (%d+ resets)</value>
+  </data>
+  <data name="Square %d (%d-%d resets)" xml:space="preserve">
+    <value>Square %d (%d-%d resets)</value>
+  </data>
+  <data name="Square %d (%d+ resets)" xml:space="preserve">
+    <value>Square %d (%d+ resets)</value>
+  </data>
+  <data name="Chamber of Kundun" xml:space="preserve">
+    <value>Chamber of Kundun</value>
+  </data>
+  <data name="Chamber %d: %d-%d resets, Lost Map +%d" xml:space="preserve">
+    <value>Chamber %d: %d-%d resets, Lost Map +%d</value>
+  </data>
+  <data name="Chamber %d: %d+ resets, Lost Map +%d" xml:space="preserve">
+    <value>Chamber %d: %d+ resets, Lost Map +%d</value>
+  </data>
+  <data name="You can go back into the running chamber of your party." xml:space="preserve">
+    <value>You can go back into the running chamber of your party.</value>
+  </data>
+  <data name="You need at least %d resets for the chamber of Kundun." xml:space="preserve">
+    <value>You need at least %d resets for the chamber of Kundun.</value>
+  </data>
+  <data name="You need a Lost Map +%d to enter." xml:space="preserve">
+    <value>You need a Lost Map +%d to enter.</value>
+  </data>
+  <data name="Entries left this week: %d / %d" xml:space="preserve">
+    <value>Entries left this week: %d / %d</value>
+  </data>
+  <data name="New entries in %d d %d h %d min" xml:space="preserve">
+    <value>New entries in %d d %d h %d min</value>
+  </data>
+  <data name="Kalima: completed" xml:space="preserve">
+    <value>Kalima: completed</value>
+  </data>
+  <data name="Reset stats" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Reset the MU Helper statistics?" xml:space="preserve">
+    <value>Reset the MU Helper statistics?</value>
+  </data>
 </root>

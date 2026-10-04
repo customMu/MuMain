@@ -1619,7 +1619,8 @@ static void RecordHelperPotionUse(const ITEM* pItem, int count)
     // the server consumed a potion: its cooldown starts (shown on the item hotkeys, respected by the MU Helper)
     GameLogic::Items::RecordPotionCooldown(pItem->Type);
 
-    static constexpr int PotionPrice[3] = { 40, 120, 300 };
+    // zen per potion in the stores; the large ones are bought for Kundun Essence
+    static constexpr int PotionPrice[3] = { 160, 480, 0 };
     bool mana;
     int size;
     switch (pItem->Type)

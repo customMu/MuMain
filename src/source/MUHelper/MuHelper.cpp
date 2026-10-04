@@ -123,6 +123,15 @@ namespace MUHelper
 
         m_iLoopCounter = 0;
 
+        ResetSessionStats();
+
+        m_bActive = true;
+        g_ConsoleDebug->Write(MCD_NORMAL, L"[MU Helper] Started");
+    }
+
+    void CMuHelper::ResetSessionStats()
+    {
+        m_iTotalCost = 0;
         m_iSessionKills = 0;
         m_iSessionExperience = 0;
         m_iSessionMasterExperience = 0;
@@ -151,11 +160,9 @@ namespace MUHelper
             m_strLastDeathKiller.clear();
         }
 
-        m_ullSessionStart = GetTickCount64();
-        m_ullSessionStop = 0;
-
-        m_bActive = true;
-        g_ConsoleDebug->Write(MCD_NORMAL, L"[MU Helper] Started");
+        const uint64_t now = GetTickCount64();
+        m_ullSessionStart = now;
+        m_ullSessionStop = now;
     }
 
     const std::array<int, CMuHelper::JewelTypeCount>& CMuHelper::GetJewelTypes()

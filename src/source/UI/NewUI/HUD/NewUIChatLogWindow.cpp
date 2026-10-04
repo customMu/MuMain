@@ -1077,6 +1077,14 @@ SEASON3B::CNewUISystemLogWindow::~CNewUISystemLogWindow()
     Release();
 }
 
+namespace
+{
+    // The system messages (blue, top left) disappear after this time. The time of each message is kept here,
+    // parallel to m_vecAllMsgs, so that the size of the classes doesn't change.
+    constexpr uint64_t SystemMessageLifetimeMs = 15000;
+    std::deque<uint64_t> s_systemMessageTimes;
+}
+
 void SEASON3B::CNewUISystemLogWindow::Init()
 {
     m_pNewUIMng = nullptr;
@@ -1213,6 +1221,7 @@ void SEASON3B::CNewUISystemLogWindow::AddText(const type_string& strText, MESSAG
     }
 
     pvecMsgs->push_back(pMsgText);
+    s_systemMessageTimes.push_back(GetTickCount64());
 
     m_iCurrentRenderEndLine = pvecMsgs->size() - 1;
 }
@@ -1224,6 +1233,11 @@ void SEASON3B::CNewUISystemLogWindow::RemoveFrontLine()
     {
         delete (*vi);
         vi = m_vecAllMsgs.erase(vi);
+    }
+
+    if (!s_systemMessageTimes.empty())
+    {
+        s_systemMessageTimes.pop_front();
     }
 }
 
@@ -1244,6 +1258,25 @@ bool SEASON3B::CNewUISystemLogWindow::UpdateKeyEvent()
 
 bool SEASON3B::CNewUISystemLogWindow::Update()
 {
+    // The times are only kept for the messages added through AddText; resynchronize if they don't match.
+    while (s_systemMessageTimes.size() < m_vecAllMsgs.size())
+    {
+        s_systemMessageTimes.push_front(GetTickCount64());
+    }
+
+    const uint64_t now = GetTickCount64();
+    bool removed = false;
+    while (!m_vecAllMsgs.empty() && !s_systemMessageTimes.empty() && now - s_systemMessageTimes.front() >= SystemMessageLifetimeMs)
+    {
+        RemoveFrontLine();
+        removed = true;
+    }
+
+    if (removed)
+    {
+        m_iCurrentRenderEndLine = static_cast<int>(m_vecAllMsgs.size()) - 1;
+    }
+
     return true;
 }
 bool SEASON3B::CNewUISystemLogWindow::Render()
@@ -1267,6 +1300,7 @@ void SEASON3B::CNewUISystemLogWindow::ClearAll()
     for (; vi_msg != m_vecAllMsgs.end(); vi_msg++)
         delete (*vi_msg);
     m_vecAllMsgs.clear();
+    s_systemMessageTimes.clear();
 
     m_iCurrentRenderEndLine = -1;
 }

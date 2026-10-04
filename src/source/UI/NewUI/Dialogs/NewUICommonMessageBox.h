@@ -298,6 +298,14 @@ namespace SEASON3B
         static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
     };
 
+    // Entry dialog of the chamber of Kundun (keeper): the levels by resets, the Lost Map of the own level, the entries left this week.
+    class CKundunChamberEntryMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
+    {
+    public:
+        bool SetLayout();
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+    };
+
     class CPartyMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
     {
     public:
@@ -354,6 +362,15 @@ namespace SEASON3B
     };
 
     class CFenrirRepairMsgBoxLayout : public TMsgBoxLayout<CFenrirRepairMsgBox>
+    {
+    public:
+        bool SetLayout();
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+    };
+
+    // Asks before the statistics of the MU Helper (panel under the helper buttons) are reset.
+    class CHelperStatsResetMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
     {
     public:
         bool SetLayout();

@@ -66,6 +66,7 @@ namespace SEASON3B
         void LoadImages();
         void UnloadImages();
         void RenderHelperStats();
+        void RenderKalimaProgress();
 
         static inline int s_iHelperStatsBottom = 0;
 

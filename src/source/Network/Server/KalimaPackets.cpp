@@ -5,9 +5,11 @@
 
 #include "GameLogic/Events/KalimaEntry.h"
 #include "GameLogic/Events/KalimaSpots.h"
+#include "GameLogic/Events/KundunChamberEntry.h"
 #include "GameLogic/Items/KundunEssence.h"
 #include "GameLogic/Travel/MinimapSpots.h"
 #include "Network/Server/WSclient.h"
+#include "Render/Terrain/ZzzLodTerrain.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 
 namespace Network::Server::KalimaPackets
@@ -27,6 +29,13 @@ namespace Network::Server::KalimaPackets
         constexpr std::size_t SpotCountOffset = 4;
         constexpr std::size_t SpotEntriesOffset = 5;
         constexpr std::size_t SpotEntrySize = 2;
+        constexpr std::uint8_t KalimaProgressSubCode = 0x08;
+        constexpr std::size_t KalimaProgressPacketSize = 7;
+        constexpr std::uint8_t KalimaArenaSubCode = 0x09;
+        constexpr std::uint8_t ChamberEntrySubCode = 0x0A;
+        constexpr std::uint8_t ChamberEnterSubCode = 0x0B;
+        constexpr std::size_t ChamberHeaderSize = 18;
+        constexpr std::size_t KalimaArenaPacketSize = 7;
         constexpr std::size_t KalimaHeaderSize = 17;
         constexpr std::size_t KalimaTierSize = 5;
 
@@ -173,6 +182,74 @@ namespace Network::Server::KalimaPackets
             GameLogic::Events::KalimaSpots::SetSpots(std::move(spots));
         }
 
+        void ReceiveKalimaProgress(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < KalimaProgressPacketSize)
+            {
+                return;
+            }
+
+            GameLogic::Events::KalimaSpots::SetProgress({ packet[4], packet[5], static_cast<GameLogic::Events::KalimaSpots::BossState>(packet[6]) });
+        }
+
+        // The chamber of Kundun: everything outside of the ring of columns is not walkable, until the map is loaded again.
+        void ReceiveKalimaArena(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < KalimaArenaPacketSize)
+            {
+                return;
+            }
+
+            const int centerX = packet[4];
+            const int centerY = packet[5];
+            const float radius = packet[6] / 2.f;
+            for (int y = 0; y < TERRAIN_SIZE; ++y)
+            {
+                for (int x = 0; x < TERRAIN_SIZE; ++x)
+                {
+                    const float dx = static_cast<float>(x - centerX);
+                    const float dy = static_cast<float>(y - centerY);
+                    if (std::sqrt((dx * dx) + (dy * dy)) >= radius)
+                    {
+                        TerrainWall[(y * TERRAIN_SIZE) + x] |= TW_NOMOVE;
+                    }
+                }
+            }
+
+            GameLogic::Events::KalimaSpots::SetArenaClosed(true);
+        }
+
+        void ReceiveChamberEntry(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < ChamberHeaderSize)
+            {
+                return;
+            }
+
+            GameLogic::Events::KundunChamberEntry::Info info;
+            info.resets = ReadUInt16LittleEndian(packet.subspan(5));
+            info.tierLevel = packet[7];
+            info.entriesLeft = packet[8];
+            info.entriesPerWeek = packet[9];
+            info.secondsUntilReset = ReadUInt32LittleEndian(packet.subspan(10));
+            info.canReenter = packet[14] != 0;
+            info.hasLostMap = packet[15] != 0;
+            const std::size_t count = packet[16];
+            if (packet.size() < ChamberHeaderSize + (count * KalimaTierSize))
+            {
+                return;
+            }
+
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                const auto entry = packet.subspan(ChamberHeaderSize + (i * KalimaTierSize), KalimaTierSize);
+                info.tiers.push_back({ entry[0], ReadUInt16LittleEndian(entry.subspan(1)), ReadUInt16LittleEndian(entry.subspan(3)) });
+            }
+
+            GameLogic::Events::KundunChamberEntry::SetInfo(std::move(info));
+            SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CKundunChamberEntryMsgBoxLayout));
+        }
+
         void ReceiveDropMode(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < DropModePacketSize)
@@ -229,6 +306,27 @@ namespace Network::Server::KalimaPackets
             }
 
             break;
+        case KalimaProgressSubCode:
+            if (isC1)
+            {
+                ReceiveKalimaProgress(packet);
+            }
+
+            break;
+        case KalimaArenaSubCode:
+            if (isC1)
+            {
+                ReceiveKalimaArena(packet);
+            }
+
+            break;
+        case ChamberEntrySubCode:
+            if (!isC1)
+            {
+                ReceiveChamberEntry(packet);
+            }
+
+            break;
         default:
             break;
         }
@@ -242,6 +340,17 @@ namespace Network::Server::KalimaPackets
         }
 
         const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeSubCode, static_cast<BYTE>(mode) };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
+    }
+
+    void SendChamberEnterRequest()
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const BYTE packet[4] = { C1Header, 4, HeadCode, ChamberEnterSubCode };
         SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 

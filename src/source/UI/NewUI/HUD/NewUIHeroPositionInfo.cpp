@@ -10,6 +10,15 @@
 #include "World/MapInfra/MapManager.h"
 #include "MUHelper/MuHelper.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "GameLogic/Events/KalimaSpots.h"
+#include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
+
+namespace
+{
+    // The "Reset" button in the last row of the helper statistics, right-aligned inside the panel so that it doesn't
+    // cover the buff icons (kept here, not in the class, so that the size of the class doesn't change).
+    RECT s_helperStatsReset = {};
+}
 
 using namespace SEASON3B;
 
@@ -142,6 +151,19 @@ bool CNewUIHeroPositionInfo::UpdateMouseEvent()
         return false;
     }
 
+    const RECT& reset = s_helperStatsReset;
+    if (reset.right > reset.left
+        && SEASON3B::CheckMouseIn(reset.left, reset.top, reset.right - reset.left, reset.bottom - reset.top))
+    {
+        if (SEASON3B::IsRelease(VK_LBUTTON))
+        {
+            SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CHelperStatsResetMsgBoxLayout));
+            PlayBuffer(SOUND_CLICK01);
+        }
+
+        return false;
+    }
+
     const RECT& header = m_HelperStatsHeader;
     if (header.right > header.left
         && SEASON3B::CheckMouseIn(header.left, header.top, header.right - header.left, header.bottom - header.top))
@@ -206,6 +228,7 @@ bool CNewUIHeroPositionInfo::Render()
     g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 5, szText, WidenX + 20, 13 - 4, RT3_SORT_CENTER);
 
     RenderHelperStats();
+    RenderKalimaProgress();
 
     DisableAlphaBlend();
     return true;
@@ -232,6 +255,41 @@ namespace
     }
 }
 
+// The progress of the Kalima instance as a banner at the top center of the screen, below the buff icons.
+void CNewUIHeroPositionInfo::RenderKalimaProgress()
+{
+    using namespace GameLogic::Events::KalimaSpots;
+    const Progress* progress = GetProgress();
+    if (progress == nullptr)
+    {
+        return;
+    }
+
+    wchar_t text[96];
+    switch (progress->bossState)
+    {
+    case BossState::Alive:
+        mu_swprintf(text, L"%ls", I18N::Game::KalimaTheIllusionOfKundunAppeared);
+        break;
+    case BossState::Defeated:
+        mu_swprintf(text, L"%ls", I18N::Game::KalimaCompleted);
+        break;
+    default:
+        mu_swprintf(text, I18N::Game::KalimaPacksKilledDD, static_cast<int>(progress->clearedPacks), static_cast<int>(progress->packCount));
+        break;
+    }
+
+    constexpr int BannerWidth = 220;
+    constexpr int BannerY = 62;
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetBgColor(0, 0, 0, 170);
+    g_pRenderText->SetTextColor(255, 210, 90, 255);
+    g_pRenderText->RenderText(320 - (BannerWidth / 2), BannerY, text, BannerWidth, 16, RT3_SORT_CENTER);
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    g_pRenderText->SetTextColor(255, 255, 255, 255);
+    g_pRenderText->SetFont(g_hFont);
+}
+
 // Session statistics of the MU Helper (for balance tests): running time, kills, experience and zen with the rate per hour.
 // Shown while the helper runs and after it stopped, until the next start.
 void CNewUIHeroPositionInfo::RenderHelperStats()
@@ -239,6 +297,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
     auto& helper = MUHelper::g_MuHelper;
     s_iHelperStatsBottom = 0;
     m_HelperStatsHeader = {};
+    s_helperStatsReset = {};
     if (!helper.HasSessionStats())
     {
         return;
@@ -263,6 +322,19 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
         g_pRenderText->RenderText(x, y, line, boxWidth, 0, RT3_SORT_LEFT);
         y += lineHeight;
     };
+    const auto renderResetRow = [&]()
+    {
+        constexpr int resetWidth = 44;
+        const int resetX = x + boxWidth - resetWidth;
+        s_helperStatsReset = { resetX, y, resetX + resetWidth, y + lineHeight };
+        const bool hover = SEASON3B::CheckMouseIn(resetX, y, resetWidth, lineHeight);
+        g_pRenderText->SetBgColor(hover ? 90 : 50, 20, 20, 200);
+        g_pRenderText->SetTextColor(255, hover ? 220 : 160, hover ? 140 : 100, 255);
+        g_pRenderText->RenderText(resetX, y, I18N::Game::ResetStats, resetWidth, lineHeight - 1, RT3_SORT_CENTER);
+        g_pRenderText->SetBgColor(0, 0, 0, 160);
+        g_pRenderText->SetTextColor(255, 255, 255, 255);
+        y += lineHeight;
+    };
 
     g_pRenderText->SetBgColor(0, 0, 0, 160);
     g_pRenderText->SetTextColor(helper.IsActive() ? 120 : 200, 255, helper.IsActive() ? 120 : 200, 255);
@@ -277,7 +349,9 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
     renderLine();
     if (m_bHelperStatsCollapsed)
     {
+        renderResetRow();
         s_iHelperStatsBottom = y;
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
         return;
     }
 
@@ -374,6 +448,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
     }
 
     g_pRenderText->SetTextColor(255, 255, 255, 255);
+    renderResetRow();
     s_iHelperStatsBottom = y;
     g_pRenderText->SetBgColor(0, 0, 0, 0);
 }

@@ -4,9 +4,9 @@
 
 namespace GameLogic::Items
 {
-    // Potion cooldown, the same as the server (potion plugins: CooldownTime 3 s, health and mana separately;
+    // Potion cooldown, the same as the server (potion plugins: CooldownTime 5 s, health and mana separately;
     // session 9, class-balance-potions.sql). Used for the cooldown shown on the item hotkeys and by the MU Helper.
-    inline constexpr std::uint64_t PotionCooldownMilliseconds = 3000;
+    inline constexpr std::uint64_t PotionCooldownMilliseconds = 5000;
 
     inline std::uint64_t g_HealthPotionUsedAt = 0;
     inline std::uint64_t g_ManaPotionUsedAt = 0;
