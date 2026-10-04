@@ -2,6 +2,7 @@
 #include "GameLogic/Combat/SkillExecution.h"
 #include "GameLogic/Items/PotionCooldown.h"
 
+#include <algorithm>
 #include <thread>
 #include <atomic>
 #include <chrono>
@@ -887,7 +888,9 @@ namespace MUHelper
             }
         }
 
-        if (m_config.bFallbackBasicAttack)
+        // No attack skill chosen in the helper: the character hits with its weapon (or bare hands) as with a click.
+        const bool bNoAttackSkill = std::none_of(m_config.aiSkill.begin(), m_config.aiSkill.end(), [](uint32_t iSkill) { return iSkill > 0; });
+        if (m_config.bFallbackBasicAttack || bNoAttackSkill)
         {
             if (!Hero->Movement)
             {
