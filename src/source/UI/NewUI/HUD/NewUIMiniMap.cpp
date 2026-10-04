@@ -9,6 +9,7 @@
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "Audio/DSPlaySound.h"
+#include "GameLogic/Events/KalimaSpots.h"
 
 #include "Guild/NewUIGuildInfoWindow.h"
 #include "UI/NewUI/Widgets/NewUIButton.h"
@@ -407,6 +408,23 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
             hoveredX = sx;
             hoveredY = sy;
         }
+    }
+
+    // The spots of the Kalima instance which still have living monsters (current pack or the Illusion of Kundun).
+    constexpr unsigned int KalimaSpotColor = 0xFFFFD23C;
+    constexpr float KalimaSpotSize = 7.f;
+    for (const auto& spot : GameLogic::Events::KalimaSpots::GetSpots())
+    {
+        float sx = 0.f;
+        float sy = 0.f;
+        MapToScreen(spot.x, spot.y, length, sx, sy);
+        if (sx < 0.f || sx > 640.f || sy < 0.f || sy > MapAreaHeight)
+        {
+            continue;
+        }
+
+        RenderColorQuadARGB(sx - (KalimaSpotSize / 2.f) - 1.f, sy - (KalimaSpotSize / 2.f) - 1.f, KalimaSpotSize + 2.f, KalimaSpotSize + 2.f, SpotBorderColor);
+        RenderColorQuadARGB(sx - (KalimaSpotSize / 2.f), sy - (KalimaSpotSize / 2.f), KalimaSpotSize, KalimaSpotSize, KalimaSpotColor);
     }
 
     int targetX = 0;

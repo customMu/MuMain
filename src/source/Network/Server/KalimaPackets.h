@@ -18,6 +18,7 @@ namespace Network::Server::KalimaPackets
     //   C1 04 FB 05                                                         - enter the Kalima instance (client to server)
     //   C2 [size] FB 06 [count: u16] count x [x, y, level: u16, monsters, name length, name: UTF-8]
     //                                                                       - monster spots of the map for the minimap
+    //   C1 [size] FB 07 [count] count x [x, y]                              - spots of the Kalima instance with living monsters
     inline constexpr std::uint8_t HeadCode = 0xFB;
 
     void ReceivePacket(std::span<const std::uint8_t> packet);

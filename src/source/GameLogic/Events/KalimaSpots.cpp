@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "GameLogic/Travel/MinimapSpots.h"
+#include "GameLogic/Events/KalimaSpots.h"
 
 #include <utility>
 
 #include "World/MapInfra/MapManager.h"
 
-namespace GameLogic::Travel::MinimapSpots
+namespace GameLogic::Events::KalimaSpots
 {
     namespace
     {
@@ -17,15 +17,9 @@ namespace GameLogic::Travel::MinimapSpots
         s_spots = std::move(spots);
     }
 
-    void Clear()
-    {
-        s_spots.clear();
-    }
-
     const std::vector<Spot>& GetSpots()
     {
-        // Kalima shows its own spots (the living packs of the instance), see GameLogic::Events::KalimaSpots.
         static const std::vector<Spot> none;
-        return gMapManager.InHellas() ? none : s_spots;
+        return gMapManager.InHellas() ? s_spots : none;
     }
 }
