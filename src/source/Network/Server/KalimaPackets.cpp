@@ -3,8 +3,10 @@
 
 #include <vector>
 
+#include "GameLogic/Events/KalimaEntry.h"
 #include "GameLogic/Items/KundunEssence.h"
 #include "Network/Server/WSclient.h"
+#include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 
 namespace Network::Server::KalimaPackets
 {
@@ -13,6 +15,10 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t BalanceSubCode = 0x01;
         constexpr std::uint8_t ShopPricesSubCode = 0x02;
         constexpr std::uint8_t DropModeSubCode = 0x03;
+        constexpr std::uint8_t KalimaEntrySubCode = 0x04;
+        constexpr std::uint8_t KalimaEnterSubCode = 0x05;
+        constexpr std::size_t KalimaHeaderSize = 17;
+        constexpr std::size_t KalimaTierSize = 5;
 
         constexpr std::uint8_t C1Header = 0xC1;
         constexpr std::size_t C1SubCodeOffset = 3;
@@ -67,6 +73,41 @@ namespace Network::Server::KalimaPackets
             GameLogic::Items::KundunEssence::SetShopPrices(prices);
         }
 
+        std::uint16_t ReadUInt16LittleEndian(const std::span<const std::uint8_t> data)
+        {
+            return static_cast<std::uint16_t>(data[0] | (data[1] << 8));
+        }
+
+        void ReceiveKalimaEntry(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < KalimaHeaderSize)
+            {
+                return;
+            }
+
+            GameLogic::Events::KalimaEntry::Info info;
+            info.resets = ReadUInt16LittleEndian(packet.subspan(5));
+            info.tierLevel = packet[7];
+            info.entriesLeft = packet[8];
+            info.entriesPerDay = packet[9];
+            info.secondsUntilReset = ReadUInt32LittleEndian(packet.subspan(10));
+            info.canReenter = packet[14] != 0;
+            const std::size_t count = packet[15];
+            if (packet.size() < KalimaHeaderSize + (count * KalimaTierSize))
+            {
+                return;
+            }
+
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                const auto entry = packet.subspan(KalimaHeaderSize + (i * KalimaTierSize), KalimaTierSize);
+                info.tiers.push_back({ entry[0], ReadUInt16LittleEndian(entry.subspan(1)), ReadUInt16LittleEndian(entry.subspan(3)) });
+            }
+
+            GameLogic::Events::KalimaEntry::SetInfo(std::move(info));
+            SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CKalimaEntryMsgBoxLayout));
+        }
+
         void ReceiveDropMode(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < DropModePacketSize)
@@ -102,6 +143,13 @@ namespace Network::Server::KalimaPackets
             }
 
             break;
+        case KalimaEntrySubCode:
+            if (!isC1)
+            {
+                ReceiveKalimaEntry(packet);
+            }
+
+            break;
         default:
             break;
         }
@@ -115,6 +163,17 @@ namespace Network::Server::KalimaPackets
         }
 
         const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeSubCode, static_cast<BYTE>(mode) };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
+    }
+
+    void SendKalimaEnterRequest()
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const BYTE packet[4] = { C1Header, 4, HeadCode, KalimaEnterSubCode };
         SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 }

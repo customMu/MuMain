@@ -290,6 +290,14 @@ namespace SEASON3B
         static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
     };
 
+    // Entry dialog of the Kalima instance (Lugard): the Kalima of each reset range, the entries left today.
+    class CKalimaEntryMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
+    {
+    public:
+        bool SetLayout();
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+    };
+
     class CPartyMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
     {
     public:

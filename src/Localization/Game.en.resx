@@ -13069,4 +13069,25 @@
   <data name="Kundun" xml:space="preserve">
     <value>Kundun</value>
   </data>
+  <data name="Your resets: %d" xml:space="preserve">
+    <value>Your resets: %d</value>
+  </data>
+  <data name="Kalima %d: %d-%d resets" xml:space="preserve">
+    <value>Kalima %d: %d-%d resets</value>
+  </data>
+  <data name="Kalima %d: %d+ resets" xml:space="preserve">
+    <value>Kalima %d: %d+ resets</value>
+  </data>
+  <data name="Entries left today: %d / %d" xml:space="preserve">
+    <value>Entries left today: %d / %d</value>
+  </data>
+  <data name="New entries in %d h %d min" xml:space="preserve">
+    <value>New entries in %d h %d min</value>
+  </data>
+  <data name="You can go back into the running Kalima of your party." xml:space="preserve">
+    <value>You can go back into the running Kalima of your party.</value>
+  </data>
+  <data name="You need at least %d resets for Kalima." xml:space="preserve">
+    <value>You need at least %d resets for Kalima.</value>
+  </data>
 </root>

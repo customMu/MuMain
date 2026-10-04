@@ -3,6 +3,8 @@
 #include "stdafx.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
+#include "GameLogic/Events/KalimaEntry.h"
+#include "Network/Server/KalimaPackets.h"
 #include "Guild/NewUIGuildMakeWindow.h"
 #include "Guild/NewUIGuildInfoWindow.h"
 #include "UI/NewUI/Inventory/NewUIMyInventory.h"
@@ -1169,6 +1171,86 @@ bool CMapEnterGateKeeperMsgBoxLayout::SetLayout()
 CALLBACK_RESULT CMapEnterGateKeeperMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
     SocketClient->ToGameServer()->SendEnterOnGatekeeperRequest();
+
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+
+    return CALLBACK_BREAK;
+}
+
+bool CKalimaEntryMsgBoxLayout::SetLayout()
+{
+    CNewUICommonMessageBox* pMsgBox = GetMsgBox();
+    if (0 == pMsgBox)
+        return false;
+    if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+        return false;
+
+    const auto& info = GameLogic::Events::KalimaEntry::GetInfo();
+    wchar_t text[256];
+
+    pMsgBox->SetPos((SCREEN_WIDTH / 2) - (MSGBOX_WIDTH / 2), 50);
+    pMsgBox->AddMsg(I18N::Game::Kalima, 0xFF49B0FF, MSGBOX_FONT_BOLD);
+    pMsgBox->AddMsg(L" ");
+    mu_swprintf_s(text, std::size(text), I18N::Game::YourResetsD, static_cast<int>(info.resets));
+    pMsgBox->AddMsg(text);
+    pMsgBox->AddMsg(L" ");
+
+    for (const auto& tier : info.tiers)
+    {
+        if (tier.maximumResets == GameLogic::Events::KalimaEntry::OpenEnd)
+        {
+            mu_swprintf_s(text, std::size(text), I18N::Game::KalimaDDResets, static_cast<int>(tier.level), static_cast<int>(tier.minimumResets));
+        }
+        else
+        {
+            mu_swprintf_s(text, std::size(text), I18N::Game::KalimaDDDResets, static_cast<int>(tier.level), static_cast<int>(tier.minimumResets), static_cast<int>(tier.maximumResets));
+        }
+
+        // The Kalima of the own reset range is highlighted; the others are grey.
+        const bool isOwn = tier.level == info.tierLevel;
+        pMsgBox->AddMsg(text, isOwn ? 0xFF61F191 : 0xFF8C8C8C, isOwn ? MSGBOX_FONT_BOLD : MSGBOX_FONT_NORMAL);
+    }
+
+    pMsgBox->AddMsg(L" ");
+    if (info.canReenter)
+    {
+        pMsgBox->AddMsg(I18N::Game::YouCanGoBackIntoTheRunningKalimaOfYourParty, 0xFF61F191);
+    }
+    else if (info.tierLevel == 0)
+    {
+        const int minimum = info.tiers.empty() ? 0 : static_cast<int>(info.tiers.front().minimumResets);
+        mu_swprintf_s(text, std::size(text), I18N::Game::YouNeedAtLeastDResetsForKalima, minimum);
+        pMsgBox->AddMsg(text, 0xFF6464FF);
+    }
+    else
+    {
+        mu_swprintf_s(text, std::size(text), I18N::Game::EntriesLeftTodayDD, static_cast<int>(info.entriesLeft), static_cast<int>(info.entriesPerDay));
+        pMsgBox->AddMsg(text, info.entriesLeft > 0 ? 0xFF61F191 : 0xFF6464FF, MSGBOX_FONT_BOLD);
+        if (info.entriesLeft == 0)
+        {
+            const int minutes = static_cast<int>(info.secondsUntilReset / 60);
+            mu_swprintf_s(text, std::size(text), I18N::Game::NewEntriesInDHDMin, minutes / 60, minutes % 60);
+            pMsgBox->AddMsg(text);
+        }
+    }
+
+    if (!GameLogic::Events::KalimaEntry::CanEnter())
+    {
+        pMsgBox->LockOkButton();
+    }
+
+    pMsgBox->AddCallbackFunc(CKalimaEntryMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CKalimaEntryMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    return true;
+}
+
+CALLBACK_RESULT CKalimaEntryMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    if (GameLogic::Events::KalimaEntry::CanEnter())
+    {
+        Network::Server::KalimaPackets::SendKalimaEnterRequest();
+    }
 
     PlayBuffer(SOUND_CLICK01);
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);

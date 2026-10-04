@@ -2228,7 +2228,9 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         Color = TEXT_COLOR_YELLOW;
     }
 
-    if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP) && !IsSellingBan(ip))
+    // Items of the essence shop show their price in Kundun Essence, also those which can't be sold for zen (e.g. Box of Kundun).
+    const bool isEssenceShopItem = Sell && GameLogic::Items::KundunEssence::IsEssenceShopOpen();
+    if (g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP) && (!IsSellingBan(ip) || isEssenceShopItem))
     {
         wchar_t Text[100];
         {
