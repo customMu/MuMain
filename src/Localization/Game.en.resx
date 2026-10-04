@@ -1594,7 +1594,7 @@
     <comment>legacy_id=427</comment>
   </data>
   <data name="Please enter your WEBZEN.COM password." xml:space="preserve">
-    <value>Please enter your WEBZEN.COM password.</value>
+    <value>Please enter the security code of your account.</value>
     <comment>legacy_id=428,444,1713</comment>
   </data>
   <data name="You have received an offer to join a guild." xml:space="preserve">
@@ -2630,7 +2630,7 @@
     <comment>legacy_id=690</comment>
   </data>
   <data name="Enter your WEBZEN.COM password." xml:space="preserve">
-    <value>Enter your WEBZEN.COM password.</value>
+    <value>Enter the security code of your account.</value>
     <comment>legacy_id=691</comment>
   </data>
   <data name="Unlock Vault" xml:space="preserve">
@@ -2654,7 +2654,7 @@
     <comment>legacy_id=696</comment>
   </data>
   <data name="EnterYourWEBZENCOMPassword697" xml:space="preserve">
-    <value>Enter your WEBZEN.COM password</value>
+    <value>Enter the security code of your account</value>
     <comment>legacy_id=697</comment>
   </data>
   <data name="Charisma Requirement: %d" xml:space="preserve">
