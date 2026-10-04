@@ -5,6 +5,7 @@
 
 #include "GameLogic/Events/KalimaEntry.h"
 #include "GameLogic/Items/KundunEssence.h"
+#include "GameLogic/Travel/MinimapSpots.h"
 #include "Network/Server/WSclient.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 
@@ -17,6 +18,10 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t DropModeSubCode = 0x03;
         constexpr std::uint8_t KalimaEntrySubCode = 0x04;
         constexpr std::uint8_t KalimaEnterSubCode = 0x05;
+        constexpr std::uint8_t MinimapSpotsSubCode = 0x06;
+        constexpr std::size_t SpotsCountOffset = 5;
+        constexpr std::size_t SpotsEntriesOffset = 7;
+        constexpr std::size_t SpotHeaderSize = 6;
         constexpr std::size_t KalimaHeaderSize = 17;
         constexpr std::size_t KalimaTierSize = 5;
 
@@ -108,6 +113,37 @@ namespace Network::Server::KalimaPackets
             SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CKalimaEntryMsgBoxLayout));
         }
 
+        void ReceiveMinimapSpots(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < SpotsEntriesOffset)
+            {
+                return;
+            }
+
+            const std::size_t count = ReadUInt16LittleEndian(packet.subspan(SpotsCountOffset));
+            std::vector<GameLogic::Travel::MinimapSpots::Spot> spots;
+            spots.reserve(count);
+            std::size_t offset = SpotsEntriesOffset;
+            for (std::size_t i = 0; i < count && offset + SpotHeaderSize <= packet.size(); ++i)
+            {
+                const std::size_t nameLength = packet[offset + 5];
+                if (offset + SpotHeaderSize + nameLength > packet.size())
+                {
+                    break;
+                }
+
+                GameLogic::Travel::MinimapSpots::Spot spot{ packet[offset], packet[offset + 1], ReadUInt16LittleEndian(packet.subspan(offset + 2)), packet[offset + 4], {} };
+                const auto* name = reinterpret_cast<const char*>(packet.data() + offset + SpotHeaderSize);
+                const int wideLength = MultiByteToWideChar(CP_UTF8, 0, name, static_cast<int>(nameLength), nullptr, 0);
+                spot.name.resize(static_cast<std::size_t>(wideLength));
+                MultiByteToWideChar(CP_UTF8, 0, name, static_cast<int>(nameLength), spot.name.data(), wideLength);
+                spots.push_back(std::move(spot));
+                offset += SpotHeaderSize + nameLength;
+            }
+
+            GameLogic::Travel::MinimapSpots::SetSpots(std::move(spots));
+        }
+
         void ReceiveDropMode(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < DropModePacketSize)
@@ -147,6 +183,13 @@ namespace Network::Server::KalimaPackets
             if (!isC1)
             {
                 ReceiveKalimaEntry(packet);
+            }
+
+            break;
+        case MinimapSpotsSubCode:
+            if (!isC1)
+            {
+                ReceiveMinimapSpots(packet);
             }
 
             break;

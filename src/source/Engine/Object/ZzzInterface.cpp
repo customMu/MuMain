@@ -51,6 +51,7 @@
 #include "UI/Legacy/UIControls.h"
 #include "GameLogic/Social/PartyManager.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
+#include "GameLogic/Travel/MinimapWalk.h"
 #include "GameLogic/Skills/SummonSystem.h"
 #include "GameLogic/Skills/SkillManager.h"
 #include "UI/Scaling/UITransform.h"
@@ -2987,6 +2988,8 @@ void MoveHero()
         Hero->Object.HeadTargetAngle[1] = 0;
     }
 
+    GameLogic::Travel::MinimapWalk::Process();
+
     if (c->Movement)
     {
         if (g_isCharacterBuff(o, eDeBuff_Harden) || g_isCharacterBuff(o, eDeBuff_CursedTempleRestraint))
@@ -3310,6 +3313,7 @@ void MoveHero()
 
                 if (SelectFlag && c->Object.Live)
                 {
+                    GameLogic::Travel::MinimapWalk::Cancel();
                     TargetX = (BYTE)(CollisionPosition[0] / TERRAIN_SCALE);
                     TargetY = (BYTE)(CollisionPosition[1] / TERRAIN_SCALE);
                     int Wall;

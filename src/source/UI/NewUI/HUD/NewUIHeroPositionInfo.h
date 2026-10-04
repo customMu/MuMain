@@ -68,6 +68,10 @@ namespace SEASON3B
         void RenderHelperStats();
 
         static inline int s_iHelperStatsBottom = 0;
+
+        // The statistics can be collapsed to their first line by clicking it.
+        bool m_bHelperStatsCollapsed = false;
+        RECT m_HelperStatsHeader = {};
     };
 }
 

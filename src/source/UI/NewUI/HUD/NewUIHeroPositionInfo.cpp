@@ -142,6 +142,19 @@ bool CNewUIHeroPositionInfo::UpdateMouseEvent()
         return false;
     }
 
+    const RECT& header = m_HelperStatsHeader;
+    if (header.right > header.left
+        && SEASON3B::CheckMouseIn(header.left, header.top, header.right - header.left, header.bottom - header.top))
+    {
+        if (SEASON3B::IsRelease(VK_LBUTTON))
+        {
+            m_bHelperStatsCollapsed = !m_bHelperStatsCollapsed;
+            PlayBuffer(SOUND_CLICK01);
+        }
+
+        return false;
+    }
+
     int Width = HERO_POSITION_INFO_BASEA_WINDOW_WIDTH + WidenX + 73;
 
     if (CheckMouseIn(m_Pos.x, m_Pos.y, Width, HERO_POSITION_INFO_BASE_WINDOW_HEIGHT))
@@ -225,6 +238,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
 {
     auto& helper = MUHelper::g_MuHelper;
     s_iHelperStatsBottom = 0;
+    m_HelperStatsHeader = {};
     if (!helper.HasSessionStats())
     {
         return;
@@ -256,7 +270,16 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
     FormatCompact(value, std::size(value), kills);
     FormatCompact(rate, std::size(rate), PerHour(kills, ms));
     mu_swprintf(line, helper.IsActive() ? I18N::Game::HelperLsKillsLsLsH : I18N::Game::HelperStoppedLsKillsLsLsH, extra, value, rate);
+    std::wstring header = m_bHelperStatsCollapsed ? L"[+] " : L"[-] ";
+    header += line;
+    mu_swprintf(line, L"%ls", header.c_str());
+    m_HelperStatsHeader = { x, y, x + boxWidth, y + lineHeight };
     renderLine();
+    if (m_bHelperStatsCollapsed)
+    {
+        s_iHelperStatsBottom = y;
+        return;
+    }
 
     g_pRenderText->SetTextColor(255, 255, 255, 255);
     FormatCompact(value, std::size(value), experience);

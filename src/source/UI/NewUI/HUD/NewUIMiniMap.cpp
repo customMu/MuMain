@@ -15,6 +15,48 @@
 #include "UI/NewUI/Inventory/NewUIMyInventory.h"
 #include "GameLogic/Items/CSItemOption.h"
 #include "World/MapInfra/MapManager.h"
+#include "Engine/Object/ZzzCharacter.h"
+#include "Engine/Object/ZzzInterface.h"
+#include "GameLogic/Travel/MinimapSpots.h"
+#include "GameLogic/Travel/MinimapWalk.h"
+
+namespace
+{
+    // The minimap draws the map rotated by 45 degrees around the hero; the icons of the minimap are shifted
+    // by 25 window pixels (RenderPointRotate). These convert between map fields and logical screen positions
+    // (640x480, y down) the same way, so the dots and the clicks match the npc icons.
+    constexpr float Cos45 = 0.70710678f;
+    constexpr float IconShift = 25.f;
+    constexpr float CenterX = 320.f;
+    constexpr float CenterY = 240.f;
+    constexpr int MapAreaHeight = 430;
+
+    void MapToScreen(float mapX, float mapY, float length, float& screenX, float& screenY)
+    {
+        const float rx = g_fScreenRate_x;
+        const float ry = g_fScreenRate_y;
+        const float dx = (mapY - Hero->PositionY) * length / 256.f;
+        const float dy = (mapX - Hero->PositionX) * length / 256.f;
+        const float qx = Cos45 * ((rx * dx) + (ry * dy));
+        const float qy = Cos45 * ((rx * dx) - (ry * dy));
+        screenX = CenterX + ((qx + IconShift) / rx);
+        screenY = CenterY - (qy / ry);
+    }
+
+    void ScreenToMap(float screenX, float screenY, float length, int& mapX, int& mapY)
+    {
+        const float rx = g_fScreenRate_x;
+        const float ry = g_fScreenRate_y;
+        const float qx = ((screenX - CenterX) * rx) - IconShift;
+        const float qy = (CenterY - screenY) * ry;
+        const float px = Cos45 * (qx + qy);
+        const float py = Cos45 * (qy - qx);
+        const float dx = px / rx;
+        const float dy = -py / ry;
+        mapY = static_cast<int>(std::lround(Hero->PositionY + (dx * 256.f / length)));
+        mapX = static_cast<int>(std::lround(Hero->PositionX + (dy * 256.f / length)));
+    }
+}
 
 extern BYTE m_OccupationState;
 
@@ -173,6 +215,8 @@ bool SEASON3B::CNewUIMiniMap::Render()
             break;
     }
 
+    RenderSpots();
+
     float Ch_wid = 12;
     RenderImage(IMAGE_MINIMAP_INTERFACE + 3, 325, 230, Ch_wid, Ch_wid, 0.f, 0.f, 17.5f / 32.f, 17.5f / 32.f);
 
@@ -207,6 +251,10 @@ bool SEASON3B::CNewUIMiniMap::Update()
 
 void SEASON3B::CNewUIMiniMap::LoadImages(const wchar_t* Filename)
 {
+    // A new map: its spots come from the server after the map was loaded.
+    GameLogic::Travel::MinimapSpots::Clear();
+    GameLogic::Travel::MinimapWalk::Cancel();
+
     wchar_t Fname[300];
     int i = 0;
     mu_swprintf(Fname, L"Data\\%ls\\mini_map.ozt", Filename);
@@ -312,7 +360,74 @@ bool SEASON3B::CNewUIMiniMap::UpdateMouseEvent()
 
 bool SEASON3B::CNewUIMiniMap::Check_Mouse(int mx, int my)
 {
-    return true;
+    // A click on the map walks the hero there.
+    if (Hero == nullptr || my >= MapAreaHeight)
+    {
+        return true;
+    }
+
+    int mapX = 0;
+    int mapY = 0;
+    ScreenToMap(static_cast<float>(mx), static_cast<float>(my), static_cast<float>(m_Lenth[m_MiniPos].x), mapX, mapY);
+    return !GameLogic::Travel::MinimapWalk::Start(mapX, mapY);
+}
+
+void SEASON3B::CNewUIMiniMap::RenderSpots()
+{
+    if (Hero == nullptr)
+    {
+        return;
+    }
+
+    constexpr unsigned int SpotColor = 0xFFFF5A3C;
+    constexpr unsigned int SpotBorderColor = 0xFF000000;
+    constexpr unsigned int TargetColor = 0xFF5AFF6E;
+    constexpr float SpotSize = 5.f;
+    constexpr float HoverRange = 6.f;
+
+    const float length = static_cast<float>(m_Lenth[m_MiniPos].x);
+    const GameLogic::Travel::MinimapSpots::Spot* hovered = nullptr;
+    float hoveredX = 0.f;
+    float hoveredY = 0.f;
+    for (const auto& spot : GameLogic::Travel::MinimapSpots::GetSpots())
+    {
+        float sx = 0.f;
+        float sy = 0.f;
+        MapToScreen(spot.x, spot.y, length, sx, sy);
+        if (sx < 0.f || sx > 640.f || sy < 0.f || sy > MapAreaHeight)
+        {
+            continue;
+        }
+
+        RenderColorQuadARGB(sx - (SpotSize / 2.f) - 1.f, sy - (SpotSize / 2.f) - 1.f, SpotSize + 2.f, SpotSize + 2.f, SpotBorderColor);
+        RenderColorQuadARGB(sx - (SpotSize / 2.f), sy - (SpotSize / 2.f), SpotSize, SpotSize, SpotColor);
+        if (std::abs(MouseX - sx) <= HoverRange && std::abs(MouseY - sy) <= HoverRange)
+        {
+            hovered = &spot;
+            hoveredX = sx;
+            hoveredY = sy;
+        }
+    }
+
+    int targetX = 0;
+    int targetY = 0;
+    if (GameLogic::Travel::MinimapWalk::GetTarget(targetX, targetY))
+    {
+        float sx = 0.f;
+        float sy = 0.f;
+        MapToScreen(static_cast<float>(targetX), static_cast<float>(targetY), length, sx, sy);
+        RenderColorQuadARGB(sx - 4.f, sy - 1.f, 8.f, 2.f, TargetColor);
+        RenderColorQuadARGB(sx - 1.f, sy - 4.f, 2.f, 8.f, TargetColor);
+    }
+
+    if (hovered != nullptr)
+    {
+        wchar_t text[96];
+        mu_swprintf_s(text, std::size(text), L"%ls  Lv %d  x%d", hovered->name.c_str(), static_cast<int>(hovered->level), static_cast<int>(hovered->count));
+        RenderTipText(static_cast<int>(hoveredX) + 8, static_cast<int>(hoveredY) - 14, text);
+    }
+
+    EnableAlphaTest();
 }
 
 bool SEASON3B::CNewUIMiniMap::Check_Btn(int mx, int my)

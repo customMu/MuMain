@@ -16,6 +16,8 @@ namespace Network::Server::KalimaPackets
     //                   [can re-enter] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
     //                                                                       - entry dialog of the Kalima instance (Lugard)
     //   C1 04 FB 05                                                         - enter the Kalima instance (client to server)
+    //   C2 [size] FB 06 [count: u16] count x [x, y, level: u16, monsters, name length, name: UTF-8]
+    //                                                                       - monster spots of the map for the minimap
     inline constexpr std::uint8_t HeadCode = 0xFB;
 
     void ReceivePacket(std::span<const std::uint8_t> packet);
