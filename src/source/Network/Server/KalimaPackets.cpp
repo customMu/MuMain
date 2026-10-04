@@ -34,6 +34,8 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t KalimaArenaSubCode = 0x09;
         constexpr std::uint8_t ChamberEntrySubCode = 0x0A;
         constexpr std::uint8_t ChamberEnterSubCode = 0x0B;
+        constexpr std::uint8_t ChamberStatusSubCode = 0x0C;
+        constexpr std::size_t ChamberStatusPacketSize = 15;
         constexpr std::size_t ChamberHeaderSize = 18;
         constexpr std::size_t KalimaArenaPacketSize = 7;
         constexpr std::size_t KalimaHeaderSize = 17;
@@ -192,6 +194,29 @@ namespace Network::Server::KalimaPackets
             GameLogic::Events::KalimaSpots::SetProgress({ packet[4], packet[5], static_cast<GameLogic::Events::KalimaSpots::BossState>(packet[6]) });
         }
 
+        void ReceiveChamberStatus(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < ChamberStatusPacketSize)
+            {
+                return;
+            }
+
+            GameLogic::Events::KalimaSpots::ChamberStatus status;
+            status.level = packet[4];
+            status.phase = packet[5];
+            status.phaseCount = packet[6];
+            status.healthPercent = packet[7];
+            status.illusions = packet[8];
+            status.shielded = (packet[9] & 1) != 0;
+            status.defeated = (packet[9] & 2) != 0;
+            status.secondsLeft = static_cast<std::uint16_t>(packet[10] | (packet[11] << 8));
+            status.receivedAt = GetTickCount64();
+            status.lastHealPercent = packet[12];
+            status.lastDefensePercent = packet[13];
+            status.lastDamagePercent = packet[14];
+            GameLogic::Events::KalimaSpots::SetChamberStatus(status);
+        }
+
         // The chamber of Kundun: everything outside of the ring of columns is not walkable, until the map is loaded again.
         void ReceiveKalimaArena(const std::span<const std::uint8_t> packet)
         {
@@ -310,6 +335,13 @@ namespace Network::Server::KalimaPackets
             if (isC1)
             {
                 ReceiveKalimaProgress(packet);
+            }
+
+            break;
+        case ChamberStatusSubCode:
+            if (isC1)
+            {
+                ReceiveChamberStatus(packet);
             }
 
             break;

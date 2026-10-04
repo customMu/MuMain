@@ -255,10 +255,69 @@ namespace
     }
 }
 
+// The fight in the chamber of Kundun as a banner at the top center: level, phase, health of Kundun, the time left,
+// whether he is invulnerable (Illusions alive), and what the last phase gave him. The time is counted down here.
+static void RenderChamberStatus(const GameLogic::Events::KalimaSpots::ChamberStatus& status)
+{
+    const auto elapsed = static_cast<int>((GetTickCount64() - status.receivedAt) / 1000);
+    const int secondsLeft = (std::max)(0, static_cast<int>(status.secondsLeft) - elapsed);
+
+    wchar_t level[48], phase[48], health[32], line[192];
+    mu_swprintf(level, I18N::Game::ChamberOfKundunD, static_cast<int>(status.level));
+    mu_swprintf(phase, I18N::Game::PhaseDOfD, static_cast<int>(status.phase), static_cast<int>(status.phaseCount));
+    mu_swprintf(health, I18N::Game::KundunD, static_cast<int>(status.healthPercent));
+    mu_swprintf(line, L"%ls  |  %ls  |  %ls  |  %d:%02d", level, phase, health, secondsLeft / 60, secondsLeft % 60);
+
+    constexpr int BannerWidth = 300;
+    constexpr int BannerX = 320 - (BannerWidth / 2);
+    int y = 62;
+    const auto renderLine = [&](const wchar_t* text, const BYTE r, const BYTE g, const BYTE b)
+    {
+        g_pRenderText->SetTextColor(r, g, b, 255);
+        g_pRenderText->RenderText(BannerX, y, text, BannerWidth, 15, RT3_SORT_CENTER);
+        y += 15;
+    };
+
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetBgColor(0, 0, 0, 170);
+    renderLine(line, 255, 210, 90);
+
+    wchar_t state[160];
+    if (status.defeated)
+    {
+        renderLine(I18N::Game::KundunIsDefeated, 120, 230, 120);
+    }
+    else if (status.shielded)
+    {
+        mu_swprintf(state, I18N::Game::KundunIsInvulnerableKillTheIllusionsDLeft, static_cast<int>(status.illusions));
+        renderLine(state, 255, 90, 80);
+    }
+    else
+    {
+        renderLine(I18N::Game::KundunCanBeDamaged, 200, 230, 255);
+    }
+
+    g_pRenderText->SetFont(g_hFont);
+    if (status.lastHealPercent > 0 || status.lastDefensePercent > 0 || status.lastDamagePercent > 0)
+    {
+        mu_swprintf(state, I18N::Game::LastPhaseHealedDDefenseDDamageD, static_cast<int>(status.lastHealPercent), static_cast<int>(status.lastDefensePercent), static_cast<int>(status.lastDamagePercent));
+        renderLine(state, 230, 230, 230);
+    }
+
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    g_pRenderText->SetTextColor(255, 255, 255, 255);
+}
+
 // The progress of the Kalima instance as a banner at the top center of the screen, below the buff icons.
 void CNewUIHeroPositionInfo::RenderKalimaProgress()
 {
     using namespace GameLogic::Events::KalimaSpots;
+    if (const ChamberStatus* chamber = GetChamberStatus())
+    {
+        RenderChamberStatus(*chamber);
+        return;
+    }
+
     const Progress* progress = GetProgress();
     if (progress == nullptr)
     {

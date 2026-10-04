@@ -45,4 +45,26 @@ namespace GameLogic::Events::KalimaSpots
     // isn't shown there. Cleared when a map is loaded.
     void SetArenaClosed(bool closed);
     bool IsArenaClosed();
+
+    // The state of the fight in the chamber of Kundun (custom packet FB 0C), shown as a banner at the top.
+    struct ChamberStatus
+    {
+        std::uint8_t level = 0;
+        std::uint8_t phase = 0;
+        std::uint8_t phaseCount = 0;
+        std::uint8_t healthPercent = 0;
+        std::uint8_t illusions = 0;
+        bool shielded = false;
+        bool defeated = false;
+        std::uint16_t secondsLeft = 0;
+        std::uint64_t receivedAt = 0;
+        std::uint8_t lastHealPercent = 0;
+        std::uint8_t lastDefensePercent = 0;
+        std::uint8_t lastDamagePercent = 0;
+    };
+
+    void SetChamberStatus(ChamberStatus status);
+
+    // The state while the hero is in the closed arena of the chamber; nullptr otherwise.
+    const ChamberStatus* GetChamberStatus();
 }

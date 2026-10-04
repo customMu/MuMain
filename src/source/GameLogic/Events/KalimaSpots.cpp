@@ -12,6 +12,17 @@ namespace GameLogic::Events::KalimaSpots
         std::vector<Spot> s_spots;
         Progress s_progress;
         bool s_arenaClosed = false;
+        ChamberStatus s_chamberStatus;
+    }
+
+    void SetChamberStatus(const ChamberStatus status)
+    {
+        s_chamberStatus = status;
+    }
+
+    const ChamberStatus* GetChamberStatus()
+    {
+        return IsArenaClosed() && s_chamberStatus.level > 0 ? &s_chamberStatus : nullptr;
     }
 
     void SetSpots(std::vector<Spot> spots)
