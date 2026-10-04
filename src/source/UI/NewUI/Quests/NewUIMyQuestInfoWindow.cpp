@@ -10,7 +10,7 @@ namespace
 {
     // The button "take the reward" of the kill quests, in the tab "Quest" (window coordinates).
     constexpr int KillQuestButtonX = 50;
-    constexpr int KillQuestButtonY = 150;
+    constexpr int KillQuestButtonY = 162;
     constexpr int KillQuestButtonWidth = 90;
     constexpr int KillQuestButtonHeight = 18;
 }
@@ -332,14 +332,17 @@ namespace
             }
         }
 
-        g_pRenderText->SetTextColor(181, 181, 181, 255);
-        mu_swprintf(text, I18N::Game::StatPointsFromQuestsD, state.questPoints);
-        g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
+        if (state.questPoints > 0)
+        {
+            g_pRenderText->SetTextColor(181, 181, 181, 255);
+            mu_swprintf(text, I18N::Game::StatPointsFromQuestsD, state.questPoints);
+            g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
+        }
 
         if (state.rewardWaiting)
         {
             g_pRenderText->SetTextColor(255, 90, 80, 255);
-            g_pRenderText->RenderText(x, static_cast<int>(pos.y) + KillQuestButtonY - 16, I18N::Game::TheRewardWaitsFreeSpaceInTheInventory, 144, 0, RT3_SORT_CENTER);
+            g_pRenderText->RenderText(x, static_cast<int>(pos.y) + KillQuestButtonY - 15, I18N::Game::TheRewardWaitsFreeSpaceInTheInventory, 144, 0, RT3_SORT_CENTER);
             const int bx = static_cast<int>(pos.x) + KillQuestButtonX;
             const int by = static_cast<int>(pos.y) + KillQuestButtonY;
             const bool hover = SEASON3B::CheckMouseIn(bx, by, KillQuestButtonWidth, KillQuestButtonHeight);
