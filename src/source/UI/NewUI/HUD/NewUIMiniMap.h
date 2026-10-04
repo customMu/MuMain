@@ -82,5 +82,7 @@ namespace SEASON3B
         void Render_Scroll();
         bool Check_Mouse(int mx, int my);
         bool Check_Btn(int mx, int my);
+        // Marks the spots of the Kalima instance which still have living monsters.
+        void RenderKalimaSpots(float x, float y, float rotation);
     };
 }

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "GameLogic/Events/KalimaEntry.h"
+#include "GameLogic/Events/KalimaSpots.h"
 #include "GameLogic/Items/KundunEssence.h"
 #include "Network/Server/WSclient.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
@@ -17,6 +18,10 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t DropModeSubCode = 0x03;
         constexpr std::uint8_t KalimaEntrySubCode = 0x04;
         constexpr std::uint8_t KalimaEnterSubCode = 0x05;
+        constexpr std::uint8_t KalimaSpotsSubCode = 0x06;
+        constexpr std::size_t SpotCountOffset = 4;
+        constexpr std::size_t SpotEntriesOffset = 5;
+        constexpr std::size_t SpotEntrySize = 2;
         constexpr std::size_t KalimaHeaderSize = 17;
         constexpr std::size_t KalimaTierSize = 5;
 
@@ -108,6 +113,30 @@ namespace Network::Server::KalimaPackets
             SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CKalimaEntryMsgBoxLayout));
         }
 
+        void ReceiveKalimaSpots(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() <= SpotCountOffset)
+            {
+                return;
+            }
+
+            const std::size_t count = packet[SpotCountOffset];
+            if (packet.size() < SpotEntriesOffset + (count * SpotEntrySize))
+            {
+                return;
+            }
+
+            std::vector<GameLogic::Events::KalimaSpots::Spot> spots;
+            spots.reserve(count);
+            for (std::size_t i = 0; i < count; ++i)
+            {
+                const auto entry = packet.subspan(SpotEntriesOffset + (i * SpotEntrySize), SpotEntrySize);
+                spots.push_back({ entry[0], entry[1] });
+            }
+
+            GameLogic::Events::KalimaSpots::SetSpots(std::move(spots));
+        }
+
         void ReceiveDropMode(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < DropModePacketSize)
@@ -147,6 +176,13 @@ namespace Network::Server::KalimaPackets
             if (!isC1)
             {
                 ReceiveKalimaEntry(packet);
+            }
+
+            break;
+        case KalimaSpotsSubCode:
+            if (isC1)
+            {
+                ReceiveKalimaSpots(packet);
             }
 
             break;

@@ -9,6 +9,7 @@
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
 #include "UI/NewUI/Dialogs/NewUICustomMessageBox.h"
 #include "Audio/DSPlaySound.h"
+#include "GameLogic/Events/KalimaSpots.h"
 
 #include "Guild/NewUIGuildInfoWindow.h"
 #include "UI/NewUI/Widgets/NewUIButton.h"
@@ -173,6 +174,8 @@ bool SEASON3B::CNewUIMiniMap::Render()
             break;
     }
 
+    RenderKalimaSpots(m_Lenth[m_MiniPos].x - Tx, m_Lenth[m_MiniPos].y - Ty, Rot);
+
     float Ch_wid = 12;
     RenderImage(IMAGE_MINIMAP_INTERFACE + 3, 325, 230, Ch_wid, Ch_wid, 0.f, 0.f, 17.5f / 32.f, 17.5f / 32.f);
 
@@ -198,6 +201,18 @@ bool SEASON3B::CNewUIMiniMap::Render()
 
     Check_Btn(MouseX, MouseY);
     return true;
+}
+
+void SEASON3B::CNewUIMiniMap::RenderKalimaSpots(float x, float y, float rotation)
+{
+    constexpr float SpotIconSize = 24.f;
+    constexpr float MapSize = 256.f;
+    for (const auto& spot : GameLogic::Events::KalimaSpots::GetSpots())
+    {
+        const float spotY = (spot.x / MapSize) * m_Lenth[m_MiniPos].y;
+        const float spotX = (spot.y / MapSize) * m_Lenth[m_MiniPos].x;
+        RenderPointRotate(IMAGE_MINIMAP_INTERFACE + 4, spotX, spotY, SpotIconSize, SpotIconSize, x, y, m_Lenth[m_MiniPos].x, m_Lenth[m_MiniPos].y, rotation, 0.f, 17.5f / 32.f, 17.5f / 32.f);
+    }
 }
 
 bool SEASON3B::CNewUIMiniMap::Update()

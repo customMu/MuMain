@@ -4,6 +4,8 @@ extern bool g_bShowPath;
 #endif // CSK_DEBUG_MAP_PATHFINDING
 
 #include <math.h>
+#include <utility>
+#include <vector>
 #include "Core/Utilities/BaseCls.h"
 #include "Core/Utilities/Log/ErrorReport.h"
 
@@ -42,20 +44,23 @@ private:
     int* m_piCostToStart;
     int* m_pxPrev;
     int* m_pyPrev;
-    CBTree<int, int> m_btOpenNodes;
+    // Open nodes as (estimated total cost, index), a min-heap; nodes which got a cheaper cost stay as stale entries.
+    std::vector<std::pair<int, int>> m_openNodes;
 
     void Clear(void);
     bool AddClearPos(int iIndex);
     void Init(void);
-    int GetNewNodeToTest(void);
+    bool IsWalkable(int iIndex, int iWall) const;
+    bool OpenNode(int iIndex, int iCostToStart, int xPrev, int yPrev, int xEnd, int yEnd);
 
 public:
     bool FindPath(int xStart, int yStart, int xEnd, int yEnd, bool bErrorCheck, int iWall, bool Value, float fDistance = 0.0f);
 
 private:
     void SetEndNodes(bool bErrorCheck, int iWall, int xEnd, int yEnd, float fDistance);
+    bool MarkEndNodes(bool bErrorCheck, int iWall, bool Value, int xEnd, int yEnd, float fDistance);
     int CalculateCostToStartAddition(int xDir, int yDir);
-    int EstimateCostToGoal(int xStart, int yStart, int xNew, int yNew);
+    static int EstimateCostToGoal(int xEnd, int yEnd, int xNew, int yNew);
     bool GeneratePath(int xStart, int yStart, int xEnd, int yEnd);
 
 #ifdef SHOW_PATH_INFO
@@ -144,169 +149,6 @@ inline void PATH::Init(void)
     m_iMaxClosed = -1;
 }
 
-inline int PATH::GetNewNodeToTest(void)
-{
-    CBNode<int, int>* pResult = NULL;
-    CBNode<int, int>* pNode = m_btOpenNodes.FindHead();
-    while (pNode)
-    {
-        pResult = pNode;
-        pNode = m_btOpenNodes.GetLeft(pNode);
-    }
-
-    int iIndex = -1;
-    if (pResult)
-    {
-        iIndex = pResult->GetData();
-        m_btOpenNodes.RemoveNode(pResult);
-    }
-    return iIndex;
-}
-
-inline bool PATH::FindPath(int xStart, int yStart, int xEnd, int yEnd, bool bErrorCheck, int iWall, bool Value, float fDistance)
-{
-    Init();
-
-    if (xStart == 0 || yStart == 0)
-    {
-        return false;
-    }
-
-    if (0.0f == fDistance)
-    {
-        int iEndIndex = GetIndex(xEnd, yEnd);
-        if (iEndIndex < 0 || iEndIndex >= m_iSize)
-        {
-            return false;
-        }
-
-        if (Value == true)
-        {
-            m_pbyMap[iEndIndex] = 0;
-        }
-
-        if (bErrorCheck && (iWall <= m_pbyMap[iEndIndex] && (m_pbyMap[GetIndex(xEnd, yEnd)] & TW_ACTION) != TW_ACTION))
-        {
-            return false;
-        }
-
-        m_pbyClosed[iEndIndex] = PATH_END;
-        if (!AddClearPos(iEndIndex))
-        {
-            return false;
-        }
-    }
-    else
-    {
-        SetEndNodes(bErrorCheck, iWall, xEnd, yEnd, fDistance);
-    }
-
-    int iCostToGoalOfNearest = MAX_INT_FORPATH;
-    int xNearest = xStart;
-    int yNearest = yStart;
-
-    int iStartIndex = GetIndex(xStart, yStart);
-    if (iStartIndex < 0 || iStartIndex >= m_iSize)
-    {
-        return false;
-    }
-
-    m_btOpenNodes.Add(iStartIndex, 0);
-    m_pbyClosed[iStartIndex] |= PATH_INTESTLIST;
-    if (!AddClearPos(iStartIndex))
-    {
-        return false;
-    }
-
-    int iMaxCount = bErrorCheck ? 500 : 50;
-    for (int iCheckCount = iMaxCount; 0 < m_btOpenNodes.GetCount() && iCheckCount > 0; --iCheckCount)
-    {
-        int xTest, yTest;
-        int iIndex = GetNewNodeToTest();
-        if (iIndex == -1)
-        {
-            return false;
-        }
-
-        GetXYPos(iIndex, &xTest, &yTest);
-
-        m_piCostToStart[iIndex] = (iCheckCount == iMaxCount) ? 0 : MAX_INT_FORPATH;
-        for (int i = 0; i < 8; i++)
-        {
-            int xNear = xTest + s_iDir[i][0];
-            int yNear = yTest + s_iDir[i][1];
-            if (!CheckXYPos(xNear, yNear))
-            {
-                continue;
-            }
-            int iNearIndex = GetIndex(xNear, yNear);
-            if (PATH_TESTED & m_pbyClosed[iNearIndex])
-            {
-                int iNewCost = m_piCostToStart[iNearIndex] + CalculateCostToStartAddition(s_iDir[i][0], s_iDir[i][1]);
-                if (iNewCost < m_piCostToStart[iIndex])
-                {
-                    m_piCostToStart[iIndex] = iNewCost;
-                    m_pxPrev[iIndex] = xNear;
-                    m_pyPrev[iIndex] = yNear;
-                }
-            }
-        }
-        m_pbyClosed[iIndex] |= PATH_TESTED;
-
-        if (PATH_END & m_pbyClosed[iIndex])
-        {
-            m_btOpenNodes.RemoveAll();
-            return (GeneratePath(xStart, yStart, xTest, yTest));
-        }
-
-        for (int i = 0; i < 8; i++)
-        {
-            int xNew = xTest + s_iDir[i][0];
-            int yNew = yTest + s_iDir[i][1];
-            if (!CheckXYPos(xNew, yNew))
-            {
-                continue;
-            }
-            int iNewIndex = GetIndex(xNew, yNew);
-            int byMapAttribute = m_pbyMap[iNewIndex];
-
-            if ((byMapAttribute & TW_ACTION) == TW_ACTION) byMapAttribute -= TW_ACTION;
-            if ((byMapAttribute & TW_HEIGHT) == TW_HEIGHT) byMapAttribute -= TW_HEIGHT;
-            if ((byMapAttribute & TW_CAMERA_UP) == TW_CAMERA_UP) byMapAttribute -= TW_CAMERA_UP;
-
-            if (!(PATH_INTESTLIST & m_pbyClosed[iNewIndex]) && iWall > byMapAttribute)
-            {
-                int iNewCost = m_piCostToStart[iIndex] + EstimateCostToGoal(xEnd, yEnd, xNew, yNew);
-                m_btOpenNodes.Add(iNewIndex, iNewCost);
-                m_pbyClosed[iNewIndex] |= PATH_INTESTLIST;
-                if (!AddClearPos(iNewIndex))
-                    return false;
-                m_pxPrev[iNewIndex] = xTest;
-                m_pyPrev[iNewIndex] = yTest;
-            }
-        }
-        if (!bErrorCheck)
-        {
-            int iCostToGoal = EstimateCostToGoal(xEnd, yEnd, xTest, yTest);
-            if (iCostToGoal < iCostToGoalOfNearest)
-            {
-                iCostToGoalOfNearest = iCostToGoal;
-                xNearest = xTest;
-                yNearest = yTest;
-            }
-        }
-    }
-    if (!bErrorCheck)
-    {
-        m_btOpenNodes.RemoveAll();
-        return (GeneratePath(xStart, yStart, xNearest, yNearest));
-    }
-
-    m_btOpenNodes.RemoveAll();
-
-    return false;
-}
-
 inline void PATH::SetEndNodes(bool bErrorCheck, int iWall, int xEnd, int yEnd, float fDistance)
 {
     int iDistance = (int)fDistance;
@@ -383,18 +225,6 @@ inline void PATH::SetEndNodes(bool bErrorCheck, int iWall, int xEnd, int yEnd, f
 inline int PATH::CalculateCostToStartAddition(int xDir, int yDir)
 {
     return ((xDir == 0 || yDir == 0) ? FACTOR_PATH_DIST : FACTOR_PATH_DIST_DIAG);
-}
-
-inline int PATH::EstimateCostToGoal(int xStart, int yStart, int xNew, int yNew)
-{
-    int xDist = abs(xNew - xStart);
-    int yDist = abs(yNew - yStart);
-    if (xDist == 1 && yDist == 1)
-    {
-        yDist = 0;
-    }
-
-    return (abs(xDist - yDist) * FACTOR_PATH_DIST + std::min<int>(xDist, yDist) * FACTOR_PATH_DIST_DIAG + 1) * 3 / 4;
 }
 
 inline bool PATH::GeneratePath(int xStart, int yStart, int xEnd, int yEnd)

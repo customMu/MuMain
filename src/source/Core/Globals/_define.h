@@ -68,6 +68,8 @@ constexpr auto FACTOR_PATH_DIST = 5;
 constexpr auto FACTOR_PATH_DIST_DIAG = ((int)((float)FACTOR_PATH_DIST * 1.414f));
 
 constexpr auto MAX_COUNT_PATH = 500;
+// Nodes the path finder expands at most per search; enough to walk around the walls of about two screens.
+constexpr auto MAX_PATH_SEARCH_NODES = 4096;
 constexpr auto MAX_INT_FORPATH = (65000 * 30000);
 
 enum EPathNodeState : BYTE
