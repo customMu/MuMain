@@ -259,6 +259,9 @@ void CCharMakeWin::Show(bool bShow)
         {
             g_pSingleTextInputBox->Configure({
                 .textLimit = 10,
+                .textR = 255,
+                .textG = 255,
+                .textB = 255,
             });
             g_pSingleTextInputBox->GiveFocus();
         }
