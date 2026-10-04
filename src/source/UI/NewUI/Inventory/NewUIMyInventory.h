@@ -49,6 +49,7 @@ namespace SEASON3B
             IMAGE_INVENTORY_EXIT_BTN, //"newui_exit_00.tga"
             IMAGE_INVENTORY_REPAIR_BTN, //"newui_repair_00.tga"
             IMAGE_INVENTORY_EXPAND_BTN, //"newui_expansion_btn.tga"
+            IMAGE_INVENTORY_MONEY_ESSENCE, //"newui_item_money_essence.tga": the zen bar with the Kundun Essence bar beside it
         };
 
         enum MYSHOP_MODE

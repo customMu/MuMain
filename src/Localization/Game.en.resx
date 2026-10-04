@@ -13072,6 +13072,9 @@
   <data name="This item requires %d resets, you have %d. Buy it anyway?" xml:space="preserve">
     <value>This item requires %d resets, you have %d. Buy it anyway?</value>
   </data>
+  <data name="Kundun Essence: the currency of Kalima (Delgado in Lorencia)" xml:space="preserve">
+    <value>Kundun Essence: the currency of Kalima (Delgado in Lorencia)</value>
+  </data>
   <data name="Usable from %d resets" xml:space="preserve">
     <value>Usable from %d resets</value>
   </data>

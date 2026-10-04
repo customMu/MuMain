@@ -709,6 +709,27 @@ bool CNewUIMyInventory::Update()
     return true;
 }
 
+namespace
+{
+    // The bars of the zen and the Kundun Essence (see RenderInventoryDetails) and the tooltip of the essence bar,
+    // a 2D effect after ITEM_SET_OPTION and ITEM_SOCKET_SET_OPTION.
+    constexpr int EssenceBarsX = 7;
+    constexpr int EssenceBarX = EssenceBarsX + 110;
+    constexpr int EssenceBarWidth = 66;
+    constexpr DWORD EssenceTooltipEffect = 3;
+
+    void RenderEssenceTooltip(const POINT& inventoryPos)
+    {
+        const wchar_t* tip = I18N::Game::KundunEssenceTheCurrencyOfKalimaDelgadoInLorencia;
+        g_pRenderText->SetFont(g_hFont);
+        const SIZE tipSize = g_pRenderText->MeasureText(tip, lstrlen(tip));
+
+        // kept inside the screen: the inventory is at the right edge
+        const int tipX = (std::min)(static_cast<int>(inventoryPos.x) + EssenceBarX, 636 - static_cast<int>(tipSize.cx));
+        RenderTipText(tipX, static_cast<int>(inventoryPos.y) + 364 - 16, tip);
+    }
+}
+
 bool CNewUIMyInventory::Render()
 {
     EnableAlphaTest();
@@ -963,7 +984,11 @@ void CNewUIMyInventory::UI2DEffectCallback(LPVOID pClass, DWORD dwParamA, DWORD 
     {
         auto* pMyInventory = (CNewUIMyInventory*)(pClass);
 
-        if (dwParamB == ITEM_SET_OPTION)
+        if (dwParamB == EssenceTooltipEffect)
+        {
+            RenderEssenceTooltip(pMyInventory->GetPos());
+        }
+        else if (dwParamB == ITEM_SET_OPTION)
         {
             g_csItemOption.RenderSetOptionList(pMyInventory->GetPos().x, pMyInventory->GetPos().y);
         }
@@ -1246,6 +1271,7 @@ void CNewUIMyInventory::LoadImages() const
     LoadBitmap(L"Interface\\newui_item_ring.tga", IMAGE_INVENTORY_ITEM_RING, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_necklace.tga", IMAGE_INVENTORY_ITEM_NECKLACE, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_money.tga", IMAGE_INVENTORY_MONEY, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_item_money_essence.tga", IMAGE_INVENTORY_MONEY_ESSENCE, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_exit_00.tga", IMAGE_INVENTORY_EXIT_BTN, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_repair_00.tga", IMAGE_INVENTORY_REPAIR_BTN, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_expansion_btn.tga", IMAGE_INVENTORY_EXPAND_BTN, GL_LINEAR);
@@ -1260,6 +1286,7 @@ void CNewUIMyInventory::UnloadImages()
     DeleteBitmap(IMAGE_INVENTORY_REPAIR_BTN);
     DeleteBitmap(IMAGE_INVENTORY_EXIT_BTN);
     DeleteBitmap(IMAGE_INVENTORY_MONEY);
+    DeleteBitmap(IMAGE_INVENTORY_MONEY_ESSENCE);
     DeleteBitmap(IMAGE_INVENTORY_ITEM_NECKLACE);
     DeleteBitmap(IMAGE_INVENTORY_ITEM_RING);
     DeleteBitmap(IMAGE_INVENTORY_ITEM_PANTS);
@@ -1409,31 +1436,48 @@ void CNewUIMyInventory::RenderInventoryDetails() const
     g_pRenderText->SetTextColor(255, 255, 255, 255);
     g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 12, I18N::Game::Inventory, INVENTORY_WIDTH, 0, RT3_SORT_CENTER);
 
-    RenderImage(IMAGE_INVENTORY_MONEY, m_Pos.x + 11, m_Pos.y + 364, 170.f, 26.f);
+    // With the Kundun Essence (a currency of this server) known, the zen and the essence have a bar each, from the
+    // inner edge of the window frame (newui_item_money_essence, 176 wide: zen bar 0..110 with the coins at 7..28,
+    // essence bar 110..176 with the crystal at 118..129).
+    const bool showEssence = GameLogic::Items::KundunEssence::IsBalanceKnown();
+    if (showEssence)
+    {
+        RenderImage(IMAGE_INVENTORY_MONEY_ESSENCE, m_Pos.x + EssenceBarsX, m_Pos.y + 364, 176.f, 26.f);
+    }
+    else
+    {
+        RenderImage(IMAGE_INVENTORY_MONEY, m_Pos.x + 11, m_Pos.y + 364, 170.f, 26.f);
+    }
 
     const DWORD dwZen = CharacterMachine->Gold;
 
     wchar_t Text[256] = { 0, };
     ConvertGold(dwZen, Text);
 
-    // The Kundun Essence (a currency of this server) is shown in a line below the zen.
-    const bool showEssence = GameLogic::Items::KundunEssence::IsBalanceKnown();
     constexpr int ZenY = 371;
-    constexpr int ZenWithEssenceY = 365;
-    constexpr int EssenceY = 377;
+    constexpr int EssenceY = 372;
+    constexpr int ZenWithEssenceX = EssenceBarsX + 32;
+    constexpr int EssenceX = EssenceBarsX + 131;
+    constexpr int EssenceWidth = 33;
 
     g_pRenderText->SetTextColor(getGoldColor(dwZen));
-    g_pRenderText->RenderText((int)m_Pos.x + 50, (int)m_Pos.y + (showEssence ? ZenWithEssenceY : ZenY), Text);
+    g_pRenderText->RenderText((int)m_Pos.x + (showEssence ? ZenWithEssenceX : 50), (int)m_Pos.y + ZenY, Text);
 
     if (showEssence)
     {
         wchar_t amount[64] = { 0, };
         ConvertGold(GameLogic::Items::KundunEssence::GetBalance(), amount);
         wchar_t essence[128] = { 0, };
-        mu_swprintf(essence, I18N::Game::EssenceLs, amount);
+        mu_swprintf(essence, L"%ls", amount);
         g_pRenderText->SetFont(g_hFont);
         g_pRenderText->SetTextColor(200, 150, 255, 255);
-        g_pRenderText->RenderText((int)m_Pos.x + 50, (int)m_Pos.y + EssenceY, essence);
+        g_pRenderText->RenderText((int)m_Pos.x + EssenceX, (int)m_Pos.y + EssenceY, essence, EssenceWidth, 0, RT3_SORT_CENTER);
+
+        // Hovering the essence bar names the currency; drawn in the 2D effect pass, over the item grid and the items.
+        if (CheckMouseIn((int)m_Pos.x + EssenceBarX, (int)m_Pos.y + 364, EssenceBarWidth, 26))
+        {
+            m_pNewUI3DRenderMng->RenderUI2DEffect(INVENTORY_CAMERA_Z_ORDER, UI2DEffectCallback, const_cast<CNewUIMyInventory*>(this), -1, EssenceTooltipEffect);
+        }
     }
 
     g_pRenderText->SetFont(g_hFont);
