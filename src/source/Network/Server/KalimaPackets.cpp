@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "GameLogic/Quests/KillQuest.h"
+#include "Data/Translation/MultiLanguage.h"
 #include "Network/Server/KalimaPackets.h"
 
 #include <vector>
@@ -35,6 +37,9 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t ChamberEntrySubCode = 0x0A;
         constexpr std::uint8_t ChamberEnterSubCode = 0x0B;
         constexpr std::uint8_t ChamberStatusSubCode = 0x0C;
+        constexpr std::uint8_t KillQuestStateSubCode = 0x0D;
+        constexpr std::uint8_t KillQuestClaimSubCode = 0x0E;
+        constexpr std::size_t KillQuestStatePacketSize = 117;
         constexpr std::size_t ChamberStatusPacketSize = 15;
         constexpr std::size_t ChamberHeaderSize = 18;
         constexpr std::size_t KalimaArenaPacketSize = 7;
@@ -194,6 +199,44 @@ namespace Network::Server::KalimaPackets
             GameLogic::Events::KalimaSpots::SetProgress({ packet[4], packet[5], static_cast<GameLogic::Events::KalimaSpots::BossState>(packet[6]) });
         }
 
+        std::wstring ReadUtf8(const std::span<const std::uint8_t> bytes)
+        {
+            std::size_t length = 0;
+            while (length < bytes.size() && bytes[length] != 0)
+            {
+                ++length;
+            }
+
+            const std::string text(reinterpret_cast<const char*>(bytes.data()), length);
+            wchar_t wide[128] = {};
+            CMultiLanguage::ConvertFromUtf8(wide, text.c_str(), static_cast<int>(text.size()));
+            return wide;
+        }
+
+        // The kill quests: [quest number u16] [quest count u16] [kills u32] [needed u32] [reward points u16] [waiting]
+        // [stat points from quests u16] [monster, 32 bytes UTF-8] [reward items, 64 bytes UTF-8]
+        void ReceiveKillQuestState(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < KillQuestStatePacketSize)
+            {
+                return;
+            }
+
+            const auto u16 = [&](std::size_t offset) { return static_cast<int>(packet[offset] | (packet[offset + 1] << 8)); };
+            const auto u32 = [&](std::size_t offset) { return static_cast<int>(packet[offset] | (packet[offset + 1] << 8) | (packet[offset + 2] << 16) | (packet[offset + 3] << 24)); };
+            GameLogic::Quests::KillQuest::State state;
+            state.number = u16(4);
+            state.count = u16(6);
+            state.kills = u32(8);
+            state.killsNeeded = u32(12);
+            state.rewardPoints = u16(16);
+            state.rewardWaiting = packet[18] != 0;
+            state.questPoints = u16(19);
+            state.monster = ReadUtf8(packet.subspan(21, 32));
+            state.reward = ReadUtf8(packet.subspan(53, 64));
+            GameLogic::Quests::KillQuest::SetState(std::move(state));
+        }
+
         void ReceiveChamberStatus(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < ChamberStatusPacketSize)
@@ -338,6 +381,13 @@ namespace Network::Server::KalimaPackets
             }
 
             break;
+        case KillQuestStateSubCode:
+            if (isC1)
+            {
+                ReceiveKillQuestState(packet);
+            }
+
+            break;
         case ChamberStatusSubCode:
             if (isC1)
             {
@@ -383,6 +433,17 @@ namespace Network::Server::KalimaPackets
         }
 
         const BYTE packet[4] = { C1Header, 4, HeadCode, ChamberEnterSubCode };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
+    }
+
+    void SendKillQuestRewardRequest()
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const BYTE packet[4] = { C1Header, 4, HeadCode, KillQuestClaimSubCode };
         SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 

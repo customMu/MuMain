@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "GameLogic/Quests/KillQuest.h"
 #include <algorithm>
 #include "I18N/All.h"
 #include "GameLogic/Items/PotionCooldown.h"
@@ -83,6 +84,7 @@ void SEASON3B::CNewUIMainFrameWindow::LoadImages()
     LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt02.jpg", IMAGE_MENU_BTN_MYINVEN, GL_LINEAR, GL_CLAMP_TO_EDGE);
     LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt03.jpg", IMAGE_MENU_BTN_FRIEND, GL_LINEAR, GL_CLAMP_TO_EDGE);
     LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt04.jpg", IMAGE_MENU_BTN_WINDOW, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    LoadBitmap(L"Interface\\newui_quest_alert.tga", BITMAP_INTERFACE_KILL_QUEST_ALERT, GL_LINEAR, GL_CLAMP_TO_EDGE);
 }
 
 void SEASON3B::CNewUIMainFrameWindow::UnloadImages()
@@ -255,9 +257,32 @@ void SEASON3B::CNewUIMainFrameWindow::RenderLeftRegion()
     m_pNewUI3DRenderMng->RenderUI2DEffect(ITEMHOTKEYNUMBER_CAMERA_Z_ORDER, UI2DEffectCallback, this, 0, 0);
 }
 
+namespace
+{
+    // A kill quest reward waits for space in the inventory: a blinking quest icon above the first skill slot (the
+    // slots start at x 222, y 431); a click opens the quest window.
+    constexpr float KillQuestAlertX = 226.f;
+    constexpr float KillQuestAlertY = 405.f;
+    constexpr float KillQuestAlertSize = 24.f;
+
+    void RenderKillQuestAlert()
+    {
+        if (!GameLogic::Quests::KillQuest::IsRewardWaiting())
+        {
+            return;
+        }
+
+        const float phase = static_cast<float>(GetTickCount64() % 1200) / 1200.f;
+        const auto alpha = static_cast<BYTE>(110 + 145 * (0.5f + 0.5f * std::sin(phase * 6.2831853f)));
+        EnableAlphaTest();
+        SEASON3B::RenderImage(BITMAP_INTERFACE_KILL_QUEST_ALERT, KillQuestAlertX, KillQuestAlertY, KillQuestAlertSize, KillQuestAlertSize, 0.f, 0.f, 1.f, 1.f, RGBA(255, 255, 255, alpha));
+    }
+}
+
 void SEASON3B::CNewUIMainFrameWindow::RenderCenterRegion()
 {
     g_pSkillList->RenderCurrentSkillAndHotSkillList();
+    RenderKillQuestAlert();
     RenderLifeMana();
     RenderGuageSD();
     RenderGuageAG();
@@ -1472,6 +1497,18 @@ bool SEASON3B::CNewUISkillList::UpdateMouseEvent()
     {
         m_bSkillList = false;
         return true;
+    }
+
+    // the icon of a waiting kill quest reward (above the first skill slot) opens the quest window
+    if (GameLogic::Quests::KillQuest::IsRewardWaiting() && SEASON3B::CheckMouseIn(226, 405, 24, 24))
+    {
+        MouseOnWindow = true;
+        if (SEASON3B::IsRelease(VK_LBUTTON))
+        {
+            g_pNewUISystem->Show(SEASON3B::INTERFACE_MYQUEST);
+            PlayBuffer(SOUND_CLICK01);
+            return false;
+        }
     }
 
     BYTE bySkillNumber = CharacterAttribute->SkillNumber;

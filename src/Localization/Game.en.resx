@@ -13075,6 +13075,30 @@
   <data name="Kundun Essence: the currency of Kalima (Delgado in Lorencia)" xml:space="preserve">
     <value>Kundun Essence: the currency of Kalima (Delgado in Lorencia)</value>
   </data>
+  <data name="Kill quests %d / %d" xml:space="preserve">
+    <value>Kill quests %d / %d</value>
+  </data>
+  <data name="All kill quests are completed" xml:space="preserve">
+    <value>All kill quests are completed</value>
+  </data>
+  <data name="Kill: %ls" xml:space="preserve">
+    <value>Kill: %ls</value>
+  </data>
+  <data name="Reward: %ls" xml:space="preserve">
+    <value>Reward: %ls</value>
+  </data>
+  <data name="Reward: +%d stat points" xml:space="preserve">
+    <value>Reward: +%d stat points</value>
+  </data>
+  <data name="Stat points from quests: %d" xml:space="preserve">
+    <value>Stat points from quests: %d</value>
+  </data>
+  <data name="The reward waits: free space in the inventory" xml:space="preserve">
+    <value>The reward waits: free space in the inventory</value>
+  </data>
+  <data name="Take reward" xml:space="preserve">
+    <value>Take reward</value>
+  </data>
   <data name="Usable from %d resets" xml:space="preserve">
     <value>Usable from %d resets</value>
   </data>

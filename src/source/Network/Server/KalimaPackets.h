@@ -37,4 +37,7 @@ namespace Network::Server::KalimaPackets
 
     // Enters the chamber of Kundun after the entry dialog of the keeper.
     void SendChamberEnterRequest();
+
+    // The kill quests: takes the reward which waits for space in the inventory (C1 04 FB 0E).
+    void SendKillQuestRewardRequest();
 }
