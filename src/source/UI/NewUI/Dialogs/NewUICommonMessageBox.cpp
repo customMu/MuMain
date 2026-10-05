@@ -1357,11 +1357,52 @@ bool SEASON3B::CPartyMsgBoxLayout::SetLayout()
 
     pMsgBox->AddMsg(CharactersClient[FindCharacterIndex(PartyKey)].ID);
     pMsgBox->AddMsg(I18N::Game::SomeoneRequestsYouToJoinTheirAParty);
+    // the drop mode of the party (the server sends it before the invitation)
+    if (GameLogic::Social::PartyDropMode::IsKnown())
+    {
+        pMsgBox->AddMsg(*GameLogic::Social::PartyDropMode::GetModeText(GameLogic::Social::PartyDropMode::GetInviteMode()), 0xFF61F191, MSGBOX_FONT_BOLD);
+    }
     pMsgBox->AddCallbackFunc(CPartyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
     pMsgBox->AddCallbackFunc(CPartyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
     pMsgBox->AddCallbackFunc(CPartyMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
     pMsgBox->AddCallbackFunc(CPartyMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_PRESSKEY_ESC);
     return true;
+}
+
+bool SEASON3B::CPartyDropModeVoteMsgBoxLayout::SetLayout()
+{
+    CNewUICommonMessageBox* pMsgBox = GetMsgBox();
+    if (0 == pMsgBox)
+        return false;
+    if (false == pMsgBox->Create(MSGBOX_COMMON_TYPE_OKCANCEL))
+        return false;
+
+    wchar_t text[128];
+    mu_swprintf_s(text, std::size(text), I18N::Game::LsProposesANewDropModeForTheParty, GameLogic::Social::PartyDropMode::GetVoteInitiator().c_str());
+    pMsgBox->AddMsg(text);
+    pMsgBox->AddMsg(*GameLogic::Social::PartyDropMode::GetModeText(GameLogic::Social::PartyDropMode::GetVoteMode()), 0xFF61F191, MSGBOX_FONT_BOLD);
+    pMsgBox->AddMsg(I18N::Game::AllMembersMustAgreeDoYouAgree);
+    pMsgBox->AddCallbackFunc(CPartyDropModeVoteMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_USER_COMMON_OK);
+    pMsgBox->AddCallbackFunc(CPartyDropModeVoteMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_USER_COMMON_CANCEL);
+    pMsgBox->AddCallbackFunc(CPartyDropModeVoteMsgBoxLayout::OkBtnDown, MSGBOX_EVENT_PRESSKEY_RETURN);
+    pMsgBox->AddCallbackFunc(CPartyDropModeVoteMsgBoxLayout::CancelBtnDown, MSGBOX_EVENT_PRESSKEY_ESC);
+    return true;
+}
+
+CALLBACK_RESULT SEASON3B::CPartyDropModeVoteMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    Network::Server::KalimaPackets::SendPartyDropModeVoteAnswer(true);
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
+}
+
+CALLBACK_RESULT SEASON3B::CPartyDropModeVoteMsgBoxLayout::CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
+{
+    Network::Server::KalimaPackets::SendPartyDropModeVoteAnswer(false);
+    PlayBuffer(SOUND_CLICK01);
+    g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
+    return CALLBACK_BREAK;
 }
 
 CALLBACK_RESULT SEASON3B::CPartyMsgBoxLayout::OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)

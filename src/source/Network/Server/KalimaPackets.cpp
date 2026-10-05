@@ -39,6 +39,12 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t ChamberStatusSubCode = 0x0C;
         constexpr std::uint8_t KillQuestStateSubCode = 0x0D;
         constexpr std::uint8_t KillQuestClaimSubCode = 0x0E;
+        constexpr std::uint8_t DropModeVoteSubCode = 0x0F;
+        constexpr std::uint8_t DropModeVoteAnswerSubCode = 0x10;
+        constexpr std::uint8_t InviteDropModeSubCode = 0x11;
+        constexpr std::size_t DropModeVotePacketSize = 15;
+        constexpr std::size_t DropModeVoteNameOffset = 5;
+        constexpr std::size_t DropModeVoteNameLength = 10;
         constexpr std::size_t KillQuestStatePacketSize = 117;
         constexpr std::size_t ChamberStatusPacketSize = 15;
         constexpr std::size_t ChamberHeaderSize = 18;
@@ -237,6 +243,20 @@ namespace Network::Server::KalimaPackets
             GameLogic::Quests::KillQuest::SetState(std::move(state));
         }
 
+        // A member proposes a new drop mode: the hero agrees or not (message box).
+        void ReceiveDropModeVote(const std::span<const std::uint8_t> packet)
+        {
+            if (packet.size() < DropModeVotePacketSize)
+            {
+                return;
+            }
+
+            GameLogic::Social::PartyDropMode::SetVote(
+                static_cast<GameLogic::Social::PartyDropMode::Mode>(packet[DropModeOffset]),
+                ReadUtf8(packet.subspan(DropModeVoteNameOffset, DropModeVoteNameLength)));
+            SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CPartyDropModeVoteMsgBoxLayout));
+        }
+
         void ReceiveChamberStatus(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < ChamberStatusPacketSize)
@@ -353,6 +373,20 @@ namespace Network::Server::KalimaPackets
             }
 
             break;
+        case DropModeVoteSubCode:
+            if (isC1)
+            {
+                ReceiveDropModeVote(packet);
+            }
+
+            break;
+        case InviteDropModeSubCode:
+            if (isC1 && packet.size() >= DropModePacketSize)
+            {
+                GameLogic::Social::PartyDropMode::SetInviteMode(static_cast<GameLogic::Social::PartyDropMode::Mode>(packet[DropModeOffset]));
+            }
+
+            break;
         case KalimaEntrySubCode:
             if (!isC1)
             {
@@ -422,6 +456,17 @@ namespace Network::Server::KalimaPackets
         }
 
         const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeSubCode, static_cast<BYTE>(mode) };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
+    }
+
+    void SendPartyDropModeVoteAnswer(const bool accept)
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeVoteAnswerSubCode, static_cast<BYTE>(accept ? 1 : 0) };
         SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 

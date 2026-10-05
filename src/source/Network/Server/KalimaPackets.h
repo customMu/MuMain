@@ -11,7 +11,11 @@ namespace Network::Server::KalimaPackets
     //   C1 08 FB 01 [balance: uint32 little endian]                         - Kundun Essence balance
     //   C2 [size: uint16 big endian] FB 02 [count] count x [slot, price: uint32 little endian]
     //                                                                       - prices of the opened essence shop
-    //   C1 05 FB 03 [mode]                                                  - drop mode of the party (both directions)
+    //   C1 05 FB 03 [mode]                                                  - drop mode of the party (both directions;
+    //                                                                         without a party: the mode for new parties)
+    //   C1 0F FB 0F [mode] [initiator name, 10 bytes]                       - a member proposes a new drop mode (vote)
+    //   C1 05 FB 10 [0 = no, 1 = yes]                                       - the answer to the vote (client to server)
+    //   C1 05 FB 11 [mode]                                                  - drop mode of the party of an invitation
     //   C2 [size] FB 04 [resets: u16] [tier level] [entries left] [entries per day] [seconds until reset: u32]
     //                   [can re-enter] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
     //                                                                       - entry dialog of the Kalima instance (Lugard)
@@ -29,8 +33,11 @@ namespace Network::Server::KalimaPackets
 
     void ReceivePacket(std::span<const std::uint8_t> packet);
 
-    // Requests the change of the drop mode of the party; only the party master may change it.
+    // Without a party: chooses the drop mode of new parties; in a party: proposes a change to all members.
     void SendPartyDropMode(GameLogic::Social::PartyDropMode::Mode mode);
+
+    // The answer to a proposed change of the drop mode of the party.
+    void SendPartyDropModeVoteAnswer(bool accept);
 
     // Enters the Kalima instance after the entry dialog was confirmed.
     void SendKalimaEnterRequest();

@@ -76,7 +76,7 @@ void CNewUIPartyInfoWindow::InitButtons()
     m_BtnDropMode.ChangeButtonInfo(m_Pos.x + DropModeButtonX, m_Pos.y + DropModeButtonY, DropModeButtonWidth, DropModeButtonHeight);
     m_BtnDropMode.ChangeImgColor(BUTTON_STATE_UP, RGBA(255, 255, 255, 255));
     m_BtnDropMode.ChangeImgColor(BUTTON_STATE_DOWN, RGBA(255, 255, 255, 255));
-    m_BtnDropMode.ChangeToolTipText(&I18N::Game::DropModeOfThePartyOnlyThePartyMasterCanChangeIt, true);
+    m_BtnDropMode.ChangeToolTipText(&I18N::Game::DropModeInAPartyAllMembersMustAgreeToAChange, true);
     m_iShownDropMode = -1;
     UpdateDropModeButton();
 }
@@ -117,10 +117,15 @@ bool CNewUIPartyInfoWindow::BtnProcess()
         return true;
     }
 
-    if (IsVisible() && m_bParty && GameLogic::Social::PartyDropMode::IsKnown() && m_BtnDropMode.UpdateMouseEvent())
+    if (IsVisible() && GameLogic::Social::PartyDropMode::IsKnown() && m_BtnDropMode.UpdateMouseEvent())
     {
-        // The server checks the party master, too, and tells the others that they can't change it.
+        // Without a party: the mode of the parties which the hero creates (saved); in a party: a proposal to all members.
         const auto next = GameLogic::Social::PartyDropMode::GetNextMode(GameLogic::Social::PartyDropMode::GetMode());
+        if (!m_bParty)
+        {
+            GameLogic::Social::PartyDropMode::SetPreferredMode(next);
+        }
+
         Network::Server::KalimaPackets::SendPartyDropMode(next);
         PlayBuffer(SOUND_CLICK01);
         return true;
@@ -225,12 +230,22 @@ bool CNewUIPartyInfoWindow::Render()
         if (GameLogic::Social::PartyDropMode::IsKnown())
         {
             UpdateDropModeButton();
-            m_BtnDropMode.ChangeTextColor(IsPartyMaster() ? RGBA(255, 255, 255, 255) : RGBA(170, 170, 170, 255));
+            m_BtnDropMode.ChangeTextColor(RGBA(255, 255, 255, 255));
             m_BtnDropMode.Render();
         }
     }
     else
     {
+        if (GameLogic::Social::PartyDropMode::IsKnown())
+        {
+            g_pRenderText->SetTextColor(255, 210, 90, 255);
+            g_pRenderText->RenderText(m_Pos.x, m_Pos.y + DropModeButtonY - 14, I18N::Game::DropModeForNewParties, PARTY_INFO_WINDOW_WIDTH, 0, RT3_SORT_CENTER);
+            g_pRenderText->SetTextColor(0xFFFFFFFF);
+            UpdateDropModeButton();
+            m_BtnDropMode.ChangeTextColor(RGBA(255, 255, 255, 255));
+            m_BtnDropMode.Render();
+        }
+
         int iStartHeight = 60;
         g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iStartHeight, I18N::Game::TypePartyWithTheMouseCursorOn, 0, 0, RT3_SORT_CENTER);
         g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iStartHeight + 15, I18N::Game::ThePlayerYouWouldLike, 0, 0, RT3_SORT_CENTER);

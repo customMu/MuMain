@@ -314,6 +314,15 @@ namespace SEASON3B
         static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
     };
 
+    // A member proposes a new drop mode of the party; all members must agree.
+    class CPartyDropModeVoteMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
+    {
+    public:
+        bool SetLayout();
+        static CALLBACK_RESULT OkBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+        static CALLBACK_RESULT CancelBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam);
+    };
+
     class CTradeMsgBoxLayout : public TMsgBoxLayout<CNewUICommonMessageBox>
     {
     public:

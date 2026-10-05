@@ -37,6 +37,7 @@ namespace CfgKeys
     // UI
     inline constexpr wchar_t CfgKeyUILocale[] = L"Locale";
     inline constexpr wchar_t CfgKeyFont[]     = L"Font";
+    inline constexpr wchar_t CfgKeyPartyDropMode[] = L"PartyDropMode";
 
     // Camera
     inline constexpr wchar_t CfgKeyZoom[] = L"Zoom";

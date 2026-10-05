@@ -2,6 +2,7 @@
 #include "GameLogic/Social/PartyDropMode.h"
 
 #include "I18N/All.h"
+#include "Data/GameConfig/GameConfig.h"
 
 namespace GameLogic::Social::PartyDropMode
 {
@@ -9,6 +10,51 @@ namespace GameLogic::Social::PartyDropMode
     {
         Mode g_Mode = Mode::Free;
         bool g_IsKnown = false;
+        Mode g_InviteMode = Mode::Free;
+        Mode g_VoteMode = Mode::Free;
+        std::wstring g_VoteInitiator;
+
+        Mode Validate(const Mode mode)
+        {
+            return mode <= Mode::InTurn ? mode : Mode::Free;
+        }
+    }
+
+    Mode GetPreferredMode()
+    {
+        return Validate(static_cast<Mode>(GameConfig::GetInstance().GetPartyDropMode()));
+    }
+
+    void SetPreferredMode(const Mode mode)
+    {
+        GameConfig::GetInstance().SetPartyDropMode(static_cast<int>(Validate(mode)));
+        GameConfig::GetInstance().Save();
+    }
+
+    void SetInviteMode(const Mode mode)
+    {
+        g_InviteMode = Validate(mode);
+    }
+
+    Mode GetInviteMode()
+    {
+        return g_InviteMode;
+    }
+
+    void SetVote(const Mode mode, std::wstring initiator)
+    {
+        g_VoteMode = Validate(mode);
+        g_VoteInitiator = std::move(initiator);
+    }
+
+    Mode GetVoteMode()
+    {
+        return g_VoteMode;
+    }
+
+    const std::wstring& GetVoteInitiator()
+    {
+        return g_VoteInitiator;
     }
 
     void SetMode(const Mode mode)

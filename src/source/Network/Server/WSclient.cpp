@@ -1247,6 +1247,12 @@ BOOL ReceiveJoinMapServer(std::span<const BYTE> ReceiveBuffer)
     GameLogic::Commands::Catalog().Reset();
     GameLogic::Commands::Catalog().RequestOnce();
 
+    // The drop mode which the player chose for new parties; the server answers with the mode (drop mode button).
+    if (PartyNumber == 0)
+    {
+        Network::Server::KalimaPackets::SendPartyDropMode(GameLogic::Social::PartyDropMode::GetPreferredMode());
+    }
+
     g_ConsoleDebug->Write(MCD_RECEIVE, L"0x03 [ReceiveJoinMapServer]");
 
     return (TRUE);

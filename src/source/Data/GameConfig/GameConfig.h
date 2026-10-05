@@ -68,6 +68,10 @@ public:
     std::wstring GetFontSelection() const { return m_fontSelection; }
     void SetFontSelection(const std::wstring& font);
 
+    // The drop mode which the player chose for new parties (0 free, 1 random, 2 in turn).
+    int GetPartyDropMode() const { return m_partyDropMode; }
+    void SetPartyDropMode(int mode) { m_partyDropMode = mode; }
+
     // Chat commands - the favourites and the named templates of the command
     // window. They belong to the installation, not to a character.
     // A template is stored as "name|command|value|value|...".
@@ -129,6 +133,7 @@ private:
     std::wstring m_fontSelection;
 
     int m_zoom;
+    int m_partyDropMode = 0;
     bool m_sortParticleDraws;
     bool m_vsyncEnabled;
 
