@@ -668,6 +668,19 @@ BOOL CMixRecipes::GetMostSimilarRecipeName(wchar_t* pszNameOut, int iNameLine)
     return GetRecipeName(GetMostSimilarRecipe(), pszNameOut, iNameLine, TRUE);
 }
 
+namespace
+{
+    // Formats into the name buffer which is also the first argument (%ls): through a temporary buffer, because
+    // mu_swprintf(szTempName, L"%ls x%d", szTempName, ...) reads and writes the same buffer (the recipe showed "x55").
+    template <typename... Args>
+    void AppendToName(wchar_t (&name)[100], const wchar_t* format, Args... args)
+    {
+        wchar_t result[100];
+        mu_swprintf_s(result, std::size(result), format, name, args...);
+        wcscpy_s(name, result);
+    }
+}
+
 BOOL CMixRecipes::GetRecipeAdvice(wchar_t* pszAdviceOut, int iAdivceLine)
 {
     if (GetMostSimilarRecipe() == NULL) return FALSE;
@@ -698,7 +711,7 @@ int CMixRecipes::GetSourceName(int iItemNum, wchar_t* pszNameOut, int iNumMixIte
         (pMixRecipeItem->m_iOptionMin == pMixRecipeItem->m_iOptionMax || (pMixRecipeItem->m_iOptionMin == 0 && pMixRecipeItem->m_iOptionMax == 255)))
     {
         if (pMixRecipeItem->m_iDurabilityMin == pMixRecipeItem->m_iDurabilityMax)
-            mu_swprintf(szTempName, L"%ls(%d)", szTempName, pMixRecipeItem->m_iDurabilityMin);
+            AppendToName(szTempName, L"%ls(%d)", pMixRecipeItem->m_iDurabilityMin);
     }
     else
     {
@@ -740,7 +753,7 @@ int CMixRecipes::GetSourceName(int iItemNum, wchar_t* pszNameOut, int iNumMixIte
                 if (szTempName[iNameLen - j] == '+') szTempName[iNameLen - j - 1] = '\0';
         }
         if (pMixRecipeItem->m_iDurabilityMin == pMixRecipeItem->m_iDurabilityMax)
-            mu_swprintf(szTempName, L"%ls(%d)", szTempName, pMixRecipeItem->m_iDurabilityMin);
+            AppendToName(szTempName, L"%ls(%d)", pMixRecipeItem->m_iDurabilityMin);
 
 
         // chaos weapon (mix 1): the server takes only an item of rank 4 (CheckRecipeItem)
@@ -750,35 +763,35 @@ int CMixRecipes::GetSourceName(int iItemNum, wchar_t* pszNameOut, int iNumMixIte
 
         if (pMixRecipeItem->m_iLevelMin == 0 && pMixRecipeItem->m_iLevelMax == 255);
         else if (pMixRecipeItem->m_iLevelMin == pMixRecipeItem->m_iLevelMax)
-            mu_swprintf(szTempName, L"%ls +%d", szTempName, pMixRecipeItem->m_iLevelMin);
+            AppendToName(szTempName, L"%ls +%d", pMixRecipeItem->m_iLevelMin);
         else if (pMixRecipeItem->m_iLevelMin == 0)
-            mu_swprintf(szTempName, L"%ls +%d %ls", szTempName, pMixRecipeItem->m_iLevelMax, I18N::Game::Maximum);
+            AppendToName(szTempName, L"%ls +%d %ls", pMixRecipeItem->m_iLevelMax, I18N::Game::Maximum);
         else if (pMixRecipeItem->m_iLevelMax == 255)
-            mu_swprintf(szTempName, L"%ls +%d %ls", szTempName, pMixRecipeItem->m_iLevelMin, I18N::Game::Minimum);
+            AppendToName(szTempName, L"%ls +%d %ls", pMixRecipeItem->m_iLevelMin, I18N::Game::Minimum);
         else
-            mu_swprintf(szTempName, L"%ls +%d~%d", szTempName, pMixRecipeItem->m_iLevelMin, pMixRecipeItem->m_iLevelMax);
+            AppendToName(szTempName, L"%ls +%d~%d", pMixRecipeItem->m_iLevelMin, pMixRecipeItem->m_iLevelMax);
 
         if (pMixRecipeItem->m_iOptionMin == 0 && pMixRecipeItem->m_iOptionMax == 255);
         else if (pMixRecipeItem->m_iOptionMin == pMixRecipeItem->m_iOptionMax)
-            mu_swprintf(szTempName, L"%ls, %ls +%d", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin);
+            AppendToName(szTempName, L"%ls, %ls +%d", I18N::Game::Option385, pMixRecipeItem->m_iOptionMin);
         else if (pMixRecipeItem->m_iOptionMin == 0)
-            mu_swprintf(szTempName, L"%ls, %ls +%d %ls", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMax, I18N::Game::Maximum);
+            AppendToName(szTempName, L"%ls, %ls +%d %ls", I18N::Game::Option385, pMixRecipeItem->m_iOptionMax, I18N::Game::Maximum);
         else if (pMixRecipeItem->m_iOptionMax == 255)
-            mu_swprintf(szTempName, L"%ls, %ls +%d %ls", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, I18N::Game::Minimum);
+            AppendToName(szTempName, L"%ls, %ls +%d %ls", I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, I18N::Game::Minimum);
         else
-            mu_swprintf(szTempName, L"%ls, %ls +%d~%d", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, pMixRecipeItem->m_iOptionMax);
+            AppendToName(szTempName, L"%ls, %ls +%d~%d", I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, pMixRecipeItem->m_iOptionMax);
     }
 
     if (pMixRecipeItem->m_iCountMin == 0 && pMixRecipeItem->m_iCountMax == 255)
-        mu_swprintf(szTempName, L"%ls (%ls)", szTempName, I18N::Game::RateIncrease);
+        AppendToName(szTempName, L"%ls (%ls)", I18N::Game::RateIncrease);
     else if (pMixRecipeItem->m_iCountMin == pMixRecipeItem->m_iCountMax)
-        mu_swprintf(szTempName, L"%ls x%d", szTempName, pMixRecipeItem->m_iCountMin);
+        AppendToName(szTempName, L"%ls x%d", pMixRecipeItem->m_iCountMin);
     else if (pMixRecipeItem->m_iCountMin == 0)
-        mu_swprintf(szTempName, L"%ls x%d %ls", szTempName, pMixRecipeItem->m_iCountMax, I18N::Game::Maximum);
+        AppendToName(szTempName, L"%ls x%d %ls", pMixRecipeItem->m_iCountMax, I18N::Game::Maximum);
     else if (pMixRecipeItem->m_iCountMax == 255)
-        mu_swprintf(szTempName, L"%ls x%d %ls", szTempName, pMixRecipeItem->m_iCountMin, I18N::Game::Minimum);
+        AppendToName(szTempName, L"%ls x%d %ls", pMixRecipeItem->m_iCountMin, I18N::Game::Minimum);
     else
-        mu_swprintf(szTempName, L"%ls x%d~%d", szTempName, pMixRecipeItem->m_iCountMin, pMixRecipeItem->m_iCountMax);
+        AppendToName(szTempName, L"%ls x%d~%d", pMixRecipeItem->m_iCountMin, pMixRecipeItem->m_iCountMax);
 
     BOOL bPreName = FALSE;
     if (pMixRecipeItem->m_dwSpecialItem & RCP_SP_EXCELLENT)
