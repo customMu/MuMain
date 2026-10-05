@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "MuHelperData.h"
+#include "GameLogic/MuHelper/HelperZenFee.h"
 
 namespace MUHelper
 {
@@ -36,7 +37,7 @@ namespace MUHelper
 		// Session statistics (shown under the helper buttons, for balance tests): reset on start, kept after stop until the next start.
 		void RecordKill() { if (m_bActive) ++m_iSessionKills; }
 		void AddExperience(int64_t iExperience, bool bMaster) { if (m_bActive) (bMaster ? m_iSessionMasterExperience : m_iSessionExperience) += iExperience; }
-		void AddZen(int64_t iZen) { if (m_bActive) m_iSessionZen += iZen; }
+		void AddZen(int64_t iZen) { if (m_bActive) { m_iSessionZen += iZen; m_iSessionZenFee += GameLogic::MuHelper::HelperZenFeeOf(iZen); } }
 		bool HasSessionStats() const { return m_ullSessionStart != 0; }
 		// Clears the session statistics; the time starts again from now (also while the helper is stopped).
 		void ResetSessionStats();
@@ -45,6 +46,8 @@ namespace MUHelper
 		int64_t GetSessionExperience() const { return m_iSessionExperience; }
 		int64_t GetSessionMasterExperience() const { return m_iSessionMasterExperience; }
 		int64_t GetSessionZen() const { return m_iSessionZen; }
+		// The zen which the server kept of the picked up zen (MU Helper zen fee) plus the fee by time, if the server takes it.
+		int64_t GetSessionHelperFee() const { return m_iSessionZenFee + m_iTotalCost; }
 
 		// Hits: dealt by the hero to monsters, and taken by the hero (damage 0 = miss).
 		void AddHitDealt(int64_t iDamage) { if (m_bActive) { ++m_iSessionHitsDealt; if (iDamage > 0) m_iSessionDamageDealt += iDamage; else ++m_iSessionMissesDealt; } }
@@ -140,6 +143,7 @@ namespace MUHelper
 		std::atomic<int64_t> m_iSessionExperience{ 0 };
 		std::atomic<int64_t> m_iSessionMasterExperience{ 0 };
 		std::atomic<int64_t> m_iSessionZen{ 0 };
+		std::atomic<int64_t> m_iSessionZenFee{ 0 };
 		std::atomic<int64_t> m_iSessionDamageDealt{ 0 };
 		std::atomic<int> m_iSessionHitsDealt{ 0 };
 		std::atomic<int> m_iSessionMissesDealt{ 0 };

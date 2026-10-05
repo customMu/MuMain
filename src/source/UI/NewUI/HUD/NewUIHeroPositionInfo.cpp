@@ -430,7 +430,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
 
     FormatCompact(value, std::size(value), zen);
     FormatCompact(rate, std::size(rate), PerHour(zen, ms));
-    FormatCompact(extra, std::size(extra), helper.GetTotalCost());
+    FormatCompact(extra, std::size(extra), helper.GetSessionHelperFee());
     mu_swprintf(line, I18N::Game::ZenLsLsHHelperCostLs, value, rate, extra);
     renderLine();
 

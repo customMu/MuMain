@@ -137,6 +137,7 @@ namespace MUHelper
         m_iSessionExperience = 0;
         m_iSessionMasterExperience = 0;
         m_iSessionZen = 0;
+        m_iSessionZenFee = 0;
         m_iSessionDamageDealt = 0;
         m_iSessionHitsDealt = 0;
         m_iSessionMissesDealt = 0;
