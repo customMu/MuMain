@@ -19,6 +19,7 @@
 
 #include "Render/Terrain/ZzzLodTerrain.h"
 #include "GameLogic/Items/CSItemOption.h"
+#include "GameLogic/Items/SetGuard.h"
 #include "GameLogic/Pets/GIPetManager.h"
 #include "GameLogic/Items/CComGem.h"
 #include "UI/NewUI/Inventory/NewUIInventoryCtrl.h"
@@ -3392,6 +3393,20 @@ void CHARACTER_MACHINE::CalculateDefense()
             Defense += defense;
         }
     }
+    // MG (helm) / RF (gloves): a complete set gives the defense of the piece the class can't wear, at the lowest
+    // level of the set - the same as the server (Set Guard, "Compensate missing pieces").
+    if (const auto setGuard = GameLogic::Items::SetGuard::GetHeroState(); setGuard.IsComplete && setGuard.Set != nullptr)
+    {
+        const int missingGroup = CharacterClass == CLASS_DARK ? ITEM_HELM : (CharacterClass == CLASS_RAGEFIGHTER ? ITEM_GLOVES : -1);
+        if (missingGroup >= 0)
+        {
+            if (const auto* missing = GameLogic::Items::FindArmorRank(missingGroup + setGuard.Set->Number))
+            {
+                Defense += static_cast<WORD>(missing->BaseDefense + GameLogic::Items::ArmorRankLevelBonus(*missing, setGuard.LowestLevel));
+            }
+        }
+    }
+
     Character.Defense += Defense;
 
     // The native complete set defense bonus (+5..+30% for full sets +10..+15) is removed on the server
