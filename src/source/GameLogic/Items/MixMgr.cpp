@@ -9,6 +9,7 @@
 #include "Network/Server/SocketSystem.h"
 #include "GameLogic/Skills/SkillManager.h"
 #include "GameLogic/Items/StackableJewels.h"
+#include "GameLogic/Items/ItemResetRequirements.h"
 
 using namespace SEASON3A;
 
@@ -297,7 +298,7 @@ BOOL CMixRecipes::IsMixSource(ITEM* pItem)
             {
                 continue;
             }
-            if (CheckItem((*iter)->m_MixSources[j], mixitem)
+            if (CheckRecipeItem(**iter, (*iter)->m_MixSources[j], mixitem)
                 && !((*iter)->m_bMixOption == 'B' && IsChaosItem(mixitem))
                 && !((*iter)->m_bMixOption == 'C' && Is380AddedItem(mixitem))
                 && !((*iter)->m_bMixOption == 'D' && IsFenrirAddedItem(mixitem))
@@ -376,7 +377,7 @@ BOOL CMixRecipes::CheckRecipeSub(std::vector<MIX_RECIPE*>::iterator iter, int iN
         if (!IsOptionItem((*iter)->m_MixSources[j])) bFind = FALSE;
         for (int i = 0; i < iNumMixItems; ++i)
         {
-            if (CheckItem((*iter)->m_MixSources[j], pMixItems[i]) && pMixItems[i].m_iTestCount > 0 &&
+            if (CheckRecipeItem(**iter, (*iter)->m_MixSources[j], pMixItems[i]) && pMixItems[i].m_iTestCount > 0 &&
                 (*iter)->m_MixSources[j].m_iCountMax >= iMixRecipeTest[j] + pMixItems[i].m_iTestCount
                 && !((*iter)->m_bMixOption == 'H' && IsSourceOfAttachSeedSphereToArmor(pMixItems[i]))
                 && !((*iter)->m_bMixOption == 'I' && IsSourceOfAttachSeedSphereToWeapon(pMixItems[i]))
@@ -483,7 +484,7 @@ int CMixRecipes::CheckRecipeSimilaritySub(std::vector<MIX_RECIPE*>::iterator ite
     {
         for (int i = 0; i < iNumMixItems; ++i)
         {
-            if (CheckItem((*iter)->m_MixSources[j], pMixItems[i]) && pMixItems[i].m_iTestCount > 0
+            if (CheckRecipeItem(**iter, (*iter)->m_MixSources[j], pMixItems[i]) && pMixItems[i].m_iTestCount > 0
                 && !((*iter)->m_bMixOption == 'H' && IsSourceOfAttachSeedSphereToArmor(pMixItems[i]))
                 && !((*iter)->m_bMixOption == 'I' && IsSourceOfAttachSeedSphereToWeapon(pMixItems[i]))
                 )
@@ -534,6 +535,24 @@ bool CMixRecipes::CheckItem(MIX_RECIPE_ITEM& rItem, CMixItem& rSource)
         return true;
     }
     return false;
+}
+
+bool CMixRecipes::CheckRecipeItem(MIX_RECIPE& rRecipe, MIX_RECIPE_ITEM& rItem, CMixItem& rSource)
+{
+    if (!CheckItem(rItem, rSource))
+    {
+        return false;
+    }
+
+    // Chaos weapon (mix 1): the server takes only an armor piece or weapon of rank 4 as the item (+4 with the option),
+    // not any item (the jewels are sources of a single type).
+    constexpr int ChaosWeaponMix = 1;
+    if (rRecipe.m_iMixID == ChaosWeaponMix && rItem.m_sTypeMin != rItem.m_sTypeMax)
+    {
+        return GameLogic::Items::GetItemRank(rSource.m_sType) == 4;
+    }
+
+    return true;
 }
 
 MIX_RECIPE* CMixRecipes::GetCurRecipe()
@@ -723,37 +742,43 @@ int CMixRecipes::GetSourceName(int iItemNum, wchar_t* pszNameOut, int iNumMixIte
         if (pMixRecipeItem->m_iDurabilityMin == pMixRecipeItem->m_iDurabilityMax)
             mu_swprintf(szTempName, L"%ls(%d)", szTempName, pMixRecipeItem->m_iDurabilityMin);
 
+
+        // chaos weapon (mix 1): the server takes only an item of rank 4 (CheckRecipeItem)
+        constexpr int ChaosWeaponMix = 1;
+        if (GetMostSimilarRecipe()->m_iMixID == ChaosWeaponMix && pMixRecipeItem->m_sTypeMin != pMixRecipeItem->m_sTypeMax)
+            mu_swprintf(szTempName, I18N::Game::GradeDEquipmentItem, 4);
+
         if (pMixRecipeItem->m_iLevelMin == 0 && pMixRecipeItem->m_iLevelMax == 255);
         else if (pMixRecipeItem->m_iLevelMin == pMixRecipeItem->m_iLevelMax)
             mu_swprintf(szTempName, L"%ls +%d", szTempName, pMixRecipeItem->m_iLevelMin);
         else if (pMixRecipeItem->m_iLevelMin == 0)
-            mu_swprintf(szTempName, L"%ls +%d%ls", szTempName, pMixRecipeItem->m_iLevelMax, I18N::Game::Maximum);
+            mu_swprintf(szTempName, L"%ls +%d %ls", szTempName, pMixRecipeItem->m_iLevelMax, I18N::Game::Maximum);
         else if (pMixRecipeItem->m_iLevelMax == 255)
-            mu_swprintf(szTempName, L"%ls +%d%ls", szTempName, pMixRecipeItem->m_iLevelMin, I18N::Game::Minimum);
+            mu_swprintf(szTempName, L"%ls +%d %ls", szTempName, pMixRecipeItem->m_iLevelMin, I18N::Game::Minimum);
         else
             mu_swprintf(szTempName, L"%ls +%d~%d", szTempName, pMixRecipeItem->m_iLevelMin, pMixRecipeItem->m_iLevelMax);
 
         if (pMixRecipeItem->m_iOptionMin == 0 && pMixRecipeItem->m_iOptionMax == 255);
         else if (pMixRecipeItem->m_iOptionMin == pMixRecipeItem->m_iOptionMax)
-            mu_swprintf(szTempName, L"%ls +%d%ls", szTempName, pMixRecipeItem->m_iOptionMin, I18N::Game::Option385);
+            mu_swprintf(szTempName, L"%ls, %ls +%d", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin);
         else if (pMixRecipeItem->m_iOptionMin == 0)
-            mu_swprintf(szTempName, L"%ls +%d%ls%ls", szTempName, pMixRecipeItem->m_iOptionMax, I18N::Game::Option385, I18N::Game::Maximum);
+            mu_swprintf(szTempName, L"%ls, %ls +%d %ls", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMax, I18N::Game::Maximum);
         else if (pMixRecipeItem->m_iOptionMax == 255)
-            mu_swprintf(szTempName, L"%ls +%d%ls%ls", szTempName, pMixRecipeItem->m_iOptionMin, I18N::Game::Option385, I18N::Game::Minimum);
+            mu_swprintf(szTempName, L"%ls, %ls +%d %ls", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, I18N::Game::Minimum);
         else
-            mu_swprintf(szTempName, L"%ls +%d~%d%ls", szTempName, pMixRecipeItem->m_iOptionMin, pMixRecipeItem->m_iOptionMax, I18N::Game::Option385);
+            mu_swprintf(szTempName, L"%ls, %ls +%d~%d", szTempName, I18N::Game::Option385, pMixRecipeItem->m_iOptionMin, pMixRecipeItem->m_iOptionMax);
     }
 
     if (pMixRecipeItem->m_iCountMin == 0 && pMixRecipeItem->m_iCountMax == 255)
         mu_swprintf(szTempName, L"%ls (%ls)", szTempName, I18N::Game::RateIncrease);
     else if (pMixRecipeItem->m_iCountMin == pMixRecipeItem->m_iCountMax)
-        mu_swprintf(szTempName, L"%ls %d%ls", szTempName, pMixRecipeItem->m_iCountMin, I18N::Game::Quantity);
+        mu_swprintf(szTempName, L"%ls x%d", szTempName, pMixRecipeItem->m_iCountMin);
     else if (pMixRecipeItem->m_iCountMin == 0)
-        mu_swprintf(szTempName, L"%ls %d%ls %ls", szTempName, pMixRecipeItem->m_iCountMax, I18N::Game::Quantity, I18N::Game::Maximum);
+        mu_swprintf(szTempName, L"%ls x%d %ls", szTempName, pMixRecipeItem->m_iCountMax, I18N::Game::Maximum);
     else if (pMixRecipeItem->m_iCountMax == 255)
-        mu_swprintf(szTempName, L"%ls %d%ls %ls", szTempName, pMixRecipeItem->m_iCountMin, I18N::Game::Quantity, I18N::Game::Minimum);
+        mu_swprintf(szTempName, L"%ls x%d %ls", szTempName, pMixRecipeItem->m_iCountMin, I18N::Game::Minimum);
     else
-        mu_swprintf(szTempName, L"%ls %d~%d%ls", szTempName, pMixRecipeItem->m_iCountMin, pMixRecipeItem->m_iCountMax, I18N::Game::Quantity);
+        mu_swprintf(szTempName, L"%ls x%d~%d", szTempName, pMixRecipeItem->m_iCountMin, pMixRecipeItem->m_iCountMax);
 
     BOOL bPreName = FALSE;
     if (pMixRecipeItem->m_dwSpecialItem & RCP_SP_EXCELLENT)

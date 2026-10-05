@@ -8425,6 +8425,9 @@
     <value>Equipment item</value>
     <comment>legacy_id=2336</comment>
   </data>
+  <data name="Grade %d equipment item" xml:space="preserve">
+    <value>Grade %d equipment item</value>
+  </data>
   <data name="Weapon item" xml:space="preserve">
     <value>Weapon item</value>
     <comment>legacy_id=2337</comment>
@@ -13025,7 +13028,7 @@
     <value>Master EXP %ls (%ls/h)</value>
   </data>
   <data name="Zen %ls (%ls/h), helper cost %ls" xml:space="preserve">
-    <value>Zen %ls (%ls/h), helper cost %ls</value>
+    <value>Zen %ls (%ls/h), helper fee %ls</value>
   </data>
   <data name="Damage %ls (%ls/s, %ls/h), hits %d%%" xml:space="preserve">
     <value>Damage %ls (%ls/s, %ls/h), hits %d%%</value>

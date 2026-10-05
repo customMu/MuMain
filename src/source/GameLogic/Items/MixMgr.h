@@ -210,7 +210,9 @@ namespace SEASON3A
         bool IsOptionItem(MIX_RECIPE_ITEM& rItem) { return (rItem.m_iCountMin == 0); }	// 옵션(안넣어도 되는) 아이템인가
         BOOL CheckRecipeSub(std::vector<MIX_RECIPE*>::iterator iter, int iNumMixItems, CMixItem* pMixItems);
         int CheckRecipeSimilaritySub(std::vector<MIX_RECIPE*>::iterator iter, int iNumMixItems, CMixItem* pMixItems);	// 유사도 비교
-        bool CheckItem(MIX_RECIPE_ITEM& rItem, CMixItem& rSource);	// 같은 아이템인지 비교
+        bool CheckItem(MIX_RECIPE_ITEM& rItem, CMixItem& rSource);
+        // CheckItem plus the server rules of the recipe: the item of the chaos weapon mix must be of rank 4.
+        bool CheckRecipeItem(MIX_RECIPE& rRecipe, MIX_RECIPE_ITEM& rItem, CMixItem& rSource);	// 같은 아이템인지 비교
         void EvaluateMixItems(int iNumMixItems, CMixItem* pMixItems);
         void CalcMixRate(int iNumMixItems, CMixItem* pMixItems);
         void CalcMixReqZen(int iNumMixItems, CMixItem* pMixItems);
