@@ -6204,7 +6204,15 @@ void ReceiveGetItem(std::span<const BYTE> ReceiveBuffer)
             if (getGold > 0)
             {
                 MUHelper::g_MuHelper.AddZen(getGold);
-                mu_swprintf(szMessage, L"%d %ls %ls", getGold, I18N::Game::Zen, I18N::Game::Obtained);
+                // while the MU Helper runs, the server keeps its fee: show it next to the received zen
+                if (MUHelper::g_MuHelper.IsActive())
+                {
+                    mu_swprintf(szMessage, I18N::Game::DZenObtainedDZenHelperCost, getGold, static_cast<int>(GameLogic::MuHelper::HelperZenFeeOf(getGold)));
+                }
+                else
+                {
+                    mu_swprintf(szMessage, L"%d %ls %ls", getGold, I18N::Game::Zen, I18N::Game::Obtained);
+                }
                 g_pSystemLogBox->AddText(szMessage, SEASON3B::TYPE_SYSTEM_MESSAGE);
             }
         }

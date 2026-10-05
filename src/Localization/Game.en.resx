@@ -13264,4 +13264,7 @@
   <data name="All members must agree. Do you agree?" xml:space="preserve">
     <value>All members must agree. Do you agree?</value>
   </data>
+  <data name="%d Zen obtained (-%d zen helper cost)" xml:space="preserve">
+    <value>%d Zen obtained (-%d zen helper cost)</value>
+  </data>
 </root>
