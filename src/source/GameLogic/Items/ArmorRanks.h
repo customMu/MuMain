@@ -32,11 +32,11 @@ namespace GameLogic::Items
         { ITEM_PANTS + 10, 48, 1 }, // Vine Pants
         { ITEM_GLOVES + 10, 35, 1 }, // Vine Gloves
         { ITEM_BOOTS + 10, 39, 1 }, // Vine Boots
-        { ITEM_HELM + 39, 100, 1 }, // Mistery Helm
-        { ITEM_ARMOR + 39, 145, 1 }, // Mistery Armor
-        { ITEM_PANTS + 39, 123, 1 }, // Mistery Pants
-        { ITEM_GLOVES + 39, 89, 1 }, // Mistery Gloves
-        { ITEM_BOOTS + 39, 100, 1 }, // Mistery Boots
+        { ITEM_HELM + 39, 45, 1 }, // Mistery Helm
+        { ITEM_ARMOR + 39, 65, 1 }, // Mistery Armor
+        { ITEM_PANTS + 39, 55, 1 }, // Mistery Pants
+        { ITEM_GLOVES + 39, 40, 1 }, // Mistery Gloves
+        { ITEM_BOOTS + 39, 45, 1 }, // Mistery Boots
         { ITEM_HELM + 4, 93, 2 }, // Bone Helm
         { ITEM_ARMOR + 4, 134, 2 }, // Bone Armor
         { ITEM_PANTS + 4, 114, 2 }, // Bone Pants
