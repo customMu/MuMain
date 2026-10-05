@@ -547,7 +547,9 @@ static std::uint8_t g_tabBar = 0;
     {
         if (ip->Type == ITEM_DARK_HORSE_ITEM)
         {
-            int Index = 0;
+            // -1 = not found: with 0 the option at the first position was added again on every pet info
+            // until SpecialNum ran past the arrays (heap corruption: the item vanished, crash on teleport)
+            int Index = -1;
             for (int i = 0; i < ip->SpecialNum; ++i)
             {
                 if (ip->Special[i] == AT_SET_OPTION_IMPROVE_DEFENCE)
@@ -557,11 +559,14 @@ static std::uint8_t g_tabBar = 0;
                 }
             }
 
-            if (Index == 0)
+            if (Index < 0)
             {
-                ip->SpecialValue[ip->SpecialNum] = static_cast<std::uint8_t>((5 + (CharacterAttribute->Dexterity / 20) + pPetInfo->m_wLevel * 2) & 0xFF);
-                ip->Special[ip->SpecialNum] = AT_SET_OPTION_IMPROVE_DEFENCE;
-                ip->SpecialNum++;
+                if (ip->SpecialNum < MAX_ITEM_SPECIAL)
+                {
+                    ip->SpecialValue[ip->SpecialNum] = static_cast<std::uint8_t>((5 + (CharacterAttribute->Dexterity / 20) + pPetInfo->m_wLevel * 2) & 0xFF);
+                    ip->Special[ip->SpecialNum] = AT_SET_OPTION_IMPROVE_DEFENCE;
+                    ip->SpecialNum++;
+                }
             }
             else
             {
