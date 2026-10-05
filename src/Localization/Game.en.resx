@@ -13216,4 +13216,52 @@
   <data name="Reset the MU Helper statistics?" xml:space="preserve">
     <value>Reset the MU Helper statistics?</value>
   </data>
+  <data name="In the inventory: %d / %d" xml:space="preserve">
+    <value>In the inventory: %d / %d</value>
+  </data>
+  <data name="Monsters level %d+" xml:space="preserve">
+    <value>Monsters level %d+</value>
+  </data>
+  <data name="Chance %ls per kill" xml:space="preserve">
+    <value>Chance %ls per kill</value>
+  </data>
+  <data name="Boss: %ls" xml:space="preserve">
+    <value>Boss: %ls</value>
+  </data>
+  <data name="Talk to %ls" xml:space="preserve">
+    <value>Talk to %ls</value>
+  </data>
+  <data name="Return to %ls" xml:space="preserve">
+    <value>Return to %ls</value>
+  </data>
+  <data name="Level %d and %d resets needed" xml:space="preserve">
+    <value>Level %d and %d resets needed</value>
+  </data>
+  <data name="Level %d and 1 reset needed" xml:space="preserve">
+    <value>Level %d and 1 reset needed</value>
+  </data>
+  <data name="Level %d needed" xml:space="preserve">
+    <value>Level %d needed</value>
+  </data>
+  <data name="Kill %ls: %d / %d" xml:space="preserve">
+    <value>Kill %ls: %d / %d</value>
+  </data>
+  <data name="Kill %ls: %d" xml:space="preserve">
+    <value>Kill %ls: %d</value>
+  </data>
+  <data name="Drops only while the quest is active" xml:space="preserve">
+    <value>Drops only while the quest is active</value>
+  </data>
+  <data name="Drop mode for new parties" xml:space="preserve">
+    <value>Drop mode for new parties</value>
+  </data>
+  <data name="Drop mode. In a party, all members must agree to a change." xml:space="preserve">
+    <value>Drop mode. In a party, all members must agree to a change.</value>
+  </data>
+  <data name="%ls proposes a new drop mode for the party:" xml:space="preserve">
+    <value>%ls proposes a new drop mode for the party:</value>
+  </data>
+  <data name="All members must agree. Do you agree?" xml:space="preserve">
+    <value>All members must agree. Do you agree?</value>
+  </data>
 </root>

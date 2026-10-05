@@ -18,6 +18,8 @@
 #include "Camera/CameraProjection.h"
 #include "Camera/CameraState.h"
 #include "UI/Combat/MonsterHealthBar.h"
+#include "GameLogic/Monsters/MonsterLevels.h"
+#include "Render/Renderer/MuRenderer.h"
 
 // DevEditor forward declarations (must be at global scope)
 #ifdef _EDITOR
@@ -205,7 +207,17 @@ void SEASON3B::CNewUINameWindow::RenderName()
             {
                 g_pRenderText->SetTextColor(255, 230, 200, 255);
                 g_pRenderText->SetBgColor(100, 0, 0, 255);
-                g_pRenderText->RenderText(320, 2, c->ID, 0, 0, RT3_WRITE_CENTER);
+                // the level of the monster on the server (the client data has the original levels)
+                if (const int level = GameLogic::Monsters::GetMonsterLevel(c->MonsterIndex); level > 0)
+                {
+                    wchar_t text[MAX_MONSTER_NAME + 32];
+                    mu_swprintf(text, L"%ls  (Lv. %d)", c->ID, level);
+                    g_pRenderText->RenderText(320, 2, text, 0, 0, RT3_WRITE_CENTER);
+                }
+                else
+                {
+                    g_pRenderText->RenderText(320, 2, c->ID, 0, 0, RT3_WRITE_CENTER);
+                }
 
                 if (UI::Combat::HealthBar::ShouldRenderSelected(c->HealthStatus))
                 {
@@ -292,6 +304,19 @@ void SEASON3B::CNewUINameWindow::RenderMonsterHealthBars()
         // Bar fixed at ~3/7 of the original width, with 8 segments so each one
         // stays close to the original thickness (see DrawHealthBar for geometry).
         DrawHealthBar(ScreenX, ScreenY, c->HealthStatus, 8, 3.f / 7.f);
+
+        // the level of the monster, left of the bar
+        if (const int level = GameLogic::Monsters::GetMonsterLevel(c->MonsterIndex); level > 0)
+        {
+            wchar_t text[8];
+            mu_swprintf(text, L"%d", level);
+            mu::GetRenderer().SetTexture2D(true);
+            EnableAlphaTest();
+            g_pRenderText->SetFont(g_hFont);
+            g_pRenderText->SetBgColor(0);
+            g_pRenderText->SetTextColor(255, 230, 200, 255);
+            g_pRenderText->RenderText(ScreenX - 18 - 30, ScreenY - 4, text, 28, 0, RT3_SORT_RIGHT);
+        }
     }
 }
 

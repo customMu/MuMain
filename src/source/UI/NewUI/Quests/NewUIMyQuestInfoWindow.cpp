@@ -18,6 +18,14 @@ namespace
 #include "I18N/All.h"
 
 #include "GameLogic/Quests/CSQuest.h"
+#include "GameLogic/Quests/ClassChangeQuests.h"
+#include "Character/CharacterManager.h"
+#include "Engine/Object/ZzzInventory.h"
+
+namespace
+{
+    void RenderClassChangeGoal(const POINT& pos);
+}
 #include "GameLogic/Quests/QuestMng.h"
 #include "Audio/DSPlaySound.h"
 #include "UI/NewUI/NewUISystem.h"
@@ -206,6 +214,7 @@ bool SEASON3B::CNewUIMyQuestInfoWindow::Render()
         RenderImage(IMAGE_MYQUEST_LINE, m_Pos.x, m_Pos.y + 182, 188.f, 21.f);
         RenderJobChangeContents();
         RenderJobChangeState();
+        RenderClassChangeGoal(m_Pos);
     }
     else if (m_eTabBtnIndex == TAB_CASTLE_TEMPLE)
     {
@@ -353,6 +362,184 @@ namespace
             g_pRenderText->RenderText(bx, by + 3, I18N::Game::TakeReward, KillQuestButtonWidth, 0, RT3_SORT_CENTER);
             g_pRenderText->SetFont(g_hFont);
         }
+    }
+}
+
+namespace
+{
+    // The class change quest the hero works on: the first one which isn't finished, in the order of the class
+    // (the same as CSQuest::setQuestLists); -1 when all are done.
+    int GetCurrentClassChangeQuest()
+    {
+        const auto baseClass = gCharacterManager.GetBaseClass(Hero->Class);
+        const bool onlyThirdClass = baseClass == CLASS_DARK || baseClass == CLASS_DARK_LORD || baseClass == CLASS_RAGEFIGHTER;
+        for (int quest = onlyThirdClass ? QUEST_3RD_CHANGE_UP_1 : QUEST_CHANGE_UP_1; quest < QUEST_LIST_END; ++quest)
+        {
+            if (quest == QUEST_COMBO && baseClass != CLASS_KNIGHT)
+            {
+                continue;
+            }
+
+            if (g_csQuest.getQuestState2(quest) != QUEST_END)
+            {
+                return quest;
+            }
+        }
+
+        return -1;
+    }
+
+    // What the class change quest needs and where it is: items (count in the inventory, monsters, map, chance)
+    // or kills, the requirements and the NPC.
+    void RenderClassChangeGoal(const POINT& pos)
+    {
+        using namespace GameLogic::Quests::ClassChange;
+        const int quest = GetCurrentClassChangeQuest();
+        const QuestInfo* info = quest >= 0 ? FindQuest(quest) : nullptr;
+        if (info == nullptr || CharacterAttribute == nullptr)
+        {
+            return;
+        }
+
+        const auto baseClass = gCharacterManager.GetBaseClass(Hero->Class);
+        const bool active = g_csQuest.getQuestState2(quest) == QUEST_ING;
+        const int x = static_cast<int>(pos.x) + 21;
+        const int width = 148;
+        int y = static_cast<int>(pos.y) + 200;
+        wchar_t text[160];
+        g_pRenderText->SetBgColor(0);
+
+        for (const auto& goal : ItemGoals)
+        {
+            if (goal.Quest != quest || (goal.BaseClass != AnyClass && goal.BaseClass != baseClass))
+            {
+                continue;
+            }
+
+            const int missing = g_csQuest.FindQuestItemsInInven(goal.ItemType, 1, goal.ItemLevel);
+            wchar_t name[64] = {};
+            GetItemName(goal.ItemType, goal.ItemLevel, name);
+            g_pRenderText->SetFont(g_hFontBold);
+            if (missing == 0)
+            {
+                g_pRenderText->SetTextColor(120, 230, 120, 255);
+            }
+            else
+            {
+                g_pRenderText->SetTextColor(255, 210, 90, 255);
+            }
+
+            g_pRenderText->RenderText(x, y, name, width, 0, RT3_SORT_CENTER);
+            y += 13;
+
+            g_pRenderText->SetFont(g_hFont);
+            g_pRenderText->SetTextColor(230, 230, 230, 255);
+            if (goal.MonsterLevel > 0)
+            {
+                mu_swprintf(text, I18N::Game::InTheInventoryDD, 1 - missing, 1);
+                g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+                y += 13;
+                mu_swprintf(text, I18N::Game::MonstersLevelD, goal.MonsterLevel);
+                g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+                y += 13;
+                g_pRenderText->RenderText(x, y, goal.Place, width, 0, RT3_SORT_CENTER);
+                y += 13;
+                g_pRenderText->SetTextColor(200, 200, 255, 255);
+                mu_swprintf(text, I18N::Game::ChanceLsPerKill, goal.Chance);
+                g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+                y += 13;
+                g_pRenderText->SetTextColor(181, 181, 181, 255);
+                g_pRenderText->RenderText(x, y, I18N::Game::DropsOnlyWhileTheQuestIsActive, width, 0, RT3_SORT_CENTER);
+                y += 13;
+            }
+            else
+            {
+                mu_swprintf(text, I18N::Game::BossLs, goal.Place);
+                g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+                y += 13;
+            }
+        }
+
+        for (const auto& goal : KillGoals)
+        {
+            if (goal.Quest != quest)
+            {
+                continue;
+            }
+
+            const int kills = active ? g_csQuest.GetKillMobCount(goal.MonsterNumber) : -1;
+            g_pRenderText->SetFont(g_hFont);
+            if (kills >= goal.Count)
+            {
+                g_pRenderText->SetTextColor(120, 230, 120, 255);
+            }
+            else
+            {
+                g_pRenderText->SetTextColor(255, 210, 90, 255);
+            }
+
+            if (kills >= 0)
+            {
+                mu_swprintf(text, I18N::Game::KillLsDD, goal.Monster, (std::min)(kills, goal.Count), goal.Count);
+            }
+            else
+            {
+                mu_swprintf(text, I18N::Game::KillLsD, goal.Monster, goal.Count);
+            }
+
+            g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+            y += 13;
+        }
+
+        for (const auto& goal : KillGoals)
+        {
+            if (goal.Quest == quest)
+            {
+                g_pRenderText->SetTextColor(230, 230, 230, 255);
+                g_pRenderText->RenderText(x, y, goal.Place, width, 0, RT3_SORT_CENTER);
+                break;
+            }
+        }
+
+        // the NPC and, before the quest is taken, the requirements
+        y = static_cast<int>(pos.y) + 326;
+        g_pRenderText->SetFont(g_hFont);
+        if (!active)
+        {
+            const bool levelOk = CharacterAttribute->Level >= info->MinimumLevel;
+            const bool resetsOk = static_cast<int>(CharacterAttribute->Resets) >= info->MinimumResets;
+            if (levelOk && resetsOk)
+            {
+                g_pRenderText->SetTextColor(120, 230, 120, 255);
+            }
+            else
+            {
+                g_pRenderText->SetTextColor(255, 90, 80, 255);
+            }
+
+            if (info->MinimumResets > 1)
+            {
+                mu_swprintf(text, I18N::Game::LevelDAndDResetsNeeded, info->MinimumLevel, info->MinimumResets);
+            }
+            else if (info->MinimumResets == 1)
+            {
+                mu_swprintf(text, I18N::Game::LevelDAnd1ResetNeeded, info->MinimumLevel);
+            }
+            else
+            {
+                mu_swprintf(text, I18N::Game::LevelDNeeded, info->MinimumLevel);
+            }
+
+            g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+            y += 13;
+        }
+
+        g_pRenderText->SetTextColor(36, 242, 252, 255);
+        mu_swprintf(text, active ? I18N::Game::ReturnToLs : I18N::Game::TalkToLs, info->Npc);
+        g_pRenderText->RenderText(x, y, text, width, 0, RT3_SORT_CENTER);
+        y += 13;
+        g_pRenderText->SetTextColor(181, 181, 181, 255);
+        g_pRenderText->RenderText(x, y, info->NpcPlace, width, 0, RT3_SORT_CENTER);
     }
 }
 
