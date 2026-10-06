@@ -26,7 +26,7 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t MinimapSpotsSubCode = 0x06;
         constexpr std::size_t SpotsCountOffset = 5;
         constexpr std::size_t SpotsEntriesOffset = 7;
-        constexpr std::size_t SpotHeaderSize = 6;
+        constexpr std::size_t SpotHeaderSize = 7;   // x, y, level (u16), monsters, flags (1 = boss), name length
         constexpr std::uint8_t KalimaSpotsSubCode = 0x07;
         constexpr std::size_t SpotCountOffset = 4;
         constexpr std::size_t SpotEntriesOffset = 5;
@@ -153,13 +153,14 @@ namespace Network::Server::KalimaPackets
             std::size_t offset = SpotsEntriesOffset;
             for (std::size_t i = 0; i < count && offset + SpotHeaderSize <= packet.size(); ++i)
             {
-                const std::size_t nameLength = packet[offset + 5];
+                const std::size_t nameLength = packet[offset + 6];
                 if (offset + SpotHeaderSize + nameLength > packet.size())
                 {
                     break;
                 }
 
                 GameLogic::Travel::MinimapSpots::Spot spot{ packet[offset], packet[offset + 1], ReadUInt16LittleEndian(packet.subspan(offset + 2)), packet[offset + 4], {} };
+                spot.boss = (packet[offset + 5] & 1) != 0;
                 const auto* name = reinterpret_cast<const char*>(packet.data() + offset + SpotHeaderSize);
                 const int wideLength = MultiByteToWideChar(CP_UTF8, 0, name, static_cast<int>(nameLength), nullptr, 0);
                 spot.name.resize(static_cast<std::size_t>(wideLength));

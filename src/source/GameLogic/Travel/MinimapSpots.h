@@ -15,6 +15,7 @@ namespace GameLogic::Travel::MinimapSpots
         std::uint16_t level;
         std::uint8_t count;
         std::wstring name;
+        bool boss = false;
     };
 
     void SetSpots(std::vector<Spot> spots);

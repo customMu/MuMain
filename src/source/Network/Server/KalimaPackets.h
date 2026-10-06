@@ -20,7 +20,7 @@ namespace Network::Server::KalimaPackets
     //                   [can re-enter] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
     //                                                                       - entry dialog of the Kalima instance (Lugard)
     //   C1 04 FB 05                                                         - enter the Kalima instance (client to server)
-    //   C2 [size] FB 06 [count: u16] count x [x, y, level: u16, monsters, name length, name: UTF-8]
+    //   C2 [size] FB 06 [count: u16] count x [x, y, level: u16, monsters, flags (1 = boss), name length, name: UTF-8]
     //                                                                       - monster spots of the map for the minimap
     //   C1 [size] FB 07 [count] count x [x, y]                              - spots of the Kalima instance with living monsters
     //   C1 07 FB 08 [killed packs] [packs] [boss: 0 not yet, 1 alive, 2 defeated] - progress of the Kalima instance

@@ -416,6 +416,9 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
     constexpr unsigned int BigSpotColor = 0xFFE0A21A;
     constexpr unsigned int BigSpotLightColor = 0xFFFFE27A;
     constexpr int BigSpotMonsters = 5;
+    // bosses: a bigger crimson diamond with a gold heart
+    constexpr unsigned int BossColor = 0xFFB0151C;
+    constexpr unsigned int BossLightColor = 0xFFFF4A3D;
     constexpr unsigned int SpotBorderColor = 0xFF000000;
     constexpr unsigned int TargetColor = 0xFF5AFF6E;
     constexpr float HoverRange = 6.f;
@@ -434,8 +437,16 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
             continue;
         }
 
-        const bool big = spot.count > BigSpotMonsters;
-        RenderSpotDiamond(sx, sy, big ? 4 : 3, big ? BigSpotColor : SpotColor, big ? BigSpotLightColor : SpotLightColor);
+        if (spot.boss)
+        {
+            RenderSpotDiamond(sx, sy, 5, BossColor, BossLightColor);
+            RenderSpotDiamond(sx, sy, 1, BigSpotColor, BigSpotLightColor);
+        }
+        else
+        {
+            const bool big = spot.count > BigSpotMonsters;
+            RenderSpotDiamond(sx, sy, big ? 4 : 3, big ? BigSpotColor : SpotColor, big ? BigSpotLightColor : SpotLightColor);
+        }
         if (std::abs(MouseX - sx) <= HoverRange && std::abs(MouseY - sy) <= HoverRange)
         {
             hovered = &spot;
@@ -475,7 +486,7 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
     if (hovered != nullptr)
     {
         wchar_t text[96];
-        mu_swprintf_s(text, std::size(text), L"%ls  Lv %d  x%d", hovered->name.c_str(), static_cast<int>(hovered->level), static_cast<int>(hovered->count));
+        mu_swprintf_s(text, std::size(text), hovered->boss ? L"%ls  Lv %d  (Boss)" : L"%ls  Lv %d  x%d", hovered->name.c_str(), static_cast<int>(hovered->level), static_cast<int>(hovered->count));
         RenderTipText(static_cast<int>(hoveredX) + 8, static_cast<int>(hoveredY) - 14, text);
     }
 
