@@ -381,6 +381,28 @@ bool SEASON3B::CNewUIMiniMap::Check_Mouse(int mx, int my)
     return !GameLogic::Travel::MinimapWalk::Start(mapX, mapY);
 }
 
+namespace
+{
+    // A diamond of 1 px rows around (cx, cy): the dark outline, the color with a lighter upper half and a highlight.
+    void RenderSpotDiamond(const float cx, const float cy, const int radius, const unsigned int color, const unsigned int lightColor)
+    {
+        constexpr unsigned int OutlineColor = 0xE0000000;
+        for (int dy = -(radius + 1); dy <= radius + 1; ++dy)
+        {
+            const int halfWidth = radius + 1 - (dy < 0 ? -dy : dy);
+            RenderColorQuadARGB(cx - halfWidth - 0.5f, cy + dy - 0.5f, static_cast<float>(halfWidth * 2 + 1), 1.f, OutlineColor);
+        }
+
+        for (int dy = -radius; dy <= radius; ++dy)
+        {
+            const int halfWidth = radius - (dy < 0 ? -dy : dy);
+            RenderColorQuadARGB(cx - halfWidth - 0.5f, cy + dy - 0.5f, static_cast<float>(halfWidth * 2 + 1), 1.f, dy < 0 ? lightColor : color);
+        }
+
+        RenderColorQuadARGB(cx - 1.5f, cy - radius + 0.5f, 1.f, 1.f, 0xF0FFFFFF);
+    }
+}
+
 void SEASON3B::CNewUIMiniMap::RenderSpots()
 {
     if (Hero == nullptr)
@@ -388,10 +410,14 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
         return;
     }
 
-    constexpr unsigned int SpotColor = 0xFFFF5A3C;
+    constexpr unsigned int SpotColor = 0xFFE8442C;
+    constexpr unsigned int SpotLightColor = 0xFFFF8A66;
+    // spots with more monsters than the usual 5 ("good" spots) are gold and bigger
+    constexpr unsigned int BigSpotColor = 0xFFE0A21A;
+    constexpr unsigned int BigSpotLightColor = 0xFFFFE27A;
+    constexpr int BigSpotMonsters = 5;
     constexpr unsigned int SpotBorderColor = 0xFF000000;
     constexpr unsigned int TargetColor = 0xFF5AFF6E;
-    constexpr float SpotSize = 5.f;
     constexpr float HoverRange = 6.f;
 
     const float length = static_cast<float>(m_Lenth[m_MiniPos].x);
@@ -408,8 +434,8 @@ void SEASON3B::CNewUIMiniMap::RenderSpots()
             continue;
         }
 
-        RenderColorQuadARGB(sx - (SpotSize / 2.f) - 1.f, sy - (SpotSize / 2.f) - 1.f, SpotSize + 2.f, SpotSize + 2.f, SpotBorderColor);
-        RenderColorQuadARGB(sx - (SpotSize / 2.f), sy - (SpotSize / 2.f), SpotSize, SpotSize, SpotColor);
+        const bool big = spot.count > BigSpotMonsters;
+        RenderSpotDiamond(sx, sy, big ? 4 : 3, big ? BigSpotColor : SpotColor, big ? BigSpotLightColor : SpotLightColor);
         if (std::abs(MouseX - sx) <= HoverRange && std::abs(MouseY - sy) <= HoverRange)
         {
             hovered = &spot;
