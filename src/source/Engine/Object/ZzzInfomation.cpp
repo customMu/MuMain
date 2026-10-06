@@ -3194,24 +3194,11 @@ void CHARACTER_MACHINE::CalculateCurseDamage()
 
 void CHARACTER_MACHINE::CalculateAttackRating()
 {
-    WORD Strength = Character.Strength + Character.AddStrength;
-    WORD Dexterity = Character.Dexterity + Character.AddDexterity;
-    WORD Charisma = Character.Charisma + Character.AddCharisma;
-
-    if (gCharacterManager.GetBaseClass(Character.Class) == CLASS_DARK_LORD)
-    {
-        Character.AttackRating = static_cast<WORD>(
-            (((Character.Level * 5) + (Dexterity * 5) / 2) + (Strength / 6) + (Charisma / 10)) & 0xFFFF);
-    }
-    else if (gCharacterManager.GetBaseClass(Character.Class) == CLASS_RAGEFIGHTER)
-    {
-        Character.AttackRating =
-            static_cast<WORD>((((Character.Level * 3) + (Dexterity * 5) / 4) + (Strength / 6)) & 0xFFFF);
-    }
-    else
-    {
-        Character.AttackRating = static_cast<WORD>((((Character.Level * 5) + (Dexterity * 3) / 2) + (Strength / 4)) & 0xFFFF);
-    }
+    // accuracy from agility (same as the server, tools/balance/accuracy_speed.py):
+    // 5 x level + 4/3 x agility, the elf 1 x agility; strength and command give no attack rate
+    const int Dexterity = Character.Dexterity + Character.AddDexterity;
+    const int agilityPart = gCharacterManager.GetBaseClass(Character.Class) == CLASS_ELF ? Dexterity : Dexterity * 4 / 3;
+    Character.AttackRating = static_cast<WORD>(std::min(0xFFFF, Character.Level * 5 + agilityPart));
 
     g_csItemOption.PlusSpecial(&Character.AttackRating, AT_SET_OPTION_IMPROVE_ATTACKING_PERCENT);
 
