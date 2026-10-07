@@ -41,6 +41,7 @@
 #include "GameLogic/Items/ItemRequirements.h"
 #include "GameLogic/Items/RepairPrice.h"
 #include "GameLogic/Items/ArmorRanks.h"
+#include "GameLogic/Combat/SkillCastTimeOptions.h"
 #include "GameLogic/Items/WeaponRanks.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
 #include "GameLogic/Items/PotionCooldown.h"
@@ -5167,6 +5168,18 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 
                     TextBold[TextNum] = true; TextNum++;
 
+                    mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
+                }
+                else if (const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4,
+                         skill = GameLogic::Combat::SkillCastTime::OptionSkill(ip->Type / MAX_ITEM_INDEX, ip->Type % MAX_ITEM_INDEX, ip->Jewel_Of_Harmony_Option, family);
+                         skill > 0)
+                {
+                    // harmony options 11, 12, 13 of the rank 7-8 weapons: the fix time of a skill of the class (session 12)
+                    mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
+                    const int percent = static_cast<int>(GameLogic::Combat::SkillCastTime::OptionCutOf(ip->Jewel_Of_Harmony_OptionLevel, family) * 100.f + 0.5f);
+                    mu_swprintf(TextList[TextNum], I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
+                    TextListColor[TextNum] = TEXT_COLOR_YELLOW;
+                    TextBold[TextNum] = true; TextNum++;
                     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
                 }
                 else

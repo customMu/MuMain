@@ -31,6 +31,8 @@ namespace MUHelper
 		void TriggerStart();
 		void TriggerStop();
 		bool IsActive() { return m_bActive; }
+		// The hero's attack or skill animation just ended: act now instead of waiting for the next timer tick.
+		void OnHeroSwingFinished();
 		void AddCost(int iCost) { m_iTotalCost += iCost; }
 		int GetTotalCost() { return m_iTotalCost; }
 

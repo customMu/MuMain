@@ -1042,8 +1042,10 @@ void CMixRecipes::CalcMixReqZen(int iNumMixItems, CMixItem* pMixItems)
         {
             iItemType = SI_Defense;
         }
-        m_dwRequiredZen = g_pUIJewelHarmonyinfo->GetHarmonyJewelOptionInfo(iItemType,
-            pMixItems[0].m_wHarmonyOption).Zen[pMixItems[0].m_wHarmonyOptionLevel];
+        // the fix time options 11, 12, 13 of the rank 7-8 weapons are not in the client harmony table: zen of option 1
+        const int harmonyOption = g_pUIJewelHarmonyinfo->IsHarmonyJewelOption(iItemType, pMixItems[0].m_wHarmonyOption)
+            ? pMixItems[0].m_wHarmonyOption : 1;
+        m_dwRequiredZen = g_pUIJewelHarmonyinfo->GetHarmonyJewelOptionInfo(iItemType, harmonyOption).Zen[pMixItems[0].m_wHarmonyOptionLevel];
     }
     break;
     default:

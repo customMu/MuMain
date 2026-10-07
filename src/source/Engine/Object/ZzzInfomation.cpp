@@ -3343,18 +3343,18 @@ void CHARACTER_MACHINE::CalculateDefense()
 
     int CharacterClass = gCharacterManager.GetBaseClass(Character.Class);
 
-    // Server data (class-defense-balance.sql): Agility -> Base Defense is the original coefficient x0.3
-    // (DK 1/3 -> 1/10). The window shows the base defense; a monster hit is reduced by a class share of it
-    // (Final Defense = Base Defense x 0.1625 .. 0.25).
+    // Server data (class-balance.sql, session 12): 1:1 defense - a monster hit is reduced by this number (Final Defense =
+    // Base Defense). Agility gives the defense it gave before (the session 8 coefficient x the old class share), the
+    // armor numbers already have the armor of their class (ArmorRanks.h), shields count x the armor of the class.
     switch (CharacterClass)
     {
-    case CLASS_KNIGHT: Character.Defense = Dexterity / 10; break;
+    case CLASS_KNIGHT: Character.Defense = static_cast<WORD>(Dexterity * 0.025f); break;          // 1/10 x 0.25
     case CLASS_WIZARD:
-    case CLASS_SUMMONER: Character.Defense = Dexterity * 3 / 40; break;
-    case CLASS_DARK: Character.Defense = Dexterity * 3 / 50; break;
-    case CLASS_DARK_LORD: Character.Defense = Dexterity * 3 / 70; break;
-    case CLASS_RAGEFIGHTER: Character.Defense = Dexterity * 3 / 80; break;
-    default: Character.Defense = Dexterity * 3 / 100; break; // Elf
+    case CLASS_SUMMONER: Character.Defense = static_cast<WORD>(Dexterity * 0.0140625f); break;    // 3/40 x 0.1875
+    case CLASS_DARK: Character.Defense = static_cast<WORD>(Dexterity * 0.01275f); break;          // 3/50 x 0.2125
+    case CLASS_DARK_LORD: Character.Defense = static_cast<WORD>(Dexterity * (3.f / 70.f * 0.2375f)); break;
+    case CLASS_RAGEFIGHTER: Character.Defense = static_cast<WORD>(Dexterity * 0.009375f); break;  // 3/80 x 0.25
+    default: Character.Defense = static_cast<WORD>(Dexterity * 0.004875f); break;                // elf: 3/100 x 0.1625
     }
 
     WORD    Defense = 0;
@@ -3376,6 +3376,12 @@ void CHARACTER_MACHINE::CalculateDefense()
             }
 
             defense -= (WORD)(defense * percent);
+
+            if (i == EQUIPMENT_WEAPON_LEFT && Equipment[i].Type >= ITEM_SHIELD && Equipment[i].Type < ITEM_SHIELD + MAX_ITEM_INDEX
+                && CharacterClass >= 0 && CharacterClass < static_cast<int>(std::size(GameLogic::Items::ClassArmor)))
+            {
+                defense = static_cast<WORD>(defense * GameLogic::Items::ClassArmor[CharacterClass]);
+            }
 
             Defense += defense;
         }

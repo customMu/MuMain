@@ -40,6 +40,9 @@
 #include "Engine/Physics/PhysicsManager.h"
 #include "Engine/AI/GOBoid.h"
 #include "GameLogic/Items/CSItemOption.h"
+#include "GameLogic/Combat/SkillCastTimeOptions.h"
+#include "MUHelper/MuHelper.h"
+#include <array>
 
 // Phase 5: Camera system includes for 3D frustum culling
 #include "Camera/CameraManager.h"
@@ -807,224 +810,294 @@ void SetPlayerWalk(CHARACTER* c)
 extern int CurrentSkill;
 int AttackHand = 0;
 
-#define RGZ_FIX_ATTACK_SPEED
 
+namespace
+{
+    // PlaySpeed of the attack and skill actions of the player model for an attack and magic speed; touched marks the
+    // actions which are set here (the attacks and skills).
+    void ApplyAttackSpeeds(int attackSpeed, int magicSpeed, std::array<bool, MAX_PLAYER_ACTION>* touched)
+    {
+        auto set = [touched](int action, float speed)
+        {
+            Models[MODEL_PLAYER].Actions[action].PlaySpeed = speed;
+            if (touched != nullptr)
+            {
+                (*touched)[action] = true;
+            }
+        };
+
+        float AttackSpeed1 = attackSpeed;
+        float MagicSpeed1 = magicSpeed;
+        float MagicSpeed2 = magicSpeed;
+
+        if (attackSpeed >= 509 && attackSpeed <= 549)
+        {
+            AttackSpeed1 = AttackSpeed1 * 0.0026000f;
+        }
+        else if (attackSpeed >= 550 && attackSpeed <= 750)
+        {
+            AttackSpeed1 = AttackSpeed1 * 0.0017000f;
+        }
+        else
+        {
+            AttackSpeed1 = AttackSpeed1 * 0.0040000f;
+        }
+
+        if (magicSpeed >= 509 && magicSpeed <= 549)
+        {
+            MagicSpeed1 = MagicSpeed1 * 0.0026000f;
+        }
+        else if (magicSpeed >= 550 && magicSpeed <= 750)
+        {
+            MagicSpeed1 = MagicSpeed1 * 0.0017000f;
+        }
+        else
+        {
+            MagicSpeed1 = MagicSpeed1 * 0.0040000f;
+        }
+
+        if (magicSpeed >= 455 && magicSpeed <= 479)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0024700f;
+        }
+        else if (magicSpeed >= 605 && magicSpeed <= 636)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0019000f;
+        }
+        else if (magicSpeed >= 637 && magicSpeed <= 668)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0018000f;
+        }
+        else if (magicSpeed >= 669 && magicSpeed <= 688)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0017000f;
+        }
+        else if (magicSpeed >= 855 && magicSpeed <= 1040)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0016300f;
+        }
+        else if (magicSpeed >= 1041 && magicSpeed <= 1104)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0015500f;
+        }
+        else if (magicSpeed >= 1301 && magicSpeed <= 1500)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0017500f;
+        }
+        else if (magicSpeed >= 1501 && magicSpeed <= 1524)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0015000f;
+        }
+        else if (magicSpeed >= 1525 && magicSpeed <= 1800)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0014500f;
+        }
+        else if (magicSpeed >= 1801 && magicSpeed <= 1999)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0013000f;
+        }
+        else if (magicSpeed >= 2000 && magicSpeed <= 2167)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0012500f;
+        }
+        else if (magicSpeed >= 2168 && magicSpeed <= 2354)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0011500f;
+        }
+        else if (magicSpeed >= 2855 && magicSpeed <= 3011)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0009000f;
+        }
+        else if (magicSpeed >= 3011)
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0008100f;
+        }
+        else
+        {
+            MagicSpeed2 = MagicSpeed2 * 0.0020000f;
+        }
+
+        set(PLAYER_ATTACK_FIST, 0.6f + AttackSpeed1);
+
+        for (int i = PLAYER_ATTACK_SWORD_RIGHT1; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
+        {
+            set(i, 0.25f + AttackSpeed1);
+        }
+
+        set(PLAYER_ATTACK_SKILL_SWORD1, 0.30f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SWORD2, 0.30f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SWORD3, 0.27f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SWORD4, 0.30f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SWORD5, 0.24f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_WHEEL, 0.24f + AttackSpeed1);
+        set(PLAYER_ATTACK_DEATHSTAB, 0.25f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SPEAR, 0.30f + AttackSpeed1);
+        set(PLAYER_SKILL_RIDER, 0.3f + AttackSpeed1);
+        set(PLAYER_SKILL_RIDER_FLY, 0.3f + AttackSpeed1);
+
+        set(PLAYER_ATTACK_TWO_HAND_SWORD_TWO, 0.25f + AttackSpeed1);
+
+        for (int i = PLAYER_ATTACK_BOW; i <= PLAYER_ATTACK_FLY_CROSSBOW; i++)
+            set(i, 0.30f + AttackSpeed1);
+        for (int i = PLAYER_ATTACK_RIDE_BOW; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
+            set(i, 0.30f + AttackSpeed1);
+
+        set(PLAYER_SKILL_ELF1, 0.25f + MagicSpeed1);
+
+        for (int i = PLAYER_SKILL_HAND1; i <= PLAYER_SKILL_WEAPON2; i++)
+            set(i, 0.29f + MagicSpeed2);
+
+        set(PLAYER_SKILL_TELEPORT, 0.30f + MagicSpeed2);
+        set(PLAYER_SKILL_FLASH, 0.40f + MagicSpeed2);
+        set(PLAYER_SKILL_INFERNO, 0.60f + MagicSpeed2);
+        set(PLAYER_SKILL_HELL, 0.50f + MagicSpeed2);
+        set(PLAYER_RIDE_SKILL, 0.30f + MagicSpeed2);
+
+        set(PLAYER_SKILL_HELL_BEGIN, 0.50f + MagicSpeed2);
+        set(PLAYER_ATTACK_STRIKE, 0.25f + AttackSpeed1);
+        set(PLAYER_ATTACK_RIDE_STRIKE, 0.2f + AttackSpeed1);
+        set(PLAYER_ATTACK_RIDE_HORSE_SWORD, 0.25f + AttackSpeed1);
+        set(PLAYER_ATTACK_RIDE_ATTACK_FLASH, 0.40f + MagicSpeed2);
+        set(PLAYER_ATTACK_RIDE_ATTACK_MAGIC, 0.3f + MagicSpeed2);
+
+        set(PLAYER_FENRIR_ATTACK, 0.25f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_STRIKE, 0.2f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_SWORD, 0.25f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_FLASH, 0.40f + MagicSpeed2);
+        set(PLAYER_FENRIR_ATTACK_TWO_SWORD, 0.25f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_MAGIC, 0.37f + MagicSpeed2);
+        set(PLAYER_FENRIR_ATTACK_CROSSBOW, 0.30f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_SPEAR, 0.25f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_ONE_SWORD, 0.25f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK_BOW, 0.30f + AttackSpeed1);
+
+        for (int i = PLAYER_ATTACK_BOW_UP; i <= PLAYER_ATTACK_RIDE_CROSSBOW_UP; ++i)
+        {
+            set(i, 0.30f + AttackSpeed1);
+        }
+
+        set(PLAYER_ATTACK_ONE_FLASH, 0.4f + AttackSpeed1);
+        set(PLAYER_ATTACK_RUSH, 0.3f + AttackSpeed1);
+        set(PLAYER_ATTACK_DEATH_CANNON, 0.2f + AttackSpeed1);
+
+        set(PLAYER_SKILL_SLEEP, 0.3f + MagicSpeed2);
+        set(PLAYER_SKILL_SLEEP_UNI, 0.3f + MagicSpeed2);
+        set(PLAYER_SKILL_SLEEP_DINO, 0.3f + MagicSpeed2);
+        set(PLAYER_SKILL_SLEEP_FENRIR, 0.3f + MagicSpeed2);
+
+        set(PLAYER_SKILL_LIGHTNING_ORB, 0.4f + MagicSpeed2);
+        set(PLAYER_SKILL_LIGHTNING_ORB_UNI, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_LIGHTNING_ORB_DINO, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_LIGHTNING_ORB_FENRIR, 0.25f + MagicSpeed2);
+
+        set(PLAYER_SKILL_CHAIN_LIGHTNING, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_UNI, 0.15f + MagicSpeed2);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_DINO, 0.15f + MagicSpeed2);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_FENRIR, 0.15f + MagicSpeed2);
+
+        set(PLAYER_SKILL_DRAIN_LIFE, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_DRAIN_LIFE_UNI, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_DRAIN_LIFE_DINO, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_DRAIN_LIFE_FENRIR, 0.25f + MagicSpeed2);
+
+        set(PLAYER_SKILL_GIGANTICSTORM, 0.55f + MagicSpeed1);
+        set(PLAYER_SKILL_FLAMESTRIKE, 0.69f + MagicSpeed2);
+        set(PLAYER_SKILL_LIGHTNING_SHOCK, 0.35f + MagicSpeed2);
+
+        set(PLAYER_SKILL_SUMMON, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_SUMMON_UNI, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_SUMMON_DINO, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_SUMMON_FENRIR, 0.25f + MagicSpeed2);
+
+        set(PLAYER_SKILL_BLOW_OF_DESTRUCTION, 0.3f + AttackSpeed1);
+        set(PLAYER_RECOVER_SKILL, 0.33f);
+        set(PLAYER_SKILL_SWELL_OF_MP, 0.2f);
+
+        set(PLAYER_ATTACK_SKILL_FURY_STRIKE, 0.38f);
+        set(PLAYER_SKILL_VITALITY, 0.34f);
+        set(PLAYER_SKILL_HELL_START, 0.30f);
+        set(PLAYER_ATTACK_TELEPORT, 0.28f);
+        set(PLAYER_ATTACK_RIDE_TELEPORT, 0.3f);
+        set(PLAYER_ATTACK_DARKHORSE, 0.3f);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_TELEPORT, 0.3f);
+        set(PLAYER_ATTACK_REMOVAL, 0.28f);
+
+        float RageAttackSpeed = attackSpeed * 0.002f;
+
+        set(PLAYER_SKILL_THRUST, 0.4f + RageAttackSpeed);
+        set(PLAYER_SKILL_STAMP, 0.4f + RageAttackSpeed);
+        set(PLAYER_SKILL_GIANTSWING, 0.4f + RageAttackSpeed);
+        set(PLAYER_SKILL_DARKSIDE_READY, 0.3f + RageAttackSpeed);
+        set(PLAYER_SKILL_DARKSIDE_ATTACK, 0.3f + RageAttackSpeed);
+        set(PLAYER_SKILL_DRAGONKICK, 0.4f + RageAttackSpeed);
+        set(PLAYER_SKILL_DRAGONLORE, 0.3f + RageAttackSpeed);
+        set(PLAYER_SKILL_ATT_UP_OURFORCES, 0.35f);
+        set(PLAYER_SKILL_HP_UP_OURFORCES, 0.35f);
+        set(PLAYER_RAGE_FENRIR_ATTACK_RIGHT, 0.25f + RageAttackSpeed);
+    }
+
+    // The share by which the harmony option of the hero's weapon lowers the fix time of the skill (0 if none).
+    // Same rules as the server plugin "Skill cast time" (GameLogic/Combat/SkillCastTime.h).
+    float GetHeroFixCut(int skill)
+    {
+        using namespace GameLogic::Combat::SkillCastTime;
+        if (skill <= 0 || CharacterMachine == nullptr)
+        {
+            return 0.f;
+        }
+
+        const int baseSkill = gSkillManager.MasterSkillToBaseSkillIndex(static_cast<ActionSkillType>(skill));
+        const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
+        float cut = 0.f;
+        for (const int slot : { EQUIPMENT_WEAPON_RIGHT, EQUIPMENT_WEAPON_LEFT })
+        {
+            const ITEM& item = CharacterMachine->Equipment[slot];
+            if (item.Type < 0 || item.Durability == 0)
+            {
+                continue;
+            }
+
+            if (OptionSkill(item.Type / MAX_ITEM_INDEX, item.Type % MAX_ITEM_INDEX, item.Jewel_Of_Harmony_Option, family) == baseSkill)
+            {
+                cut += OptionCutOf(item.Jewel_Of_Harmony_OptionLevel, family);
+            }
+        }
+
+        return std::min(cut, 0.9f);
+    }
+}
+
+// Session 12: every attack and skill action plays at most as fast as at the fix (attack speed 335 / magic speed 285 =
+// 10 000 agility + a median weapon, at least 0.15 s); the harmony option of a rank 7-8 weapon lowers the fix of its
+// skill; nothing plays faster than 0.12 s. The server refuses earlier casts (plugin "Skill cast time").
 void SetAttackSpeed()
 {
-#ifndef RGZ_FIX_ATTACK_SPEED
-    float AttackSpeed1 = CharacterAttribute->AttackSpeed * 0.004f;
-    float MagicSpeed1 = CharacterAttribute->MagicSpeed * 0.004f;
-    float MagicSpeed2 = CharacterAttribute->MagicSpeed * 0.002f;
-#else
-    float AttackSpeed1 = CharacterAttribute->AttackSpeed;
-    float MagicSpeed1 = CharacterAttribute->MagicSpeed;
-    float MagicSpeed2 = CharacterAttribute->MagicSpeed;
-
-    if (CharacterAttribute->AttackSpeed >= 509 && CharacterAttribute->AttackSpeed <= 549)
+    using namespace GameLogic::Combat::SkillCastTime;
+    std::array<float, MAX_PLAYER_ACTION> atFix{};
+    ApplyAttackSpeeds(static_cast<int>(AttackSpeedAtFix), static_cast<int>(MagicSpeedAtFix), nullptr);
+    for (int action = 0; action < MAX_PLAYER_ACTION; ++action)
     {
-        AttackSpeed1 = AttackSpeed1 * 0.0026000f;
-    }
-    else if (CharacterAttribute->AttackSpeed >= 550 && CharacterAttribute->AttackSpeed <= 750)
-    {
-        AttackSpeed1 = AttackSpeed1 * 0.0017000f;
-    }
-    else
-    {
-        AttackSpeed1 = AttackSpeed1 * 0.0040000f;
+        atFix[action] = Models[MODEL_PLAYER].Actions[action].PlaySpeed;
     }
 
-    if (CharacterAttribute->MagicSpeed >= 509 && CharacterAttribute->MagicSpeed <= 549)
+    std::array<bool, MAX_PLAYER_ACTION> touched{};
+    ApplyAttackSpeeds(CharacterAttribute->AttackSpeed, CharacterAttribute->MagicSpeed, &touched);
+
+    const int currentSkill = Hero != nullptr && Hero->CurrentSkill < MAX_SKILLS ? static_cast<int>(CharacterAttribute->Skill[Hero->CurrentSkill]) : 0;
+    const float cut = GetHeroFixCut(currentSkill);
+    for (int action = 0; action < MAX_PLAYER_ACTION; ++action)
     {
-        MagicSpeed1 = MagicSpeed1 * 0.0026000f;
+        auto& animation = Models[MODEL_PLAYER].Actions[action];
+        const float keys = static_cast<float>(animation.LockPositions ? animation.NumAnimationKeys - 1 : animation.NumAnimationKeys);
+        if (!touched[action] || keys <= 0.f)
+        {
+            continue;
+        }
+
+        const float fixSpeed = std::min(atFix[action], keys / (FixFloorSeconds * 25.f));
+        const float maxSpeed = std::min(fixSpeed / (1.f - cut), keys / (CastFloorSeconds * 25.f));
+        animation.PlaySpeed = std::min(animation.PlaySpeed, maxSpeed);
     }
-    else if (CharacterAttribute->MagicSpeed >= 550 && CharacterAttribute->MagicSpeed <= 750)
-    {
-        MagicSpeed1 = MagicSpeed1 * 0.0017000f;
-    }
-    else
-    {
-        MagicSpeed1 = MagicSpeed1 * 0.0040000f;
-    }
-
-    if (CharacterAttribute->MagicSpeed >= 455 && CharacterAttribute->MagicSpeed <= 479)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0024700f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 605 && CharacterAttribute->MagicSpeed <= 636)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0019000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 637 && CharacterAttribute->MagicSpeed <= 668)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0018000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 669 && CharacterAttribute->MagicSpeed <= 688)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0017000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 855 && CharacterAttribute->MagicSpeed <= 1040)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0016300f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 1041 && CharacterAttribute->MagicSpeed <= 1104)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0015500f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 1301 && CharacterAttribute->MagicSpeed <= 1500)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0017500f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 1501 && CharacterAttribute->MagicSpeed <= 1524)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0015000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 1525 && CharacterAttribute->MagicSpeed <= 1800)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0014500f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 1801 && CharacterAttribute->MagicSpeed <= 1999)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0013000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 2000 && CharacterAttribute->MagicSpeed <= 2167)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0012500f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 2168 && CharacterAttribute->MagicSpeed <= 2354)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0011500f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 2855 && CharacterAttribute->MagicSpeed <= 3011)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0009000f;
-    }
-    else if (CharacterAttribute->MagicSpeed >= 3011)
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0008100f;
-    }
-    else
-    {
-        MagicSpeed2 = MagicSpeed2 * 0.0020000f;
-    }
-#endif
-
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_FIST].PlaySpeed = 0.6f + AttackSpeed1;
-
-    for (int i = PLAYER_ATTACK_SWORD_RIGHT1; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
-    {
-        Models[MODEL_PLAYER].Actions[i].PlaySpeed = 0.25f + AttackSpeed1;
-    }
-
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SWORD1].PlaySpeed = 0.30f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SWORD2].PlaySpeed = 0.30f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SWORD3].PlaySpeed = 0.27f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SWORD4].PlaySpeed = 0.30f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SWORD5].PlaySpeed = 0.24f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_WHEEL].PlaySpeed = 0.24f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_DEATHSTAB].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_SPEAR].PlaySpeed = 0.30f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_RIDER].PlaySpeed = 0.3f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_RIDER_FLY].PlaySpeed = 0.3f + AttackSpeed1;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_TWO_HAND_SWORD_TWO].PlaySpeed = 0.25f + AttackSpeed1;
-
-    for (int i = PLAYER_ATTACK_BOW; i <= PLAYER_ATTACK_FLY_CROSSBOW; i++)
-        Models[MODEL_PLAYER].Actions[i].PlaySpeed = 0.30f + AttackSpeed1;
-    for (int i = PLAYER_ATTACK_RIDE_BOW; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
-        Models[MODEL_PLAYER].Actions[i].PlaySpeed = 0.30f + AttackSpeed1;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_ELF1].PlaySpeed = 0.25f + MagicSpeed1;
-
-    for (int i = PLAYER_SKILL_HAND1; i <= PLAYER_SKILL_WEAPON2; i++)
-        Models[MODEL_PLAYER].Actions[i].PlaySpeed = 0.29f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_TELEPORT].PlaySpeed = 0.30f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_FLASH].PlaySpeed = 0.40f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_INFERNO].PlaySpeed = 0.60f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_HELL].PlaySpeed = 0.50f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_RIDE_SKILL].PlaySpeed = 0.30f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_HELL_BEGIN].PlaySpeed = 0.50f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_STRIKE].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RIDE_STRIKE].PlaySpeed = 0.2f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RIDE_HORSE_SWORD].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RIDE_ATTACK_FLASH].PlaySpeed = 0.40f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RIDE_ATTACK_MAGIC].PlaySpeed = 0.3f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_DARKLORD_STRIKE].PlaySpeed = 0.2f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_DARKLORD_SWORD].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_DARKLORD_FLASH].PlaySpeed = 0.40f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_TWO_SWORD].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_MAGIC].PlaySpeed = 0.37f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_CROSSBOW].PlaySpeed = 0.30f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_SPEAR].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_ONE_SWORD].PlaySpeed = 0.25f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_BOW].PlaySpeed = 0.30f + AttackSpeed1;
-
-    for (int i = PLAYER_ATTACK_BOW_UP; i <= PLAYER_ATTACK_RIDE_CROSSBOW_UP; ++i)
-    {
-        Models[MODEL_PLAYER].Actions[i].PlaySpeed = 0.30f + AttackSpeed1;
-    }
-
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_ONE_FLASH].PlaySpeed = 0.4f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RUSH].PlaySpeed = 0.3f + AttackSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_DEATH_CANNON].PlaySpeed = 0.2f + AttackSpeed1;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SLEEP].PlaySpeed = 0.3f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SLEEP_UNI].PlaySpeed = 0.3f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SLEEP_DINO].PlaySpeed = 0.3f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SLEEP_FENRIR].PlaySpeed = 0.3f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_LIGHTNING_ORB].PlaySpeed = 0.4f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_LIGHTNING_ORB_UNI].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_LIGHTNING_ORB_DINO].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_LIGHTNING_ORB_FENRIR].PlaySpeed = 0.25f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_CHAIN_LIGHTNING].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_CHAIN_LIGHTNING_UNI].PlaySpeed = 0.15f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_CHAIN_LIGHTNING_DINO].PlaySpeed = 0.15f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_CHAIN_LIGHTNING_FENRIR].PlaySpeed = 0.15f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAIN_LIFE].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAIN_LIFE_UNI].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAIN_LIFE_DINO].PlaySpeed = 0.25f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAIN_LIFE_FENRIR].PlaySpeed = 0.25f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_GIGANTICSTORM].PlaySpeed = 0.55f + MagicSpeed1;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_FLAMESTRIKE].PlaySpeed = 0.69f + MagicSpeed2;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_LIGHTNING_SHOCK].PlaySpeed = 0.35f + MagicSpeed2;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SUMMON].PlaySpeed = 0.25f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SUMMON_UNI].PlaySpeed = 0.25f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SUMMON_DINO].PlaySpeed = 0.25f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SUMMON_FENRIR].PlaySpeed = 0.25f;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_BLOW_OF_DESTRUCTION].PlaySpeed = 0.3f;
-    Models[MODEL_PLAYER].Actions[PLAYER_RECOVER_SKILL].PlaySpeed = 0.33f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_SWELL_OF_MP].PlaySpeed = 0.2f;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_SKILL_FURY_STRIKE].PlaySpeed = 0.38f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_VITALITY].PlaySpeed = 0.34f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_HELL_START].PlaySpeed = 0.30f;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_TELEPORT].PlaySpeed = 0.28f;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_RIDE_TELEPORT].PlaySpeed = 0.3f;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_DARKHORSE].PlaySpeed = 0.3f;
-    Models[MODEL_PLAYER].Actions[PLAYER_FENRIR_ATTACK_DARKLORD_TELEPORT].PlaySpeed = 0.3f;
-    Models[MODEL_PLAYER].Actions[PLAYER_ATTACK_REMOVAL].PlaySpeed = 0.28f;
-
-    float RageAttackSpeed = CharacterAttribute->AttackSpeed * 0.002f;
-
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_THRUST].PlaySpeed = 0.4f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_STAMP].PlaySpeed = 0.4f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_GIANTSWING].PlaySpeed = 0.4f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DARKSIDE_READY].PlaySpeed = 0.3f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DARKSIDE_ATTACK].PlaySpeed = 0.3f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAGONKICK].PlaySpeed = 0.4f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_DRAGONLORE].PlaySpeed = 0.3f + RageAttackSpeed;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_ATT_UP_OURFORCES].PlaySpeed = 0.35f;
-    Models[MODEL_PLAYER].Actions[PLAYER_SKILL_HP_UP_OURFORCES].PlaySpeed = 0.35f;
-    Models[MODEL_PLAYER].Actions[PLAYER_RAGE_FENRIR_ATTACK_RIGHT].PlaySpeed = 0.25f + RageAttackSpeed;
 }
 
 void SetPlayerHighBowAttack(CHARACTER* c)
@@ -3490,8 +3563,14 @@ void PlayerStopAnimationSetting(CHARACTER* c, OBJECT* o)
             && (o->CurrentAction < PLAYER_FENRIR_RUN || o->CurrentAction > PLAYER_FENRIR_RUN_ONE_LEFT_ELF)
             && o->CurrentAction != PLAYER_RECOVER_SKILL
             ))
-
+    {
+        const bool heroSwingEnded = c == Hero && Engine::Object::IsAttackAction(o->CurrentAction);
         SetPlayerStop(c);
+        if (heroSwingEnded)
+        {
+            MUHelper::g_MuHelper.OnHeroSwingFinished();
+        }
+    }
 
     if (o->CurrentAction == PLAYER_SKILL_HELL_BEGIN)
     {

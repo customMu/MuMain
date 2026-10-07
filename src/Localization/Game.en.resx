@@ -13267,4 +13267,7 @@
   <data name="%d Zen obtained (-%d zen helper cost)" xml:space="preserve">
     <value>%d Zen obtained (-%d zen helper cost)</value>
   </data>
+  <data name="Fix time of %ls: -%d%%" xml:space="preserve">
+    <value>Fix time of %ls: -%d%%</value>
+  </data>
 </root>

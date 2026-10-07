@@ -279,6 +279,19 @@ namespace MUHelper
         }
     }
 
+    void CMuHelper::OnHeroSwingFinished()
+    {
+        // Session 12 (skill fix time): the timer ticks every 250 ms and waits for the swing to end, so a cast which ends
+        // between two ticks waited up to 250 ms (a 0.3 s skill was cast every 0.5 s). Now the helper acts right when the
+        // swing ends - the same steps and order as on the timer (buffs, potions, pick-up, attack), as fast as a held button.
+        if (!m_bActive || Hero == nullptr || Hero->SafeZone)
+        {
+            return;
+        }
+
+        Work();
+    }
+
     void CMuHelper::Work()
     {
         try
