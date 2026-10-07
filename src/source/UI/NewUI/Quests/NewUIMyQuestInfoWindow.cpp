@@ -8,11 +8,12 @@
 
 namespace
 {
-    // The button "take the reward" of the kill quests, in the tab "Quest" (window coordinates).
+    // The button "take the reward" of the kill quests, in the tab "Quest" (window coordinates); it is placed below the
+    // lines of the reward, so its y is set when the window is rendered.
     constexpr int KillQuestButtonX = 50;
-    constexpr int KillQuestButtonY = 162;
     constexpr int KillQuestButtonWidth = 90;
     constexpr int KillQuestButtonHeight = 18;
+    int s_killQuestButtonY = 200;
 }
 #include "UI/NewUI/Quests/NewUIMyQuestInfoWindow.h"
 #include "I18N/All.h"
@@ -151,7 +152,7 @@ bool SEASON3B::CNewUIMyQuestInfoWindow::BtnProcess()
 
     if (m_eTabBtnIndex == TAB_QUEST && GameLogic::Quests::KillQuest::IsRewardWaiting()
         && SEASON3B::IsRelease(VK_LBUTTON)
-        && SEASON3B::CheckMouseIn(m_Pos.x + KillQuestButtonX, m_Pos.y + KillQuestButtonY, KillQuestButtonWidth, KillQuestButtonHeight))
+        && SEASON3B::CheckMouseIn(m_Pos.x + KillQuestButtonX, m_Pos.y + s_killQuestButtonY, KillQuestButtonWidth, KillQuestButtonHeight))
     {
         ::PlayBuffer(SOUND_CLICK01);
         GameLogic::Quests::KillQuest::RequestReward();
@@ -324,21 +325,6 @@ namespace
             g_pRenderText->SetTextColor(255, 255, 255, 255);
             g_pRenderText->RenderText(x, y, text, 144, 10, RT3_SORT_CENTER);
             y += 16;
-
-            g_pRenderText->SetTextColor(200, 200, 255, 255);
-            if (!state.reward.empty())
-            {
-                mu_swprintf(text, I18N::Game::RewardLs, state.reward.c_str());
-                g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
-                y += 14;
-            }
-
-            if (state.rewardPoints > 0)
-            {
-                mu_swprintf(text, I18N::Game::RewardDStatPoints, state.rewardPoints);
-                g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
-                y += 14;
-            }
         }
 
         if (state.questPoints > 0)
@@ -348,12 +334,61 @@ namespace
             g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
         }
 
+        if (IsAllDone())
+        {
+            return;
+        }
+
+        // the reward below the line of the window: the stat points, then one item per line (the server separates them by '\n')
+        y = static_cast<int>(pos.y) + 186;
+        g_pRenderText->SetTextColor(200, 200, 255, 255);
+        bool first = true;
+        if (state.rewardPoints > 0)
+        {
+            mu_swprintf(text, I18N::Game::RewardDStatPoints, state.rewardPoints);
+            g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
+            y += 13;
+            first = false;
+        }
+
+        std::size_t begin = 0;
+        while (begin < state.reward.size())
+        {
+            auto lineEnd = state.reward.find(L'\n', begin);
+            if (lineEnd == std::wstring::npos)
+            {
+                lineEnd = state.reward.size();
+            }
+
+            const std::wstring line = state.reward.substr(begin, lineEnd - begin);
+            begin = lineEnd + 1;
+            if (line.empty())
+            {
+                continue;
+            }
+
+            if (first)
+            {
+                mu_swprintf(text, I18N::Game::RewardLs, line.c_str());
+                first = false;
+            }
+            else
+            {
+                mu_swprintf(text, L"%ls", line.c_str());
+            }
+
+            g_pRenderText->RenderText(x, y, text, 144, 0, RT3_SORT_CENTER);
+            y += 13;
+        }
+
         if (state.rewardWaiting)
         {
+            y += 4;
             g_pRenderText->SetTextColor(255, 90, 80, 255);
-            g_pRenderText->RenderText(x, static_cast<int>(pos.y) + KillQuestButtonY - 15, I18N::Game::TheRewardWaitsFreeSpaceInTheInventory, 144, 0, RT3_SORT_CENTER);
+            g_pRenderText->RenderText(x, y, I18N::Game::TheRewardWaitsFreeSpaceInTheInventory, 144, 0, RT3_SORT_CENTER);
+            s_killQuestButtonY = y + 15 - static_cast<int>(pos.y);
             const int bx = static_cast<int>(pos.x) + KillQuestButtonX;
-            const int by = static_cast<int>(pos.y) + KillQuestButtonY;
+            const int by = static_cast<int>(pos.y) + s_killQuestButtonY;
             const bool hover = SEASON3B::CheckMouseIn(bx, by, KillQuestButtonWidth, KillQuestButtonHeight);
             RenderColorQuadARGB(static_cast<float>(bx), static_cast<float>(by), static_cast<float>(KillQuestButtonWidth), static_cast<float>(KillQuestButtonHeight), hover ? 0xFF8A6A20u : 0xFF5A4410u);
             mu::GetRenderer().SetTexture2D(true);

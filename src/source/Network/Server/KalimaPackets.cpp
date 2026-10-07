@@ -3,6 +3,7 @@
 #include "Data/Translation/MultiLanguage.h"
 #include "Network/Server/KalimaPackets.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "GameLogic/Events/KalimaEntry.h"
@@ -46,6 +47,7 @@ namespace Network::Server::KalimaPackets
         constexpr std::size_t DropModeVoteNameOffset = 5;
         constexpr std::size_t DropModeVoteNameLength = 10;
         constexpr std::size_t KillQuestStatePacketSize = 117;
+        constexpr std::size_t KillQuestRewardLength = 192;
         constexpr std::size_t ChamberStatusPacketSize = 15;
         constexpr std::size_t ChamberHeaderSize = 18;
         constexpr std::size_t KalimaArenaPacketSize = 7;
@@ -215,13 +217,13 @@ namespace Network::Server::KalimaPackets
             }
 
             const std::string text(reinterpret_cast<const char*>(bytes.data()), length);
-            wchar_t wide[128] = {};
+            wchar_t wide[256] = {};
             CMultiLanguage::ConvertFromUtf8(wide, text.c_str(), static_cast<int>(text.size()));
             return wide;
         }
 
         // The kill quests: [quest number u16] [quest count u16] [kills u32] [needed u32] [reward points u16] [waiting]
-        // [stat points from quests u16] [monster, 32 bytes UTF-8] [reward items, 64 bytes UTF-8]
+        // [stat points from quests u16] [monster, 32 bytes UTF-8] [reward items, up to 192 bytes UTF-8, one per line]
         void ReceiveKillQuestState(const std::span<const std::uint8_t> packet)
         {
             if (packet.size() < KillQuestStatePacketSize)
@@ -240,7 +242,7 @@ namespace Network::Server::KalimaPackets
             state.rewardWaiting = packet[18] != 0;
             state.questPoints = u16(19);
             state.monster = ReadUtf8(packet.subspan(21, 32));
-            state.reward = ReadUtf8(packet.subspan(53, 64));
+            state.reward = ReadUtf8(packet.subspan(53, (std::min)(packet.size() - 53, KillQuestRewardLength)));
             GameLogic::Quests::KillQuest::SetState(std::move(state));
         }
 

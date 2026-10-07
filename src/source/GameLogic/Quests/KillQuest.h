@@ -18,7 +18,7 @@ namespace GameLogic::Quests::KillQuest
         bool rewardWaiting = false;
         int questPoints = 0;
         std::wstring monster;
-        std::wstring reward;     // the items of the reward
+        std::wstring reward;     // the items of the reward, one per line
     };
 
     void SetState(State state);
