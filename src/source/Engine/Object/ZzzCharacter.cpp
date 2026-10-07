@@ -813,16 +813,24 @@ int AttackHand = 0;
 
 namespace
 {
+    using GameLogic::Combat::SkillCastTime::SpeedStat;
+
     // PlaySpeed of the attack and skill actions of the player model for an attack and magic speed; touched marks the
-    // actions which are set here (the attacks and skills).
-    void ApplyAttackSpeeds(int attackSpeed, int magicSpeed, std::array<bool, MAX_PLAYER_ACTION>* touched)
+    // actions which are set here (the attacks and skills), stats the speed each of them follows.
+    void ApplyAttackSpeeds(int attackSpeed, int magicSpeed, std::array<bool, MAX_PLAYER_ACTION>* touched,
+                           std::array<SpeedStat, MAX_PLAYER_ACTION>* stats)
     {
-        auto set = [touched](int action, float speed)
+        auto set = [touched, stats](int action, float speed, SpeedStat stat = SpeedStat::None)
         {
             Models[MODEL_PLAYER].Actions[action].PlaySpeed = speed;
             if (touched != nullptr)
             {
                 (*touched)[action] = true;
+            }
+
+            if (stats != nullptr)
+            {
+                (*stats)[action] = stat;
             }
         };
 
@@ -917,99 +925,99 @@ namespace
             MagicSpeed2 = MagicSpeed2 * 0.0020000f;
         }
 
-        set(PLAYER_ATTACK_FIST, 0.6f + AttackSpeed1);
+        set(PLAYER_ATTACK_FIST, 0.6f + AttackSpeed1, SpeedStat::Attack);
 
         for (int i = PLAYER_ATTACK_SWORD_RIGHT1; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
         {
-            set(i, 0.25f + AttackSpeed1);
+            set(i, 0.25f + AttackSpeed1, SpeedStat::Attack);
         }
 
-        set(PLAYER_ATTACK_SKILL_SWORD1, 0.30f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_SWORD2, 0.30f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_SWORD3, 0.27f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_SWORD4, 0.30f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_SWORD5, 0.24f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_WHEEL, 0.24f + AttackSpeed1);
-        set(PLAYER_ATTACK_DEATHSTAB, 0.25f + AttackSpeed1);
-        set(PLAYER_ATTACK_SKILL_SPEAR, 0.30f + AttackSpeed1);
-        set(PLAYER_SKILL_RIDER, 0.3f + AttackSpeed1);
-        set(PLAYER_SKILL_RIDER_FLY, 0.3f + AttackSpeed1);
+        set(PLAYER_ATTACK_SKILL_SWORD1, 0.30f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_SWORD2, 0.30f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_SWORD3, 0.27f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_SWORD4, 0.30f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_SWORD5, 0.24f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_WHEEL, 0.24f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_DEATHSTAB, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_SKILL_SPEAR, 0.30f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_SKILL_RIDER, 0.3f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_SKILL_RIDER_FLY, 0.3f + AttackSpeed1, SpeedStat::Attack);
 
-        set(PLAYER_ATTACK_TWO_HAND_SWORD_TWO, 0.25f + AttackSpeed1);
+        set(PLAYER_ATTACK_TWO_HAND_SWORD_TWO, 0.25f + AttackSpeed1, SpeedStat::Attack);
 
         for (int i = PLAYER_ATTACK_BOW; i <= PLAYER_ATTACK_FLY_CROSSBOW; i++)
-            set(i, 0.30f + AttackSpeed1);
+            set(i, 0.30f + AttackSpeed1, SpeedStat::Attack);
         for (int i = PLAYER_ATTACK_RIDE_BOW; i <= PLAYER_ATTACK_RIDE_CROSSBOW; i++)
-            set(i, 0.30f + AttackSpeed1);
+            set(i, 0.30f + AttackSpeed1, SpeedStat::Attack);
 
-        set(PLAYER_SKILL_ELF1, 0.25f + MagicSpeed1);
+        set(PLAYER_SKILL_ELF1, 0.25f + MagicSpeed1, SpeedStat::Magic);
 
         for (int i = PLAYER_SKILL_HAND1; i <= PLAYER_SKILL_WEAPON2; i++)
-            set(i, 0.29f + MagicSpeed2);
+            set(i, 0.29f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_TELEPORT, 0.30f + MagicSpeed2);
-        set(PLAYER_SKILL_FLASH, 0.40f + MagicSpeed2);
-        set(PLAYER_SKILL_INFERNO, 0.60f + MagicSpeed2);
-        set(PLAYER_SKILL_HELL, 0.50f + MagicSpeed2);
-        set(PLAYER_RIDE_SKILL, 0.30f + MagicSpeed2);
+        set(PLAYER_SKILL_TELEPORT, 0.30f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_FLASH, 0.40f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_INFERNO, 0.60f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_HELL, 0.50f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_RIDE_SKILL, 0.30f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_HELL_BEGIN, 0.50f + MagicSpeed2);
-        set(PLAYER_ATTACK_STRIKE, 0.25f + AttackSpeed1);
-        set(PLAYER_ATTACK_RIDE_STRIKE, 0.2f + AttackSpeed1);
-        set(PLAYER_ATTACK_RIDE_HORSE_SWORD, 0.25f + AttackSpeed1);
-        set(PLAYER_ATTACK_RIDE_ATTACK_FLASH, 0.40f + MagicSpeed2);
-        set(PLAYER_ATTACK_RIDE_ATTACK_MAGIC, 0.3f + MagicSpeed2);
+        set(PLAYER_SKILL_HELL_BEGIN, 0.50f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_ATTACK_STRIKE, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_RIDE_STRIKE, 0.2f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_RIDE_HORSE_SWORD, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_RIDE_ATTACK_FLASH, 0.40f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_ATTACK_RIDE_ATTACK_MAGIC, 0.3f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_FENRIR_ATTACK, 0.25f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_DARKLORD_STRIKE, 0.2f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_DARKLORD_SWORD, 0.25f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_DARKLORD_FLASH, 0.40f + MagicSpeed2);
-        set(PLAYER_FENRIR_ATTACK_TWO_SWORD, 0.25f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_MAGIC, 0.37f + MagicSpeed2);
-        set(PLAYER_FENRIR_ATTACK_CROSSBOW, 0.30f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_SPEAR, 0.25f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_ONE_SWORD, 0.25f + AttackSpeed1);
-        set(PLAYER_FENRIR_ATTACK_BOW, 0.30f + AttackSpeed1);
+        set(PLAYER_FENRIR_ATTACK, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_STRIKE, 0.2f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_SWORD, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_DARKLORD_FLASH, 0.40f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_FENRIR_ATTACK_TWO_SWORD, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_MAGIC, 0.37f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_FENRIR_ATTACK_CROSSBOW, 0.30f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_SPEAR, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_ONE_SWORD, 0.25f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_FENRIR_ATTACK_BOW, 0.30f + AttackSpeed1, SpeedStat::Attack);
 
         for (int i = PLAYER_ATTACK_BOW_UP; i <= PLAYER_ATTACK_RIDE_CROSSBOW_UP; ++i)
         {
-            set(i, 0.30f + AttackSpeed1);
+            set(i, 0.30f + AttackSpeed1, SpeedStat::Attack);
         }
 
-        set(PLAYER_ATTACK_ONE_FLASH, 0.4f + AttackSpeed1);
-        set(PLAYER_ATTACK_RUSH, 0.3f + AttackSpeed1);
-        set(PLAYER_ATTACK_DEATH_CANNON, 0.2f + AttackSpeed1);
+        set(PLAYER_ATTACK_ONE_FLASH, 0.4f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_RUSH, 0.3f + AttackSpeed1, SpeedStat::Attack);
+        set(PLAYER_ATTACK_DEATH_CANNON, 0.2f + AttackSpeed1, SpeedStat::Attack);
 
-        set(PLAYER_SKILL_SLEEP, 0.3f + MagicSpeed2);
-        set(PLAYER_SKILL_SLEEP_UNI, 0.3f + MagicSpeed2);
-        set(PLAYER_SKILL_SLEEP_DINO, 0.3f + MagicSpeed2);
-        set(PLAYER_SKILL_SLEEP_FENRIR, 0.3f + MagicSpeed2);
+        set(PLAYER_SKILL_SLEEP, 0.3f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SLEEP_UNI, 0.3f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SLEEP_DINO, 0.3f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SLEEP_FENRIR, 0.3f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_LIGHTNING_ORB, 0.4f + MagicSpeed2);
-        set(PLAYER_SKILL_LIGHTNING_ORB_UNI, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_LIGHTNING_ORB_DINO, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_LIGHTNING_ORB_FENRIR, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_LIGHTNING_ORB, 0.4f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_LIGHTNING_ORB_UNI, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_LIGHTNING_ORB_DINO, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_LIGHTNING_ORB_FENRIR, 0.25f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_CHAIN_LIGHTNING, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_CHAIN_LIGHTNING_UNI, 0.15f + MagicSpeed2);
-        set(PLAYER_SKILL_CHAIN_LIGHTNING_DINO, 0.15f + MagicSpeed2);
-        set(PLAYER_SKILL_CHAIN_LIGHTNING_FENRIR, 0.15f + MagicSpeed2);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_UNI, 0.15f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_DINO, 0.15f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_CHAIN_LIGHTNING_FENRIR, 0.15f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_DRAIN_LIFE, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_DRAIN_LIFE_UNI, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_DRAIN_LIFE_DINO, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_DRAIN_LIFE_FENRIR, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_DRAIN_LIFE, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_DRAIN_LIFE_UNI, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_DRAIN_LIFE_DINO, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_DRAIN_LIFE_FENRIR, 0.25f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_GIGANTICSTORM, 0.55f + MagicSpeed1);
-        set(PLAYER_SKILL_FLAMESTRIKE, 0.69f + MagicSpeed2);
-        set(PLAYER_SKILL_LIGHTNING_SHOCK, 0.35f + MagicSpeed2);
+        set(PLAYER_SKILL_GIGANTICSTORM, 0.55f + MagicSpeed1, SpeedStat::Magic);
+        set(PLAYER_SKILL_FLAMESTRIKE, 0.69f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_LIGHTNING_SHOCK, 0.35f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_SUMMON, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_SUMMON_UNI, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_SUMMON_DINO, 0.25f + MagicSpeed2);
-        set(PLAYER_SKILL_SUMMON_FENRIR, 0.25f + MagicSpeed2);
+        set(PLAYER_SKILL_SUMMON, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SUMMON_UNI, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SUMMON_DINO, 0.25f + MagicSpeed2, SpeedStat::Magic);
+        set(PLAYER_SKILL_SUMMON_FENRIR, 0.25f + MagicSpeed2, SpeedStat::Magic);
 
-        set(PLAYER_SKILL_BLOW_OF_DESTRUCTION, 0.3f + AttackSpeed1);
+        set(PLAYER_SKILL_BLOW_OF_DESTRUCTION, 0.3f + AttackSpeed1, SpeedStat::Attack);
         set(PLAYER_RECOVER_SKILL, 0.33f);
         set(PLAYER_SKILL_SWELL_OF_MP, 0.2f);
 
@@ -1024,16 +1032,16 @@ namespace
 
         float RageAttackSpeed = attackSpeed * 0.002f;
 
-        set(PLAYER_SKILL_THRUST, 0.4f + RageAttackSpeed);
-        set(PLAYER_SKILL_STAMP, 0.4f + RageAttackSpeed);
-        set(PLAYER_SKILL_GIANTSWING, 0.4f + RageAttackSpeed);
-        set(PLAYER_SKILL_DARKSIDE_READY, 0.3f + RageAttackSpeed);
-        set(PLAYER_SKILL_DARKSIDE_ATTACK, 0.3f + RageAttackSpeed);
-        set(PLAYER_SKILL_DRAGONKICK, 0.4f + RageAttackSpeed);
-        set(PLAYER_SKILL_DRAGONLORE, 0.3f + RageAttackSpeed);
+        set(PLAYER_SKILL_THRUST, 0.4f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_STAMP, 0.4f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_GIANTSWING, 0.4f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_DARKSIDE_READY, 0.3f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_DARKSIDE_ATTACK, 0.3f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_DRAGONKICK, 0.4f + RageAttackSpeed, SpeedStat::Attack);
+        set(PLAYER_SKILL_DRAGONLORE, 0.3f + RageAttackSpeed, SpeedStat::Attack);
         set(PLAYER_SKILL_ATT_UP_OURFORCES, 0.35f);
         set(PLAYER_SKILL_HP_UP_OURFORCES, 0.35f);
-        set(PLAYER_RAGE_FENRIR_ATTACK_RIGHT, 0.25f + RageAttackSpeed);
+        set(PLAYER_RAGE_FENRIR_ATTACK_RIGHT, 0.25f + RageAttackSpeed, SpeedStat::Attack);
     }
 
     // The share by which the harmony option of the hero's weapon lowers the fix time of the skill (0 if none).
@@ -1070,21 +1078,20 @@ namespace
 // Session 12: every attack and skill action plays at most as fast as at the fix (attack speed 335 / magic speed 285 =
 // 10 000 agility + a median weapon, at least 0.15 s); the harmony option of a rank 7-8 weapon lowers the fix of its
 // skill; nothing plays faster than 0.12 s. The server refuses earlier casts (plugin "Skill cast time").
+// Session 13: one speed curve for all: an action plays at its speed at the fix x (offset + speed) / (offset + speed at
+// the fix), the offsets of attack and magic speed equal in agility - every class is as much slower than its fix at the
+// same agility (before, the attack actions slowed down much more than the spells at low agility).
 void SetAttackSpeed()
 {
     using namespace GameLogic::Combat::SkillCastTime;
-    std::array<float, MAX_PLAYER_ACTION> atFix{};
-    ApplyAttackSpeeds(static_cast<int>(AttackSpeedAtFix), static_cast<int>(MagicSpeedAtFix), nullptr);
-    for (int action = 0; action < MAX_PLAYER_ACTION; ++action)
-    {
-        atFix[action] = Models[MODEL_PLAYER].Actions[action].PlaySpeed;
-    }
-
     std::array<bool, MAX_PLAYER_ACTION> touched{};
-    ApplyAttackSpeeds(CharacterAttribute->AttackSpeed, CharacterAttribute->MagicSpeed, &touched);
+    std::array<SpeedStat, MAX_PLAYER_ACTION> stats{};
+    ApplyAttackSpeeds(static_cast<int>(AttackSpeedAtFix), static_cast<int>(MagicSpeedAtFix), &touched, &stats);
 
     const int currentSkill = Hero != nullptr && Hero->CurrentSkill < MAX_SKILLS ? static_cast<int>(CharacterAttribute->Skill[Hero->CurrentSkill]) : 0;
     const float cut = GetHeroFixCut(currentSkill);
+    const float attackCurve = SpeedCurve(SpeedStat::Attack, static_cast<float>(CharacterAttribute->AttackSpeed));
+    const float magicCurve = SpeedCurve(SpeedStat::Magic, static_cast<float>(CharacterAttribute->MagicSpeed));
     for (int action = 0; action < MAX_PLAYER_ACTION; ++action)
     {
         auto& animation = Models[MODEL_PLAYER].Actions[action];
@@ -1094,9 +1101,13 @@ void SetAttackSpeed()
             continue;
         }
 
-        const float fixSpeed = std::min(atFix[action], keys / (FixFloorSeconds * 25.f));
+        const float atFix = animation.PlaySpeed;
+        const float curve = stats[action] == SpeedStat::Attack  ? attackCurve
+                            : stats[action] == SpeedStat::Magic ? magicCurve
+                                                                : 1.f;
+        const float fixSpeed = std::min(atFix, keys / (FixFloorSeconds * 25.f));
         const float maxSpeed = std::min(fixSpeed / (1.f - cut), keys / (CastFloorSeconds * 25.f));
-        animation.PlaySpeed = std::min(animation.PlaySpeed, maxSpeed);
+        animation.PlaySpeed = std::min(atFix * curve, maxSpeed);
     }
 }
 

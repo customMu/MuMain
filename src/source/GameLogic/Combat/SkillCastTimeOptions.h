@@ -7,6 +7,34 @@
 
 namespace GameLogic::Combat::SkillCastTime
 {
+    // The stat an attack action follows (None: a fixed play speed).
+    enum class SpeedStat
+    {
+        None,
+        Attack,
+        Magic,
+    };
+
+    // One speed curve for all actions: play speed at the fix x (offset + speed) / (offset + speed at the fix). The
+    // offsets are equal in agility (attack speed 0.03, magic speed 0.025 per agility + 35 of a median weapon):
+    // (181 + 35) / 0.03 = (145 + 35) / 0.025 = 7 200 - at the same agility every action is as much slower than its fix.
+    // Must match the server plugin "Skill cast time" (AttackSpeedCurveOffset, MagicSpeedCurveOffset).
+    inline constexpr float AttackSpeedCurveOffset = 181.0f;
+    inline constexpr float MagicSpeedCurveOffset = 145.0f;
+
+    // The factor of the play speed at the fix for a speed of the hero (1 at the fix speed, more above it).
+    inline float SpeedCurve(SpeedStat stat, float speed)
+    {
+        if (stat == SpeedStat::None)
+        {
+            return 1.f;
+        }
+
+        const float offset = stat == SpeedStat::Attack ? AttackSpeedCurveOffset : MagicSpeedCurveOffset;
+        const float atFix = stat == SpeedStat::Attack ? AttackSpeedAtFix : MagicSpeedAtFix;
+        return (offset + std::max(0.f, speed)) / (offset + atFix);
+    }
+
     // The weapon entry of an item for a class family (number of the 1st class), or nullptr: an entry of the family
     // wins over one for any class (Staff of Kundun: DW and MG have their own skills).
     inline const WeaponSkills* FindWeapon(int group, int number, int family)
