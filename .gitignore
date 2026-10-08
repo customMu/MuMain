@@ -60,8 +60,9 @@ build-linux/
 /build-test-upstream-sync/
 src/graphify-out/
 
-# Local agent/tool state
-.claude/
+# Local agent/tool state (shared Claude Code settings are committed)
+.claude/*
+!.claude/settings.json
 .paw/
 .remember/
 .superpowers/
