@@ -130,6 +130,7 @@ namespace
 #include "GameLogic/Combat/DuelMgr.h"
 #include "GameLogic/Social/MonkSystem.h"
 #include "UI/NewUI/NewUISystem.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 
 CHARACTER* CharactersClient;
 CHARACTER CharacterView;
@@ -5450,7 +5451,7 @@ void PlayWalkSound()
         {
             PlayBuffer(SOUND_HUMAN_WALK_GRASS);
         }
-        else if (gMapManager.WorldActive == WD_3NORIA && HeroTile == 0)
+        else if (gMapManager.IsNoriaWorld() && HeroTile == 0)
         {
             PlayBuffer(SOUND_HUMAN_WALK_GRASS);
         }
@@ -8798,6 +8799,41 @@ void RenderCharacter(CHARACTER* c, OBJECT* o, int Select)
 
                 o->HiddenMesh = -1;
             }
+        }
+    }
+
+    if (GameLogic::Events::IllusionOfNoria::IsIllusionMonster(c->MonsterIndex) || GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex))
+    {
+        // the Illusion of Noria: a violet glow which pulses (the elites and the boss gold) and sparks around the body
+        const bool gold = GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex)
+            || c->MonsterIndex == MONSTER_ILLUSION_STONE_GOLEM || c->MonsterIndex == MONSTER_ILLUSION_ELITE_GOBLIN;
+        const float pulse = sinf(WorldTime * 0.003f + c->Key * 0.7f) * 0.5f + 0.5f;
+        vec3_t backup;
+        VectorCopy(Models[o->Type].BodyLight, backup);
+        if (gold)
+        {
+            Vector(1.f, 0.65f + 0.15f * pulse, 0.25f, Models[o->Type].BodyLight);
+            if (GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex))
+            {
+                RenderPartObjectBodyColor(&Models[o->Type], o, o->Type, o->Alpha, RENDER_METAL | RENDER_BRIGHT, 1.f);
+            }
+
+            RenderPartObjectBodyColor(&Models[o->Type], o, o->Type, o->Alpha, RENDER_CHROME | RENDER_BRIGHT, 0.6f + 0.4f * pulse);
+            Vector(1.f, 0.7f, 0.2f, Light);
+        }
+        else
+        {
+            Vector(0.55f + 0.25f * pulse, 0.2f + 0.1f * pulse, 1.f, Models[o->Type].BodyLight);
+            RenderPartObjectBodyColor(&Models[o->Type], o, o->Type, o->Alpha, RENDER_CHROME | RENDER_BRIGHT, 0.4f + 0.5f * pulse);
+            Vector(0.7f, 0.35f, 1.f, Light);
+        }
+
+        VectorCopy(backup, Models[o->Type].BodyLight);
+        if (b->NumBones > 0 && rand_fps_check(2))
+        {
+            Vector((float)(rand() % 30 - 15), (float)(rand() % 30 - 15), (float)(rand() % 30 - 15), p);
+            b->TransformPosition(o->BoneTransform[rand() % b->NumBones], p, Position, true);
+            CreateParticle(BITMAP_SPARK + 1, Position, o->Angle, Light, 3);
         }
     }
 
@@ -13268,11 +13304,75 @@ void Setting_Monster(CHARACTER* c, EMonsterType Type, int PositionX, int Positio
     }
 }
 
+namespace
+{
+    // The Illusion of Noria: the monsters are the Noria monsters with other numbers (the model, weapons and scale of the
+    // original, a bit bigger), the boss a big golden Stone Golem, the warden a guard in a dragon armor; the glow is drawn in
+    // RenderCharacter.
+    CHARACTER* CreateIllusionOfNoriaMonster(const EMonsterType type, const int x, const int y, const int key)
+    {
+        namespace Illusion = GameLogic::Events::IllusionOfNoria;
+        EMonsterType original;
+        float scale = 1.1f;
+        switch (type)
+        {
+        case MONSTER_ILLUSION_GOBLIN: original = MONSTER_GOBLIN; break;
+        case MONSTER_ILLUSION_CHAIN_SCORPION: original = MONSTER_CHAIN_SCORPION; break;
+        case MONSTER_ILLUSION_BEETLE_MONSTER: original = MONSTER_BEETLE_MONSTER; break;
+        case MONSTER_ILLUSION_HUNTER: original = MONSTER_HUNTER; break;
+        case MONSTER_ILLUSION_FOREST_MONSTER: original = MONSTER_FOREST_MONSTER; break;
+        case MONSTER_ILLUSION_AGON: original = MONSTER_AGON; break;
+        case MONSTER_ILLUSION_STONE_GOLEM: original = MONSTER_STONE_GOLEM; scale = 1.2f; break;
+        case MONSTER_ILLUSION_ELITE_GOBLIN: original = MONSTER_ELITE_GOBLIN; scale = 1.15f; break;
+        case MONSTER_GILDED_COLOSSUS: original = MONSTER_STONE_GOLEM; scale = 2.2f; break;
+        case MONSTER_WARDEN_ELDRIN: original = MONSTER_BERDYSH_GUARD; scale = 1.f; break;
+        default: return nullptr;
+        }
+
+        CHARACTER* c = CreateMonster(original, x, y, key);
+        if (c == nullptr)
+        {
+            return nullptr;
+        }
+
+        OBJECT* o = &c->Object;
+        c->MonsterIndex = type;
+        o->Scale *= scale;
+        if (const wchar_t* name = Illusion::MonsterName(type))
+        {
+            wcscpy_s(c->ID, MAX_MONSTER_NAME + 1, name);
+        }
+
+        if (type == MONSTER_WARDEN_ELDRIN)
+        {
+            o->Kind = KIND_NPC;
+            c->BodyPart[BODYPART_HELM].Type = MODEL_DRAGON_HELM;
+            c->BodyPart[BODYPART_ARMOR].Type = MODEL_DRAGON_ARMOR;
+            c->BodyPart[BODYPART_PANTS].Type = MODEL_DRAGON_PANTS;
+            c->BodyPart[BODYPART_GLOVES].Type = MODEL_DRAGON_GLOVES;
+            c->BodyPart[BODYPART_BOOTS].Type = MODEL_DRAGON_BOOTS;
+            c->Weapon[0].Type = MODEL_GREAT_SCEPTER;
+        }
+        else if (Illusion::IsIllusionMonster(type))
+        {
+            o->Alpha = 0.85f; // an illusion: a bit transparent
+            c->HideShadow = true;
+        }
+
+        return c;
+    }
+}
+
 CHARACTER* CreateMonster(EMonsterType Type, int PositionX, int PositionY, int Key)
 {
     CHARACTER* c = NULL;
     OBJECT* o;
     int Level;
+
+    if (CHARACTER* illusion = CreateIllusionOfNoriaMonster(Type, PositionX, PositionY, Key))
+    {
+        return illusion;
+    }
 
     c = g_CursedTemple->CreateCharacters(Type, PositionX, PositionY, Key);
     if (c != NULL)

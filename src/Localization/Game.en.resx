@@ -13279,6 +13279,27 @@
   <data name="Fix time of %ls: -%d%%" xml:space="preserve">
     <value>Fix time of %ls: -%d%%</value>
   </data>
+  <data name="(lvl %d, next %d%%)" xml:space="preserve">
+    <value>(lvl %d, next %d%%)</value>
+  </data>
+  <data name="(%d lvl max)" xml:space="preserve">
+    <value>(%d lvl max)</value>
+  </data>
+  <data name="Adds an option to a rank 7-8 weapon" xml:space="preserve">
+    <value>Adds an option to a rank 7-8 weapon +10 or higher (75%%)</value>
+  </data>
+  <data name="The option lowers the fix time of a skill" xml:space="preserve">
+    <value>The option lowers the fix time of one of its skills: -5%% .. -25%%</value>
+  </data>
+  <data name="Raises the harmony option level" xml:space="preserve">
+    <value>Raises the harmony option level (up to 10)</value>
+  </data>
+  <data name="On a fail the option falls back to level 1" xml:space="preserve">
+    <value>On a fail the option falls back to level 1</value>
+  </data>
+  <data name="On a fail the option keeps its level" xml:space="preserve">
+    <value>On a fail the option keeps its level</value>
+  </data>
   <data name="Jewelry Box" xml:space="preserve">
     <value>Jewelry Box</value>
   </data>
@@ -13293,5 +13314,155 @@
   </data>
   <data name="The windows change their look after a restart." xml:space="preserve">
     <value>The windows change their look after a restart.</value>
+  </data>
+  <data name="Illusion of Noria" xml:space="preserve">
+    <value>Illusion of Noria</value>
+  </data>
+  <data name="Warden Eldrin" xml:space="preserve">
+    <value>Warden Eldrin</value>
+  </data>
+  <data name="Whistle of the Veil" xml:space="preserve">
+    <value>Whistle of the Veil</value>
+  </data>
+  <data name="Illusion Shard" xml:space="preserve">
+    <value>Illusion Shard</value>
+  </data>
+  <data name="Jewel of Illusion" xml:space="preserve">
+    <value>Jewel of Illusion</value>
+  </data>
+  <data name="Lesser Mirage Stone" xml:space="preserve">
+    <value>Lesser Mirage Stone</value>
+  </data>
+  <data name="Greater Mirage Stone" xml:space="preserve">
+    <value>Greater Mirage Stone</value>
+  </data>
+  <data name="Echo of %ls" xml:space="preserve">
+    <value>Echo of %ls</value>
+  </data>
+  <data name="Illusion Goblin" xml:space="preserve">
+    <value>Illusion Goblin</value>
+  </data>
+  <data name="Illusion Chain Scorpion" xml:space="preserve">
+    <value>Illusion Chain Scorpion</value>
+  </data>
+  <data name="Illusion Beetle Monster" xml:space="preserve">
+    <value>Illusion Beetle Monster</value>
+  </data>
+  <data name="Illusion Hunter" xml:space="preserve">
+    <value>Illusion Hunter</value>
+  </data>
+  <data name="Illusion Forest Monster" xml:space="preserve">
+    <value>Illusion Forest Monster</value>
+  </data>
+  <data name="Illusion Agon" xml:space="preserve">
+    <value>Illusion Agon</value>
+  </data>
+  <data name="Illusion Stone Golem" xml:space="preserve">
+    <value>Illusion Stone Golem</value>
+  </data>
+  <data name="Illusion Elite Goblin" xml:space="preserve">
+    <value>Illusion Elite Goblin</value>
+  </data>
+  <data name="Gilded Colossus" xml:space="preserve">
+    <value>Gilded Colossus</value>
+  </data>
+  <data name="The Whistle of the Veil was stolen." xml:space="preserve">
+    <value>The Whistle of the Veil was stolen.</value>
+  </data>
+  <data name="Condra, the outcast of Karutan, has it." xml:space="preserve">
+    <value>Condra, the outcast of Karutan, has it.</value>
+  </data>
+  <data name="Bring it back and I open the Veil for you." xml:space="preserve">
+    <value>Bring it back and I open the Veil for you.</value>
+  </data>
+  <data name="Resets needed: %d (you have %d)" xml:space="preserve">
+    <value>Resets needed: %d (you have %d)</value>
+  </data>
+  <data name="Accept the quest" xml:space="preserve">
+    <value>Accept the quest</value>
+  </data>
+  <data name="Hunt Condra in Karutan 2 for the whistle." xml:space="preserve">
+    <value>Hunt Condra in Karutan 2 for the whistle.</value>
+  </data>
+  <data name="You carry the Whistle of the Veil!" xml:space="preserve">
+    <value>You carry the Whistle of the Veil!</value>
+  </data>
+  <data name="Only the one who took the quest finds it." xml:space="preserve">
+    <value>Only the one who took the quest finds it.</value>
+  </data>
+  <data name="Give the whistle" xml:space="preserve">
+    <value>Give the whistle</value>
+  </data>
+  <data name="The Veil is open for you." xml:space="preserve">
+    <value>The Veil is open for you.</value>
+  </data>
+  <data name="Enter the Illusion" xml:space="preserve">
+    <value>Enter the Illusion</value>
+  </data>
+  <data name="Daily quest: %d kills of each of 3 monsters" xml:space="preserve">
+    <value>Daily quest: %d kills of each of 3 monsters</value>
+  </data>
+  <data name="Take the daily quest" xml:space="preserve">
+    <value>Take the daily quest</value>
+  </data>
+  <data name="Daily quest" xml:space="preserve">
+    <value>Daily quest</value>
+  </data>
+  <data name="%ls: %d/%d" xml:space="preserve">
+    <value>%ls: %d/%d</value>
+  </data>
+  <data name="Claim the reward" xml:space="preserve">
+    <value>Claim the reward</value>
+  </data>
+  <data name="Daily quest done. Next in %d h %d min" xml:space="preserve">
+    <value>Daily quest done. Next in %d h %d min</value>
+  </data>
+  <data name="%ls - %ls" xml:space="preserve">
+    <value>%ls - %ls</value>
+  </data>
+  <data name="Reset: %d %ls, %d %ls" xml:space="preserve">
+    <value>Reset: %d %ls, %d %ls</value>
+  </data>
+  <data name=", %d %ls" xml:space="preserve">
+    <value>, %d %ls</value>
+  </data>
+  <data name="Reset %ls" xml:space="preserve">
+    <value>Reset %ls</value>
+  </data>
+  <data name="Shop (%u)" xml:space="preserve">
+    <value>Shop (%u Illusion Shards)</value>
+  </data>
+  <data name="Return to Noria" xml:space="preserve">
+    <value>Return to Noria</value>
+  </data>
+  <data name="Illusion Shards: %u" xml:space="preserve">
+    <value>Illusion Shards: %u</value>
+  </data>
+  <data name="%ls (%d)" xml:space="preserve">
+    <value>%ls (%d)</value>
+  </data>
+  <data name="Buy this item?" xml:space="preserve">
+    <value>Buy this item?</value>
+  </data>
+  <data name="For %d Illusion Shards" xml:space="preserve">
+    <value>For %d Illusion Shards</value>
+  </data>
+  <data name="Adds the option of %ls to a rank 7-8 weapon" xml:space="preserve">
+    <value>Adds the option of %ls to a rank 7-8 weapon +10 (75%%)</value>
+  </data>
+  <data name="The currency of Warden Eldrin in Noria" xml:space="preserve">
+    <value>The currency of Warden Eldrin (Noria): his shop</value>
+  </data>
+  <data name="Bring it to Warden Eldrin in Noria." xml:space="preserve">
+    <value>Bring it to Warden Eldrin in Noria.</value>
+  </data>
+  <data name="Golden Curse" xml:space="preserve">
+    <value>Golden Curse</value>
+  </data>
+  <data name="-%d HP per second" xml:space="preserve">
+    <value>-%d HP per second</value>
+  </data>
+  <data name="Buy it" xml:space="preserve">
+    <value>Buy</value>
   </data>
 </root>

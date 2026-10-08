@@ -66,6 +66,7 @@ enum ENUM_WORLD
     WD_79UNITEDMARKETPLACE = 79,
     WD_80KARUTAN1 = 80,
     WD_81KARUTAN2 = 81,
+    WD_82ILLUSION_NORIA = 82, // a copy of Noria (World4) with the illusion monsters, server plugin "Illusion of Noria"
     NUM_WD
 };
 
@@ -84,6 +85,9 @@ public:
     bool InHiddenHellas(int iMap = -1);
     bool IsPKField();
     bool IsCursedTemple();
+    // Noria and its copy, the Illusion of Noria: the same world files, objects and effects
+    bool IsNoriaWorld() const { return WorldActive == WD_3NORIA || WorldActive == WD_82ILLUSION_NORIA; }
+    bool IsIllusionOfNoria() const { return WorldActive == WD_82ILLUSION_NORIA; }
     bool IsEmpireGuardian1();
     bool IsEmpireGuardian2();
     bool IsEmpireGuardian3();

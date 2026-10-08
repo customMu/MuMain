@@ -23,6 +23,8 @@
 #include "World/MapInfra/PortalMgr.h"
 #include "GameLogic/Quests/CSQuest.h"
 #include "I18N/All.h"
+#include "GameLogic/Combat/SkillCastTimeOptions.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 
 namespace SEASON3B
 {
@@ -461,7 +463,8 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
                               pPickItem->Type == ITEM_JEWEL_OF_LIFE || pPickItem->Type == ITEM_JEWEL_OF_HARMONY ||
                               pPickItem->Type == ITEM_LOWER_REFINE_STONE ||
                               pPickItem->Type == ITEM_HIGHER_REFINE_STONE || pPickItem->Type == ITEM_POTION + 160 ||
-                              pPickItem->Type == ITEM_POTION + 161;
+                              pPickItem->Type == ITEM_POTION + 161 ||
+                              GameLogic::Events::IllusionOfNoria::FindEcho(pPickItem->Type) != nullptr;
 
     if (!bIsJewelType)
     {
@@ -524,13 +527,28 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
         }
         else
         {
-            const StrengthenItem strengthitem = g_pUIJewelHarmonyinfo->GetItemType(static_cast<int>(pItem->Type));
-
-            if (strengthitem == SI_None)
-            {
-                bSuccess = false;
-            }
+            // 09.10.2026: only the rank 7-8 weapons of +10 take the jewel (the options which lower the fix time of a skill)
+            namespace CastTime = GameLogic::Combat::SkillCastTime;
+            bSuccess = CastTime::IsOptionWeapon(pItem->Type / MAX_ITEM_INDEX, pItem->Type % MAX_ITEM_INDEX)
+                && pItem->Level >= CastTime::RequiredItemLevel;
         }
+    }
+
+    if (const auto* echo = GameLogic::Events::IllusionOfNoria::FindEcho(pPickItem->Type))
+    {
+        // an Echo: like the Jewel of Illusion, but only on a weapon whose options have its skill (for this class)
+        namespace CastTime = GameLogic::Combat::SkillCastTime;
+        const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
+        const int group = pItem->Type / MAX_ITEM_INDEX;
+        const int number = pItem->Type % MAX_ITEM_INDEX;
+        bool hasSkill = false;
+        for (const int option : CastTime::OptionNumbers)
+        {
+            hasSkill = hasSkill || CastTime::OptionSkill(group, number, option, family) == echo->Skill;
+        }
+
+        bSuccess = hasSkill && pItem->Jewel_Of_Harmony_Option == 0 && pItem->Level >= CastTime::RequiredItemLevel
+            && !g_SocketItemMgr.IsSocketItem(pItem);
     }
 
     if (pPickItem->Type == ITEM_LOWER_REFINE_STONE || pPickItem->Type == ITEM_HIGHER_REFINE_STONE)
@@ -539,7 +557,8 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
         {
             bSuccess = false;
         }
-        else if (pItem->Jewel_Of_Harmony_Option == 0)
+        else if (pItem->Jewel_Of_Harmony_Option == 0
+            || pItem->Jewel_Of_Harmony_OptionLevel >= GameLogic::Combat::SkillCastTime::MaxOptionLevel)
         {
             bSuccess = false;
         }

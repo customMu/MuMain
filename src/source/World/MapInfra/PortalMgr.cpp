@@ -46,6 +46,7 @@ BOOL CPortalMgr::IsPortalUsable()
     case WD_6STADIUM:
     case WD_0LORENCIA:
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
     case WD_51HOME_6TH_CHAR:
     case WD_2DEVIAS:
     case WD_1DUNGEON:

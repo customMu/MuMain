@@ -43,6 +43,20 @@ namespace GameLogic::Combat::SkillCastTime
         return found;
     }
 
+    // Whether the item takes the Jewel of Harmony: a rank 7-8 weapon with the fix options (any class).
+    inline bool IsOptionWeapon(int group, int number)
+    {
+        for (const auto& entry : Weapons)
+        {
+            if (entry.Group == group && entry.Number == number)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // The skill whose fix time the harmony option of the weapon lowers, or 0.
     inline int OptionSkill(int group, int number, int harmonyOption, int family)
     {

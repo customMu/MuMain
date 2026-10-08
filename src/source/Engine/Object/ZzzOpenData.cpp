@@ -24,6 +24,7 @@
 #include "GameLogic/Events/Event.h"
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/JewelryBox.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "GameLogic/Items/MixMgr.h"
 #include "UI/NewUI/NewUISystem.h"
 #include "UI/NewUI/Dialogs/NewUIHelpWindow.h"
@@ -907,6 +908,10 @@ void OpenItems()
     gLoadData.AccessModel(MODEL_TOWN_PORTAL_SCROLL, L"Data\\Item\\", L"Scroll", 1);
     gLoadData.AccessModel(MODEL_BOX_OF_LUCK, L"Data\\Item\\", L"MagicBox", 1);
     gLoadData.AccessModel(MODEL_JEWELRY_BOX, L"Data\\Item\\", L"JewelryBox", 1); // tools/bmd/examples/jewelry_box.py
+    gLoadData.AccessModel(MODEL_WHISTLE_OF_THE_VEIL, L"Data\\Item\\", L"Whistle", 1); // tools/bmd/examples/whistle.py
+    gLoadData.AccessModel(MODEL_ILLUSION_SHARD, L"Data\\Item\\", L"IllusionShard", 1); // tools/bmd/examples/illusion_shard.py
+    for (int i = MODEL_ECHO_FIRST; i <= MODEL_ECHO_LAST; i++)
+        gLoadData.AccessModel(i, L"Data\\Item\\", L"jos"); // the Echoes look like the Jewel of Illusion
     gLoadData.AccessModel(MODEL_POTION + 12, L"Data\\Item\\", L"Event", 1);
 
     for (int i = 0; i < 2; i++)
@@ -1327,6 +1332,10 @@ void OpenItemTextures()
 
     gLoadData.OpenTexture(MODEL_POTION + 27, L"Item\\");
     gLoadData.OpenTexture(MODEL_JEWELRY_BOX, L"Item\\");
+    gLoadData.OpenTexture(MODEL_WHISTLE_OF_THE_VEIL, L"Item\\");
+    gLoadData.OpenTexture(MODEL_ILLUSION_SHARD, L"Item\\");
+    for (int i = MODEL_ECHO_FIRST; i <= MODEL_ECHO_LAST; i++)
+        gLoadData.OpenTexture(i, L"Item\\");
 
     for (int i = 0; i < 2; i++)
         gLoadData.OpenTexture(MODEL_LOST_MAP + i, L"Item\\");
@@ -5613,6 +5622,7 @@ void OpenBasicData(HDC hDC)
     mu_swprintf(Text, L"Data\\Local\\%ls\\Item_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     g_ItemDataHandler.Load(Text);
     GameLogic::Items::JewelryBox::Register();
+    GameLogic::Events::IllusionOfNoria::RegisterItems();
 
     mu_swprintf(Text, L"Data\\Local\\%ls\\movereq_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     SEASON3B::CMoveCommandData::OpenMoveReqScript(Text);

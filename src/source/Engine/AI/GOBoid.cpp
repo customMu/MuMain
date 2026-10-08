@@ -1303,7 +1303,7 @@ void MoveBoids()
             }
             else if (gMapManager.WorldActive == WD_0LORENCIA
                 || gMapManager.WorldActive == WD_1DUNGEON
-                || gMapManager.WorldActive == WD_3NORIA
+                || gMapManager.IsNoriaWorld()
                 || gMapManager.WorldActive == WD_4LOSTTOWER
                 || gMapManager.WorldActive == WD_10HEAVEN
                 || ((gMapManager.WorldActive == WD_7ATLANSE || gMapManager.WorldActive == WD_67DOPPLEGANGER3) && (TerrainWall[Index] == 0 || TerrainWall[Index] == TW_CHARACTER))
@@ -1332,7 +1332,7 @@ void MoveBoids()
                     o->Type = MODEL_BIRD01;
                 else if (gMapManager.WorldActive == WD_1DUNGEON || gMapManager.WorldActive == WD_4LOSTTOWER)
                     o->Type = MODEL_BAT01;
-                else if (gMapManager.WorldActive == WD_3NORIA)
+                else if (gMapManager.IsNoriaWorld())
                 {
                     o->Type = MODEL_BUTTERFLY01;
                     o->Velocity = 0.3f;

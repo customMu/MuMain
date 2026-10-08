@@ -1054,7 +1054,7 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
                 b->RenderBodyShadow(o->BlendMesh, o->HiddenMesh);
                 o->HiddenMesh = -1;
             }
-            else if (gMapManager.WorldActive == WD_3NORIA && o->Type == MODEL_WARP3)
+            else if (gMapManager.IsNoriaWorld() && o->Type == MODEL_WARP3)
             {
                 b->BodyLight[0] = 0.8f;
                 b->BodyLight[1] = 0.8f;
@@ -1095,6 +1095,10 @@ void Draw_RenderObject(OBJECT* o, bool Translate, int Select, int ExtraMon)
                 else if (g_isCharacterBuff(o, eDeBuff_BlowOfDestruction))
                 {
                     Vector(0.3f, 0.5f, 1.f, b->BodyLight);
+                }
+                else if (g_isCharacterBuff(o, EFFECT_GOLDEN_CURSE))
+                {
+                    Vector(1.f, 0.75f, 0.3f, b->BodyLight); // the Golden Curse of the Illusion of Noria
                 }
 
                 if (o->Type == MODEL_VALKYRIE || o->Type == MODEL_ICE_MONSTER || o->Type == MODEL_ALQUAMOS || o->Type == MODEL_QUEEN_RAINER)
@@ -2818,6 +2822,7 @@ void RenderObjectVisual(OBJECT* o)
         }
         break;
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
         switch (o->Type)
         {
         case 9:
@@ -3921,6 +3926,7 @@ void MoveObject(OBJECT* o)
         }
         break;
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
         switch (o->Type)
         {
         case MODEL_WARP:
@@ -4676,6 +4682,7 @@ OBJECT* CreateObject(int Type, vec3_t Position, vec3_t Angle, float Scale)
         }
         break;
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
         switch (Type)
         {
         case MODEL_WARP:

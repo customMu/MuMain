@@ -21,9 +21,10 @@ namespace GameLogic::Items
         case ITEM_JEWEL_OF_HARMONY:
         case ITEM_LOWER_REFINE_STONE:
         case ITEM_HIGHER_REFINE_STONE:
+        case ITEM_ILLUSION_SHARD:
             return true;
         default:
-            return false;
+            return itemType >= ITEM_ECHO_FIRST && itemType <= ITEM_ECHO_LAST;
         }
     }
 }

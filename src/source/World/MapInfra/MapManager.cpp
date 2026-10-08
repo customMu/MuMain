@@ -86,6 +86,7 @@ void CMapManager::Load() // OK
     }
     break;
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
         gLoadData.AccessModel(MODEL_BUTTERFLY01, L"Data\\Object1\\", L"Butterfly", 1);
         gLoadData.OpenTexture(MODEL_BUTTERFLY01, L"Object1\\");
         gLoadData.AccessModel(MODEL_WARP, L"Data\\Npc\\", L"warp01");
@@ -1117,6 +1118,10 @@ void CMapManager::Load() // OK
         {
             iMapWorld = WD_45CURSEDTEMPLE_LV1 + 2;
         }
+        else if (this->IsIllusionOfNoria())
+        {
+            iMapWorld = WD_3NORIA + 1;
+        }
 
         mu_swprintf(DirName, L"Data\\Object%d\\", iMapWorld);
         for (i = MODEL_WORLD_OBJECT; i < MAX_WORLD_OBJECTS; i++)
@@ -1219,6 +1224,10 @@ void CMapManager::LoadWorld(int Map)
     else if (gMapManager.IsCursedTemple())
     {
         iMapWorld = WD_45CURSEDTEMPLE_LV1 + 2;
+    }
+    else if (this->IsIllusionOfNoria())
+    {
+        iMapWorld = WD_3NORIA + 1;
     }
 
     battleCastle::Init();
@@ -1474,7 +1483,7 @@ void CMapManager::LoadWorld(int Map)
         
         mu_swprintf(FileName, L"%ls\\leaf01.tga", WorldName);
         LoadBitmap(FileName, BITMAP_LEAF1, GL_NEAREST, GL_CLAMP_TO_EDGE, false);
-        mu_swprintf(FileName,(Map==0||Map==3||Map==63)? L"%ls\\leaf01.tga": L"%ls\\leaf01.jpg",WorldName);
+        mu_swprintf(FileName,(Map==0||Map==3||Map==63||Map==WD_82ILLUSION_NORIA)? L"%ls\\leaf01.tga": L"%ls\\leaf01.jpg",WorldName);
         LoadBitmap(FileName, BITMAP_LEAF1, GL_NEAREST, GL_CLAMP_TO_EDGE, false);
         mu_swprintf(FileName, L"%ls\\leaf02.jpg", WorldName);
         LoadBitmap(FileName, BITMAP_LEAF2, GL_NEAREST, GL_CLAMP_TO_EDGE, false);
@@ -1680,6 +1689,11 @@ bool CMapManager::InBattleCastle(int iMap)
 
 const wchar_t* CMapManager::GetMapName(int iMap)
 {
+    if (iMap == WD_82ILLUSION_NORIA)
+    {
+        return I18N::Game::IllusionOfNoria;
+    }
+
     if (iMap == WD_34CRYWOLF_1ST)
     {
         return(I18N::Game::CrywolfFortress);

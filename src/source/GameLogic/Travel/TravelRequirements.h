@@ -44,6 +44,7 @@ namespace GameLogic::Travel
         { 41, 10 }, // Barracks of Balgass
         { 42, 10 }, // Balgass Refuge
         { 81, 20 }, // Karutan 2
+        { 82, 20 }, // Illusion of Noria (entered through Warden Eldrin, plugin "Illusion of Noria")
         { 57, 30 }, // Raklion
         { 58, 30 }, // Raklion boss room
         { 38, 50 }, // Kanturu Relics - postponed (to be reworked as a high-end map)

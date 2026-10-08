@@ -15,8 +15,12 @@ namespace GameLogic::Combat::SkillCastTime
     inline constexpr float CastFloorSeconds = 0.12f;
     inline constexpr float ElfOptionFactor = 0.6f;
     inline constexpr int OptionNumbers[3] = { 11, 12, 13 };
-    // the share by which the option lowers the fix time, by harmony level 0..13
-    inline constexpr float OptionCut[14] = { 0.05f, 0.0654f, 0.0808f, 0.0962f, 0.1115f, 0.1269f, 0.1423f, 0.1577f, 0.1731f, 0.1885f, 0.2038f, 0.2192f, 0.2346f, 0.25f };
+    // the share by which the option lowers the fix time, by harmony level 1..10 (0: no option)
+    inline constexpr float OptionCut[11] = { 0.0f, 0.05f, 0.0722f, 0.0944f, 0.1167f, 0.1389f, 0.1611f, 0.1833f, 0.2056f, 0.2278f, 0.25f };
+    inline constexpr int MaxOptionLevel = 10;
+    inline constexpr int RequiredItemLevel = 10; // the Jewel of Harmony needs a weapon of +10
+    // chance in percent to reach the level with a refine stone (server RefineStoneUpgradeConsumeHandlerPlugIn)
+    inline constexpr int RefineChance[11] = { 0, 0, 100, 100, 70, 60, 50, 40, 30, 20, 10 };
 
     struct WeaponSkills
     {
@@ -73,15 +77,25 @@ namespace GameLogic::Combat::SkillCastTime
     // the server: SkillCastTimeConfiguration.FixTimes and SpeedCurves (the tooltip shows the casts per second with it)
     inline constexpr SkillTime SkillTimes[] =
     {
+        { 1, 279, SpeedStat::Magic }, // Poison
         { 2, 279, SpeedStat::Magic }, // Meteorite
+        { 3, 279, SpeedStat::Magic }, // Lightning
+        { 4, 279, SpeedStat::Magic }, // Fire Ball
         { 5, 279, SpeedStat::Magic }, // Flame
+        { 7, 279, SpeedStat::Magic }, // Ice
         { 8, 279, SpeedStat::Magic }, // Twister
         { 9, 279, SpeedStat::Magic }, // Evil Spirit
         { 10, 673, SpeedStat::Magic }, // Hellfire
+        { 11, 279, SpeedStat::Magic }, // Power Wave
         { 12, 536, SpeedStat::Magic }, // Aqua Beam
         { 13, 279, SpeedStat::Magic }, // Cometfall
         { 14, 444, SpeedStat::Magic }, // Inferno
+        { 17, 279, SpeedStat::Magic }, // Energy Ball
         { 19, 195, SpeedStat::Attack }, // Falling Slash
+        { 20, 171, SpeedStat::Attack }, // Lunge
+        { 21, 174, SpeedStat::Attack }, // Uppercut
+        { 22, 171, SpeedStat::Attack }, // Cyclone
+        { 23, 177, SpeedStat::Attack }, // Slash
         { 24, 171, SpeedStat::Attack }, // Triple Shot
         { 38, 279, SpeedStat::Magic }, // Decay
         { 39, 279, SpeedStat::Magic }, // Ice Storm
@@ -97,6 +111,7 @@ namespace GameLogic::Combat::SkillCastTime
         { 55, 289, SpeedStat::None }, // Fire Slash
         { 56, 176, SpeedStat::Attack }, // Power Slash
         { 57, 253, SpeedStat::None }, // Spiral Slash
+        { 60, 176, SpeedStat::Attack }, // Force
         { 61, 176, SpeedStat::Attack }, // Fire Burst
         { 62, 268, SpeedStat::Attack }, // Earthshake
         { 66, 176, SpeedStat::Attack }, // Force Wave

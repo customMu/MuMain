@@ -199,6 +199,7 @@ int OpenTerrainAttribute(wchar_t* FileName)
         if (TerrainWall[55 * TERRAIN_SIZE + 208] != 5) Error = true;
         break;
     case WD_3NORIA:
+    case WD_82ILLUSION_NORIA:
         if (TerrainWall[119 * TERRAIN_SIZE + 186] != 5) Error = true;
         break;
     case WD_4LOSTTOWER:

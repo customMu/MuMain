@@ -29,6 +29,9 @@ namespace Network::Server::KalimaPackets
     //                   [has lost map] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
     //                                                                       - entry dialog of the chamber of Kundun (keeper)
     //   C1 04 FB 0B                                                         - enter the chamber of Kundun (client to server)
+    //   C2 xx xx FB 12 ...                                                  - the dialog of the warden of the Illusion of Noria
+    //                                                                         (GameLogic/Events/IllusionOfNoria.cpp)
+    //   C1 05 FB 13 [action] / C1 08 FB 13 20 [group] [number u16]          - an action / a purchase in that dialog
     //   C1 14 FB 20 [16 bytes]                                              - the fingerprint of this computer (client to server,
     //                                                                         GameLogic/Social/HardwareId.h)
     inline constexpr std::uint8_t HeadCode = 0xFB;

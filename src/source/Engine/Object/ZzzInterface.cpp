@@ -1729,7 +1729,7 @@ void Action(CHARACTER* c, OBJECT* o, bool Now)
                 case 73:Sit = true; break;
                 }
             }
-            else if (gMapManager.WorldActive == WD_3NORIA)
+            else if (gMapManager.IsNoriaWorld())
             {
                 switch (TargetType)
                 {
@@ -4039,7 +4039,7 @@ void RenderCursor()
         if ((gMapManager.WorldActive == WD_0LORENCIA && Operates[SelectedOperate].Owner->Type == MODEL_POSE_BOX) ||
             (gMapManager.WorldActive == WD_1DUNGEON && Operates[SelectedOperate].Owner->Type == 60) ||
             (gMapManager.WorldActive == WD_2DEVIAS && Operates[SelectedOperate].Owner->Type == 91) ||
-            (gMapManager.WorldActive == WD_3NORIA && Operates[SelectedOperate].Owner->Type == 38)
+            (gMapManager.IsNoriaWorld() && Operates[SelectedOperate].Owner->Type == 38)
             )
             RenderBitmap(BITMAP_CURSOR + 6, (float)MouseX - 2.f, (float)MouseY - 2.f, 24.f, 24.f);
         else

@@ -297,7 +297,7 @@ bool CreateDeviasSnow(PARTICLE* o)
 
 bool CreateAtlanseLeaf(PARTICLE* o)
 {
-    if (gMapManager.WorldActive != WD_3NORIA && gMapManager.WorldActive != WD_7ATLANSE) return false;
+    if (!gMapManager.IsNoriaWorld() && gMapManager.WorldActive != WD_7ATLANSE) return false;
 
     o->Type = BITMAP_LEAF1;
     vec3_t Position;

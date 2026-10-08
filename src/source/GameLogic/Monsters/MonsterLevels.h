@@ -359,6 +359,15 @@ namespace GameLogic::Monsters
         { 704, 220 }, // Kundun 5
         { 705, 320 }, // Kundun 6
         { 706, 371 }, // Kundun 7
+        { 710, 310 }, // Illusion Goblin
+        { 711, 312 }, // Illusion Chain Scorpion
+        { 712, 314 }, // Illusion Beetle Monster
+        { 713, 316 }, // Illusion Hunter
+        { 714, 316 }, // Illusion Forest Monster
+        { 715, 320 }, // Illusion Agon
+        { 716, 330 }, // Illusion Stone Golem
+        { 717, 330 }, // Illusion Elite Goblin
+        { 718, 340 }, // Gilded Colossus
     };
 
     // The level of the monster on the server; 0 if unknown.

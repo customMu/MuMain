@@ -447,6 +447,8 @@ static void SetWorldClearColor()
         rgb8(178, 178, 178);                           // Gray
     else if (world == WD_65DOPPLEGANGER1)
         rgb8(148, 179, 223);                           // Light blue
+    else if (world == WD_82ILLUSION_NORIA)
+        rgb8(46, 22, 74);                              // Violet haze of the illusion
     else
         SetClearAndFogColor(0.f, 0.f, 0.f);            // Black (default)
 
@@ -904,6 +906,7 @@ static void PlayWorldAmbientSounds()
                     PlayBuffer(SOUND_WIND01, NULL, true);
                 break;
             case WD_3NORIA:
+            case WD_82ILLUSION_NORIA:
                 PlayBuffer(SOUND_WIND01, NULL, true);
                 if (rand_fps_check(512))
                     PlayBuffer(SOUND_FOREST01);
@@ -967,7 +970,7 @@ static void PlayWorldAmbientSounds()
  */
 static void StopInactiveAmbientSounds()
 {
-    if (gMapManager.WorldActive != WD_0LORENCIA && gMapManager.WorldActive != WD_2DEVIAS && gMapManager.WorldActive != WD_3NORIA && gMapManager.WorldActive != WD_58ICECITY_BOSS && gMapManager.WorldActive != WD_79UNITEDMARKETPLACE)
+    if (gMapManager.WorldActive != WD_0LORENCIA && gMapManager.WorldActive != WD_2DEVIAS && !gMapManager.IsNoriaWorld() && gMapManager.WorldActive != WD_58ICECITY_BOSS && gMapManager.WorldActive != WD_79UNITEDMARKETPLACE)
     {
         StopBuffer(SOUND_WIND01, true);
     }
@@ -979,7 +982,7 @@ static void StopInactiveAmbientSounds()
     {
         StopBuffer(SOUND_DUNGEON01, true);
     }
-    if (gMapManager.WorldActive != WD_3NORIA)
+    if (!gMapManager.IsNoriaWorld())
     {
         StopBuffer(SOUND_FOREST01, true);
     }

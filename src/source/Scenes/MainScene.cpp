@@ -78,7 +78,7 @@ static bool RequireLeavesEffect()
 {
     return (gMapManager.WorldActive == WD_0LORENCIA && HeroTile != 4) ||
            (gMapManager.WorldActive == WD_2DEVIAS && HeroTile != 3 && HeroTile < 10) ||
-           gMapManager.WorldActive == WD_3NORIA ||
+           gMapManager.IsNoriaWorld() ||
            gMapManager.WorldActive == WD_7ATLANSE ||
            gMapManager.InDevilSquare() ||
            gMapManager.WorldActive == WD_10HEAVEN ||

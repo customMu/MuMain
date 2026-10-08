@@ -8,6 +8,7 @@
 
 #include "GameLogic/Events/KalimaEntry.h"
 #include "GameLogic/Events/KalimaSpots.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "GameLogic/Events/KundunChamberEntry.h"
 #include "GameLogic/Items/KundunEssence.h"
 #include "GameLogic/Social/HardwareId.h"
@@ -42,6 +43,7 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t KillQuestStateSubCode = 0x0D;
         constexpr std::uint8_t KillQuestClaimSubCode = 0x0E;
         constexpr std::uint8_t HardwareIdSubCode = 0x20;
+        constexpr std::uint8_t IllusionWardenSubCode = 0x12; // C2: the dialog of the warden of the Illusion of Noria
         constexpr std::uint8_t DropModeVoteSubCode = 0x0F;
         constexpr std::uint8_t DropModeVoteAnswerSubCode = 0x10;
         constexpr std::uint8_t InviteDropModeSubCode = 0x11;
@@ -389,6 +391,13 @@ namespace Network::Server::KalimaPackets
             if (isC1 && packet.size() >= DropModePacketSize)
             {
                 GameLogic::Social::PartyDropMode::SetInviteMode(static_cast<GameLogic::Social::PartyDropMode::Mode>(packet[DropModeOffset]));
+            }
+
+            break;
+        case IllusionWardenSubCode:
+            if (!isC1)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveWardenDialog(packet);
             }
 
             break;

@@ -16,6 +16,7 @@ namespace SEASON3B
             IMAGE_BUFF_STATUS2,
             IMAGE_BUFF_STATUS3,
             IMAGE_BUFF_SET_GUARD,   // Interface\newui_setguard (tools/hud/set_guard_icon.py)
+            IMAGE_BUFF_GOLDEN_CURSE, // Interface\newui_goldencurse (tools/hud/golden_curse_icon.py), EFFECT_GOLDEN_CURSE
         };
 
         enum BUFF_RENDER

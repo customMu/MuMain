@@ -43,6 +43,7 @@
 #include "GameLogic/Items/RepairPrice.h"
 #include "GameLogic/Items/ArmorRanks.h"
 #include "GameLogic/Combat/SkillCastTimeOptions.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "GameLogic/Items/WeaponRanks.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
 #include "GameLogic/Items/PotionCooldown.h"
@@ -4337,18 +4338,42 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     }
     else if (ip->Type == ITEM_JEWEL_OF_HARMONY)
     {
-        mu_swprintf(TextList[TextNum], I18N::Game::JewelForItemReinforcement);
+        // 09.10.2026: the harmony options lower the fix time of a skill (server HarmonyJewelConsumeHandlerPlugIn)
+        mu_swprintf(TextList[TextNum], I18N::Game::AddsAnOptionToARank78Weapon);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::TheOptionLowersTheFixTimeOfASkill);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (const auto* echo = GameLogic::Events::IllusionOfNoria::FindEcho(ip->Type))
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::AddsTheOptionOfLsToARank78Weapon, echo->SkillName);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::TheOptionLowersTheFixTimeOfASkill);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_ILLUSION_SHARD)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::TheCurrencyOfWardenEldrinInNoria);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_WHISTLE_OF_THE_VEIL)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::BringItToWardenEldrinInNoria);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_LOWER_REFINE_STONE)
     {
-        mu_swprintf(TextList[TextNum], I18N::Game::GrantActualPowerToReinforcedItem);
+        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionFallsBackToLevel1);
+        TextListColor[TextNum] = TEXT_COLOR_RED; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_HIGHER_REFINE_STONE)
     {
-        mu_swprintf(TextList[TextNum], I18N::Game::GrantActualPowerToReinforcedItem);
+        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionKeepsItsLevel);
+        TextListColor[TextNum] = TEXT_COLOR_BLUE; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_POTION + 160)
     {
@@ -5184,8 +5209,23 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
                 {
                     // harmony options 11, 12, 13 of the rank 7-8 weapons: the fix time of a skill of the class (session 12)
                     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
-                    const int percent = static_cast<int>(GameLogic::Combat::SkillCastTime::OptionCutOf(ip->Jewel_Of_Harmony_OptionLevel, family) * 100.f + 0.5f);
-                    mu_swprintf(TextList[TextNum], I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
+                    namespace CastTime = GameLogic::Combat::SkillCastTime;
+                    const int harmonyLevel = ip->Jewel_Of_Harmony_OptionLevel;
+                    const int percent = static_cast<int>(CastTime::OptionCutOf(harmonyLevel, family) * 100.f + 0.5f);
+                    wchar_t fixText[100];
+                    wchar_t levelText[40];
+                    mu_swprintf(fixText, I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
+                    if (harmonyLevel >= CastTime::MaxOptionLevel)
+                    {
+                        mu_swprintf(levelText, I18N::Game::DLvlMax, CastTime::MaxOptionLevel);
+                    }
+                    else
+                    {
+                        // the option level and the chance of the refine stones to raise it
+                        mu_swprintf(levelText, I18N::Game::LvlDNextD, harmonyLevel, CastTime::RefineChance[std::max(0, harmonyLevel) + 1]);
+                    }
+
+                    mu_swprintf(TextList[TextNum], L"%ls %ls", fixText, levelText);
                     TextListColor[TextNum] = TEXT_COLOR_YELLOW;
                     TextBold[TextNum] = true; TextNum++;
                     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;

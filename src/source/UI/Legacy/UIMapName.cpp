@@ -115,6 +115,7 @@ void CUIMapName::InitImgPathMap()
     m_mapImgPath[80] = strFolderName + L"MapName_Karutan.tga";
     m_mapImgPath[81] = strFolderName + L"MapName_Karutan.tga";
 #endif	// ASG_ADD_MAP_KARUTAN
+    m_mapImgPath[82] = strFolderName + L"IllusionNoria.tga"; // Illusion of Noria: the words of Illusion Temple and Noria
 }
 
 void CUIMapName::Init()

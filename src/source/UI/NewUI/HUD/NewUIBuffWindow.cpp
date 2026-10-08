@@ -381,6 +381,13 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffIcon(eBuffState& eBuffType, float x, 
     int iWidthIndex, iHeightIndex;
     float u, v;
 
+    if (eBuffType == EFFECT_GOLDEN_CURSE)
+    {
+        // the curse of the boss of the Illusion of Noria: its own picture of 40 x 56 (padded to 64 x 64), like the Set Guard
+        RenderBitmap(IMAGE_BUFF_GOLDEN_CURSE, x, y, width, height, 0.f, 0.f, 40.f / 64.f, 56.f / 64.f);
+        return;
+    }
+
     if (eBuffType < 81) // eBuff_Berserker
     {
         iWidthIndex = (eBuffType - 1) % 10;
@@ -410,6 +417,21 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffTooltip(eBuffClass& eBuffClassType, e
     ::memset(TextList[0], 0, sizeof(char) * 30 * 100);
     ::memset(TextListColor, 0, sizeof(int) * 30);
     ::memset(TextBold, 0, sizeof(int) * 30);
+
+    if (eBuffType == EFFECT_GOLDEN_CURSE)
+    {
+        // not in BuffEffect_<lang>.bmd: the text of the server plugin "Illusion of Noria"
+        mu_swprintf(TextList[TextNum], I18N::Game::GoldenCurse);
+        TextListColor[TextNum] = TEXT_COLOR_RED;
+        TextBold[TextNum] = true;
+        ++TextNum;
+        mu_swprintf(TextList[TextNum], I18N::Game::DHPPerSecond, 300);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE;
+        TextBold[TextNum] = false;
+        ++TextNum;
+        RenderTipTextList(x, y, TextNum, 0);
+        return;
+    }
 
     std::list<std::wstring> tooltipinfo;
     g_BuffToolTipString(tooltipinfo, eBuffType);
@@ -466,11 +488,13 @@ void SEASON3B::CNewUIBuffWindow::LoadImages()
     LoadBitmap(L"Interface\\newui_statusicon.jpg", IMAGE_BUFF_STATUS, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_statusicon2.jpg", IMAGE_BUFF_STATUS2, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_setguard.jpg", IMAGE_BUFF_SET_GUARD, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_goldencurse.jpg", IMAGE_BUFF_GOLDEN_CURSE, GL_LINEAR);
 }
 
 void SEASON3B::CNewUIBuffWindow::UnloadImages()
 {
     DeleteBitmap(IMAGE_BUFF_SET_GUARD);
+    DeleteBitmap(IMAGE_BUFF_GOLDEN_CURSE);
     DeleteBitmap(IMAGE_BUFF_STATUS2);
     DeleteBitmap(IMAGE_BUFF_STATUS);
 }

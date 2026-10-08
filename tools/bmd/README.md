@@ -13,6 +13,8 @@ and their textures (`.OZJ`, `.OZT`). The file layout follows `BMD::Open2` / `BMD
 | `roundtrip_test.py` | regression test: game models → Blender → BMD, compared pose by pose | Blender 4.4+ |
 | `examples/golem.py` | a rigged, animated monster built from code | Blender 4.4+ |
 | `examples/jewelry_box.py` | a static item built from code: the Jewelry Box (14/170) in `Data/Item/JewelryBox01.bmd` | Blender 4.4+ |
+| `examples/whistle.py` | the Whistle of the Veil (14/171), `Data/Item/Whistle01.bmd`; texture atlas `whistle_atlas.jpg` (Gemini) | Blender 4.4+ |
+| `examples/illusion_shard.py` | the Illusion Shard (14/172), `Data/Item/IllusionShard01.bmd`; texture `illusion_shard.jpg` | Blender 4.4+ |
 
 Checked against the game data in `src/bin/Data`: all 5114 models are read to the last byte and written back
 without loss (4 files of version `0x00` the client does not load either); 600 random models went through

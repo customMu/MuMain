@@ -11,6 +11,7 @@
 #include "Engine/Object/ZzzObject.h"
 #include "Engine/Object/ZzzCharacter.h"
 #include "UI/NewUI/NewUISystem.h"
+#include "World/MapInfra/MapManager.h"
 #include <SDL3/SDL.h>
 #ifdef LDS_ADD_MULTISAMPLEANTIALIASING
 #include "wglext.h"  // legacy WGL multisample pixel-format path (disabled by default)
@@ -644,6 +645,12 @@ void BeginOpenglPhysical(int x, int y, int width, int height)
         // the visible range and fog completes before the clip plane.
         float fogStart = g_Camera.ViewFar * 1.00f;
         float fogEnd   = g_Camera.ViewFar * 1.25f;
+        if (gMapManager.IsIllusionOfNoria())
+        {
+            // the Illusion of Noria: a violet haze closer to the hero (the colour: SceneManager SetWorldClearColor)
+            fogStart = g_Camera.ViewFar * 0.45f;
+            fogEnd = g_Camera.ViewFar * 1.1f;
+        }
 
 #ifdef _EDITOR
         // Allow DevEditor to override fog percentages for the active camera.
