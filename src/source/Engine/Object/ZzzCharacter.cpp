@@ -1026,7 +1026,7 @@ namespace
         set(PLAYER_SKILL_HELL_START, 0.30f);
         set(PLAYER_ATTACK_TELEPORT, 0.28f);
         set(PLAYER_ATTACK_RIDE_TELEPORT, 0.3f);
-        set(PLAYER_ATTACK_DARKHORSE, 0.3f);
+        set(PLAYER_ATTACK_DARKHORSE, 0.3f + AttackSpeed1, SpeedStat::Attack); // Earthshake: the DL command build farms with it
         set(PLAYER_FENRIR_ATTACK_DARKLORD_TELEPORT, 0.3f);
         set(PLAYER_ATTACK_REMOVAL, 0.28f);
 
