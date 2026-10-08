@@ -71,6 +71,8 @@ public:
     // The drop mode which the player chose for new parties (0 free, 1 random, 2 in turn).
     int GetPartyDropMode() const { return m_partyDropMode; }
     void SetPartyDropMode(int mode) { m_partyDropMode = mode; }
+    bool GetModernHud() const { return m_modernHud; }
+    void SetModernHud(bool modern) { m_modernHud = modern; }
 
     // Chat commands - the favourites and the named templates of the command
     // window. They belong to the installation, not to a character.
@@ -134,6 +136,7 @@ private:
 
     int m_zoom;
     int m_partyDropMode = 0;
+    bool m_modernHud = true;
     bool m_sortParticleDraws;
     bool m_vsyncEnabled;
 

@@ -184,6 +184,10 @@ namespace
     // Font combo box placement (relative to m_Pos). Row order below the effect
     // rows is: Font, Language, Resolution, Windowed mode (combos grouped at the
     // top so an open dropdown never overlaps the Close button).
+    // the Modern HUD row comes after Windowed mode, the Close button below it
+    constexpr int HUD_CHECKBOX_Y_LOCAL = 378;
+    constexpr int CLOSE_BUTTON_Y_LOCAL = 408;
+
     constexpr int FONT_LABEL_Y_LOCAL = 244;
     constexpr int FONT_COMBO_X_LOCAL = 22;
     constexpr int FONT_COMBO_Y_LOCAL = 257;
@@ -211,6 +215,7 @@ SEASON3B::CNewUIOptionWindow::CNewUIOptionWindow()
     m_bRenderAllEffects = true;
     m_iResolutionIndex = 0;
     m_bWindowedMode = (g_bUseWindowMode == TRUE);
+    m_bModernHud = GameConfig::GetInstance().GetModernHud();
     m_iLanguageIndex = FindCurrentLanguageIndex();
     m_iFontIndex = FindCurrentFontIndex();
 }
@@ -304,7 +309,7 @@ void SEASON3B::CNewUIOptionWindow::SetButtonInfo()
 {
     m_BtnClose.ChangeTextBackColor(RGBA(255, 255, 255, 0));
     m_BtnClose.ChangeButtonImgState(true, IMAGE_OPTION_BTN_CLOSE, true);
-    m_BtnClose.ChangeButtonInfo(m_Pos.x + 68, m_Pos.y + 388, 54, 30);
+    m_BtnClose.ChangeButtonInfo(m_Pos.x + 68, m_Pos.y + CLOSE_BUTTON_Y_LOCAL, 54, 30);
     m_BtnClose.ChangeImgColor(BUTTON_STATE_UP, RGBA(255, 255, 255, 255));
     m_BtnClose.ChangeImgColor(BUTTON_STATE_DOWN, RGBA(255, 255, 255, 255));
 }
@@ -398,10 +403,14 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
     }
 
     bool oldWindowedMode = m_bWindowedMode;
+    const bool oldModernHud = m_bModernHud;
     HandleCheckboxInputs();
 
     if (m_bWindowedMode != oldWindowedMode)
         ApplyWindowModeToggle();
+
+    if (m_bModernHud != oldModernHud)
+        ApplyHudStyle();
 
     if (HandleVolumeSlider(m_iVolumeLevel, 104))
         OnSoundVolumeChanged();
@@ -413,7 +422,7 @@ bool SEASON3B::CNewUIOptionWindow::UpdateMouseEvent()
 
     // Combo box already processed at the top. Just consume clicks inside the
     // option window itself so they don't fall through to the world.
-    if (CheckMouseIn(m_Pos.x, m_Pos.y, 190, 419))
+    if (CheckMouseIn(m_Pos.x, m_Pos.y, 190, CLOSE_BUTTON_Y_LOCAL + 31))
         return false;
 
     return true;
@@ -428,6 +437,7 @@ void SEASON3B::CNewUIOptionWindow::HandleCheckboxInputs()
         { 155, &m_bSlideHelp         },
         { 238, &m_bRenderAllEffects  },
         { 356, &m_bWindowedMode      },
+        { HUD_CHECKBOX_Y_LOCAL, &m_bModernHud },
     };
 
     constexpr int CHECKBOX_X_LOCAL = 150;
@@ -572,6 +582,7 @@ void SEASON3B::CNewUIOptionWindow::OpenningProcess()
     m_FontCombo.SetSelectedIndex(m_iFontIndex);
     m_FontCombo.Close();
     m_bWindowedMode = (g_bUseWindowMode == TRUE);
+    m_bModernHud = GameConfig::GetInstance().GetModernHud();
 }
 
 void SEASON3B::CNewUIOptionWindow::ClosingProcess()
@@ -621,9 +632,9 @@ void SEASON3B::CNewUIOptionWindow::RenderFrame()
     x = m_Pos.x;
     y = m_Pos.y;
     // Frame is composed of: 64px top + N*10px middle slats + 45px bottom. The
-    // slat count is tuned so the frame reaches the Close button (Y 388) plus the
-    // bottom border, after the Font/Language/Resolution/Windowed rows.
-    constexpr int SLAT_COUNT = 30;
+    // slat count is tuned so the frame reaches the Close button (CLOSE_BUTTON_Y_LOCAL)
+    // plus the bottom border, after the Font/Language/Resolution/Windowed/HUD rows.
+    constexpr int SLAT_COUNT = 32;
     constexpr float FRAME_HEIGHT = 64.f + SLAT_COUNT * 10.f + 45.f;
     RenderImage(IMAGE_OPTION_FRAME_BACK, x, y, 190.f, FRAME_HEIGHT);
     RenderImage(IMAGE_OPTION_FRAME_UP, x, y, 190.f, 64.f);
@@ -700,6 +711,10 @@ void SEASON3B::CNewUIOptionWindow::RenderContents()
     y += 39.f;
     RenderImage(IMAGE_OPTION_POINT, x, y, 10.f, 10.f);       // Windowed Mode
     g_pRenderText->RenderText(m_Pos.x + 40, m_Pos.y + 361, I18N::Game::WindowedMode);
+
+    y += 22.f;
+    RenderImage(IMAGE_OPTION_POINT, x, y, 10.f, 10.f);       // Modern HUD
+    g_pRenderText->RenderText(m_Pos.x + 40, m_Pos.y + HUD_CHECKBOX_Y_LOCAL + 5, I18N::Game::ModernHUD);
 }
 
 void SEASON3B::CNewUIOptionWindow::RenderButtons()
@@ -776,6 +791,8 @@ void SEASON3B::CNewUIOptionWindow::RenderButtons()
     {
         RenderImage(IMAGE_OPTION_BTN_CHECK, m_Pos.x + 150, m_Pos.y + 356, 15, 15, 0, 15.f);
     }
+
+    RenderImage(IMAGE_OPTION_BTN_CHECK, m_Pos.x + 150, m_Pos.y + HUD_CHECKBOX_Y_LOCAL, 15, 15, 0, m_bModernHud ? 0.f : 15.f);
 
     // Combo boxes drawn last so their expanded dropdowns sit on top of
     // anything else in the window. Within the combo pair, render the
@@ -953,6 +970,16 @@ void SEASON3B::CNewUIOptionWindow::SyncResolutionComboToWindow()
 // rather than driving the OS directly: the old Win32 ChangeDisplaySettings /
 // SetWindowLongPtr path fought SDL and left its state inconsistent with a
 // later resolution change. Keeps the current size and applies the new mode.
+void SEASON3B::CNewUIOptionWindow::ApplyHudStyle()
+{
+    GameConfig::GetInstance().SetModernHud(m_bModernHud);
+    GameConfig::GetInstance().Save();
+    if (g_pMainFrame)
+    {
+        g_pMainFrame->ReloadImages();
+    }
+}
+
 void SEASON3B::CNewUIOptionWindow::ApplyWindowModeToggle()
 {
     g_bUseWindowMode = m_bWindowedMode ? TRUE : FALSE;

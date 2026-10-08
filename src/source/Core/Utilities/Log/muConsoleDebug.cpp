@@ -21,6 +21,7 @@
 #include "Scenes/SceneManager.h"
 #include "Scenes/MainScene.h"
 #include "UI/NewUI/NewUISystem.h"
+#include "Data/GameConfig/GameConfig.h"
 
 #ifdef _EDITOR
 #include "../MuEditor/UI/Console/MuEditorConsoleUI.h"
@@ -121,6 +122,16 @@ bool CmuConsoleDebug::CheckCommand(const std::wstring& strCommand)
         auto fps_str = strCommand.substr(5);
         auto target_fps = std::stof(fps_str);
         SetTargetFps(target_fps);
+        return true;
+    }
+    else if (strCommand.compare(L"$hud modern") == 0 || strCommand.compare(L"$hud classic") == 0)
+    {
+        GameConfig::GetInstance().SetModernHud(strCommand.compare(L"$hud modern") == 0);
+        GameConfig::GetInstance().Save();
+        if (g_pMainFrame)
+        {
+            g_pMainFrame->ReloadImages();
+        }
         return true;
     }
     else if (strCommand.compare(L"$vsync on") == 0)

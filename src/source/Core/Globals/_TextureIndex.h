@@ -690,6 +690,9 @@ enum
     BITMAP_INTERFACE_MACROUI_BEGIN,
     BITMAP_INTERFACE_MACROUI_END = BITMAP_INTERFACE_MACROUI_BEGIN + 4,
     BITMAP_INTERFACE_KILL_QUEST_ALERT, // newui_quest_alert: a kill quest reward waits (above the first skill slot)
+    BITMAP_INTERFACE_MODERN_ORB_GLASS, // Modern\orb_glass: glass and gold ring over the HP / mana liquid (modern HUD)
+    BITMAP_INTERFACE_MODERN_TUBE_GLASS, // Modern\tube_glass: glass over the SD / AG tubes (modern HUD)
+    BITMAP_INTERFACE_MODERN_MEDALLIONS, // Modern\medallions: the menu button medallions, one 128-texel cell each (modern HUD)
     BITMAP_EFFECT_TEXTURE_END = 33000,
     BITMAP_NONAMED_TEXTURES_BEGIN = 33001,
     BITMAP_NONAMED_TEXTURES_END = 0x7FFFFFFF,

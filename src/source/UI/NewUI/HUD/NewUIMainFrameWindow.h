@@ -227,6 +227,9 @@ namespace SEASON3B
 
         static void UI2DEffectCallback(LPVOID pClass, DWORD dwParamA, DWORD dwParamB);
 
+        // Loads the textures again after `$hud modern` / `$hud classic` (GameConfig ModernHud).
+        void ReloadImages();
+
     private:
         void SetButtonInfo();
 

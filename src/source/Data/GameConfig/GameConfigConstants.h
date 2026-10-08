@@ -38,6 +38,7 @@ namespace CfgKeys
     inline constexpr wchar_t CfgKeyUILocale[] = L"Locale";
     inline constexpr wchar_t CfgKeyFont[]     = L"Font";
     inline constexpr wchar_t CfgKeyPartyDropMode[] = L"PartyDropMode";
+    inline constexpr wchar_t CfgKeyModernHud[] = L"ModernHud";
 
     // Camera
     inline constexpr wchar_t CfgKeyZoom[] = L"Zoom";
@@ -83,4 +84,7 @@ namespace CfgDefaults
     // Opt-in until real effects have been visually checked on target hardware.
     inline constexpr bool CfgDefaultSortParticleDraws = false;
     inline constexpr bool CfgDefaultVSync = true;
+
+    // The bottom HUD with the textures of tools/hud/modern_hud.py; `$hud classic` switches back.
+    inline constexpr bool CfgDefaultModernHud = true;
 }

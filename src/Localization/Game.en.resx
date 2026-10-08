@@ -13279,4 +13279,7 @@
   <data name="Drop it on the ground: one random excellent pendant." xml:space="preserve">
     <value>Drop it on the ground: one random excellent pendant.</value>
   </data>
+  <data name="Modern HUD" xml:space="preserve">
+    <value>Modern HUD</value>
+  </data>
 </root>

@@ -114,6 +114,7 @@ namespace SEASON3B
         bool m_bRenderAllEffects;
         int m_iResolutionIndex;
         bool m_bWindowedMode;
+        bool m_bModernHud;      // the bottom HUD: modern or classic (GameConfig ModernHud, also `$hud modern / classic`)
         int m_iLanguageIndex;
         int m_iFontIndex;
 
@@ -134,6 +135,7 @@ namespace SEASON3B
         void InitResolutionCombo();
         void SyncResolutionComboToWindow();
         void ApplyWindowModeToggle();
+        void ApplyHudStyle();
 
         void ApplyLanguage();
         int FindCurrentLanguageIndex();

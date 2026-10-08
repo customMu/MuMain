@@ -28,6 +28,7 @@
 #include "UI/NewUI/HUD/Skills/SkillTooltip.h"
 #include "UI/Scaling/UITransform.h"
 #include "Core/Time/CTimCheck.h"
+#include "Data/GameConfig/GameConfig.h"
 #include "GameLogic/Social/MonkSystem.h"
 
 #ifdef PBG_ADD_INGAMESHOP_UI_MAINFRAME
@@ -50,6 +51,59 @@ namespace
     constexpr float kRightBandStart = 488.0f;
     constexpr float kRightBandWidth = 152.0f;
     constexpr float kMenu3RightSourceX = 104.0f;
+
+    // Modern HUD (tools/hud/modern_hud.py): the gold rings of the HP / mana orbs, the glass of the SD / AG tubes (both
+    // with their shadow) and the menu button medallions, drawn over the classic-sized textures from textures of a
+    // higher resolution than the reference pixels; the sizes match ORB_OVERLAY, TUBE_OVERLAY and MEDALLION_DRAWN there.
+    bool g_modernHudLoaded = false;
+    constexpr float kOrbGlassSize = 56.0f;
+    constexpr float kOrbGlassTexels = 128.0f;
+    constexpr float kTubeGlassWidth = 26.0f;
+    constexpr float kTubeGlassHeight = 48.0f;
+    constexpr float kTubeGlassTexelsX = 64.0f;
+    constexpr float kTubeGlassTexelsY = 128.0f;
+    constexpr float kMedallionSize = 27.3f;
+    constexpr float kMedallionTexels = 128.0f;
+    constexpr float kMedallionCenterY = 21.3f; // from the top of the button
+
+    // A medallion over a menu button (cell = the button's place in the row, as in BUTTONS of modern_hud.py):
+    // dimmed at rest, full brightness under the mouse, darker and one pixel lower while pressed.
+    void RenderMedallion(SEASON3B::CNewUIButton& button, int cell)
+    {
+        if (!g_modernHudLoaded)
+        {
+            return;
+        }
+
+        const POINT& pos = button.GetPos();
+        const POINT& size = button.GetSize();
+        const SEASON3B::BUTTON_STATE state = button.GetBTState();
+        const float pressed = state == SEASON3B::BUTTON_STATE_DOWN ? 1.0f : 0.0f;
+        const BYTE light = state == SEASON3B::BUTTON_STATE_OVER ? 255 : state == SEASON3B::BUTTON_STATE_DOWN ? 170 : 215;
+        const float x = static_cast<float>(pos.x) + (static_cast<float>(size.x) - kMedallionSize) / 2;
+        const float y = static_cast<float>(pos.y) + kMedallionCenterY - kMedallionSize / 2 + pressed;
+        SEASON3B::RenderImageStretch(BITMAP_INTERFACE_MODERN_MEDALLIONS, x, y, kMedallionSize, kMedallionSize,
+                                     kMedallionTexels * static_cast<float>(cell), 0.0f, kMedallionTexels, kMedallionTexels,
+                                     RGBA(light, light, light, 255));
+    }
+
+    void RenderOrbGlass(float x, float y, float width, float height)
+    {
+        if (g_modernHudLoaded)
+        {
+            SEASON3B::RenderImageStretch(BITMAP_INTERFACE_MODERN_ORB_GLASS, x + (width - kOrbGlassSize) / 2, y + (height - kOrbGlassSize) / 2,
+                                         kOrbGlassSize, kOrbGlassSize, 0.0f, 0.0f, kOrbGlassTexels, kOrbGlassTexels);
+        }
+    }
+
+    void RenderTubeGlass(float x, float y, float width, float height)
+    {
+        if (g_modernHudLoaded)
+        {
+            SEASON3B::RenderImageStretch(BITMAP_INTERFACE_MODERN_TUBE_GLASS, x + (width - kTubeGlassWidth) / 2, y + (height - kTubeGlassHeight) / 2,
+                                         kTubeGlassWidth, kTubeGlassHeight, 0.0f, 0.0f, kTubeGlassTexelsX, kTubeGlassTexelsY);
+        }
+    }
 }
 
 SEASON3B::CNewUIMainFrameWindow::CNewUIMainFrameWindow()
@@ -68,23 +122,48 @@ SEASON3B::CNewUIMainFrameWindow::~CNewUIMainFrameWindow()
 
 void SEASON3B::CNewUIMainFrameWindow::LoadImages()
 {
-    LoadBitmap(L"Interface\\newui_menu01.jpg", IMAGE_MENU_1, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu02.jpg", IMAGE_MENU_2, GL_LINEAR);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu03.jpg", IMAGE_MENU_3, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu02-03.jpg", IMAGE_MENU_2_1, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu_blue.jpg", IMAGE_GAUGE_BLUE, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu_green.jpg", IMAGE_GAUGE_GREEN, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu_red.jpg", IMAGE_GAUGE_RED, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu_ag.jpg", IMAGE_GAUGE_AG, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_menu_sd.jpg", IMAGE_GAUGE_SD, GL_LINEAR);
-    LoadBitmap(L"Interface\\newui_exbar.jpg", IMAGE_GAUGE_EXBAR, GL_LINEAR);
-    LoadBitmap(L"Interface\\Exbar_Master.jpg", IMAGE_MASTER_GAUGE_BAR, GL_LINEAR);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt05.jpg", IMAGE_MENU_BTN_CSHOP, GL_LINEAR, GL_CLAMP_TO_EDGE);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt01.jpg", IMAGE_MENU_BTN_CHAINFO, GL_LINEAR, GL_CLAMP_TO_EDGE);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt02.jpg", IMAGE_MENU_BTN_MYINVEN, GL_LINEAR, GL_CLAMP_TO_EDGE);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt03.jpg", IMAGE_MENU_BTN_FRIEND, GL_LINEAR, GL_CLAMP_TO_EDGE);
-    LoadBitmap(L"Interface\\partCharge1\\newui_menu_Bt04.jpg", IMAGE_MENU_BTN_WINDOW, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    // The modern textures (tools/hud/modern_hud.py) keep the size and layout of the classic ones, all in one folder.
+    const bool modern = GameConfig::GetInstance().GetModernHud();
+    const auto path = [modern](const wchar_t* classicFolder, const wchar_t* name)
+    {
+        return std::wstring(L"Interface\\") + (modern ? L"Modern\\" : classicFolder) + name;
+    };
+
+    LoadBitmap(path(L"", L"newui_menu01.jpg").c_str(), IMAGE_MENU_1, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu02.jpg").c_str(), IMAGE_MENU_2, GL_LINEAR);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu03.jpg").c_str(), IMAGE_MENU_3, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu02-03.jpg").c_str(), IMAGE_MENU_2_1, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu_blue.jpg").c_str(), IMAGE_GAUGE_BLUE, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu_green.jpg").c_str(), IMAGE_GAUGE_GREEN, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu_red.jpg").c_str(), IMAGE_GAUGE_RED, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu_ag.jpg").c_str(), IMAGE_GAUGE_AG, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_menu_sd.jpg").c_str(), IMAGE_GAUGE_SD, GL_LINEAR);
+    LoadBitmap(path(L"", L"newui_exbar.jpg").c_str(), IMAGE_GAUGE_EXBAR, GL_LINEAR);
+    LoadBitmap(path(L"", L"Exbar_Master.jpg").c_str(), IMAGE_MASTER_GAUGE_BAR, GL_LINEAR);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu_Bt05.jpg").c_str(), IMAGE_MENU_BTN_CSHOP, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu_Bt01.jpg").c_str(), IMAGE_MENU_BTN_CHAINFO, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu_Bt02.jpg").c_str(), IMAGE_MENU_BTN_MYINVEN, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu_Bt03.jpg").c_str(), IMAGE_MENU_BTN_FRIEND, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    LoadBitmap(path(L"partCharge1\\", L"newui_menu_Bt04.jpg").c_str(), IMAGE_MENU_BTN_WINDOW, GL_LINEAR, GL_CLAMP_TO_EDGE);
     LoadBitmap(L"Interface\\newui_quest_alert.tga", BITMAP_INTERFACE_KILL_QUEST_ALERT, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    g_modernHudLoaded = modern;
+    if (modern)
+    {
+        LoadBitmap(L"Interface\\Modern\\orb_glass.tga", BITMAP_INTERFACE_MODERN_ORB_GLASS, GL_LINEAR, GL_CLAMP_TO_EDGE);
+        LoadBitmap(L"Interface\\Modern\\tube_glass.tga", BITMAP_INTERFACE_MODERN_TUBE_GLASS, GL_LINEAR, GL_CLAMP_TO_EDGE);
+        LoadBitmap(L"Interface\\Modern\\medallions.tga", BITMAP_INTERFACE_MODERN_MEDALLIONS, GL_LINEAR, GL_CLAMP_TO_EDGE);
+    }
+}
+
+void SEASON3B::CNewUIMainFrameWindow::ReloadImages()
+{
+    if (m_pNewUIMng == NULL)
+    {
+        return; // not created yet (login screen): Create loads them with the current setting
+    }
+
+    UnloadImages();
+    LoadImages();
 }
 
 void SEASON3B::CNewUIMainFrameWindow::UnloadImages()
@@ -99,10 +178,15 @@ void SEASON3B::CNewUIMainFrameWindow::UnloadImages()
     DeleteBitmap(IMAGE_GAUGE_AG);
     DeleteBitmap(IMAGE_GAUGE_SD);
     DeleteBitmap(IMAGE_GAUGE_EXBAR);
+    DeleteBitmap(IMAGE_MASTER_GAUGE_BAR);
+    DeleteBitmap(IMAGE_MENU_BTN_CSHOP);
     DeleteBitmap(IMAGE_MENU_BTN_CHAINFO);
     DeleteBitmap(IMAGE_MENU_BTN_MYINVEN);
     DeleteBitmap(IMAGE_MENU_BTN_FRIEND);
     DeleteBitmap(IMAGE_MENU_BTN_WINDOW);
+    DeleteBitmap(BITMAP_INTERFACE_MODERN_ORB_GLASS);
+    DeleteBitmap(BITMAP_INTERFACE_MODERN_TUBE_GLASS);
+    DeleteBitmap(BITMAP_INTERFACE_MODERN_MEDALLIONS);
 }
 
 bool SEASON3B::CNewUIMainFrameWindow::Create(CNewUIManager* pNewUIMng, CNewUI3DRenderMng* pNewUI3DRenderMng)
@@ -394,6 +478,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderLifeMana()
         RenderBitmap(IMAGE_GAUGE_RED, x, fY, width, fH, 0.f, fV * height / 64.f, width / 64.f, (1.0f - fV) * height / 64.f);
     }
 
+    RenderOrbGlass(x, y, width, height);
     SEASON3B::RenderNumber(x + 25, REFERENCE_HEIGHT - 18, wLife);
 
     wchar_t strTipText[256];
@@ -414,6 +499,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderLifeMana()
     fV = fMana;
     RenderBitmap(IMAGE_GAUGE_BLUE, x, fY, width, fH, 0.f, fV * height / 64.f, width / 64.f, (1.0f - fV) * height / 64.f);
 
+    RenderOrbGlass(x, y, width, height);
     SEASON3B::RenderNumber(x + 30, REFERENCE_HEIGHT - 18, wMana);
 
     // mana
@@ -456,6 +542,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderGuageAG()
     fV = fSkillMana;
 
     RenderBitmap(IMAGE_GAUGE_AG, x, fY, width, fH, 0.f, fV * height / 64.f, width / 16.f, (1.0f - fV) * height / 64.f);
+    RenderTubeGlass(x, y, width, height);
     SEASON3B::RenderNumber(x + 10, REFERENCE_HEIGHT - 18, (int)dwSkillMana);
 
     if (SEASON3B::CheckMouseIn(x, y, width, height) == true)
@@ -499,6 +586,7 @@ void SEASON3B::CNewUIMainFrameWindow::RenderGuageSD()
     fV = fShield;
 
     RenderBitmap(IMAGE_GAUGE_SD, x, fY, width, fH, 0.f, fV * height / 64.f, width / 16.f, (1.0f - fV) * height / 64.f);
+    RenderTubeGlass(x, y, width, height);
     SEASON3B::RenderNumber(x + 15, REFERENCE_HEIGHT - 18, (int)wShield);
 
     height = 39.f;
@@ -751,6 +839,15 @@ void SEASON3B::CNewUIMainFrameWindow::RenderButtons()
     RenderFriendButton();
 
     m_BtnWindow.Render();
+
+    // modern HUD: the medallions, in the order of the row (BUTTONS in tools/hud/modern_hud.py)
+#ifdef PBG_ADD_INGAMESHOP_UI_MAINFRAME
+    RenderMedallion(m_BtnCShop, 0);
+#endif //defined PBG_ADD_INGAMESHOP_UI_MAINFRAME
+    RenderMedallion(m_BtnChaInfo, 1);
+    RenderMedallion(m_BtnMyInven, 2);
+    RenderMedallion(m_BtnFriend, 3);
+    RenderMedallion(m_BtnWindow, 4);
 }
 
 void SEASON3B::CNewUIMainFrameWindow::RenderCharInfoButton()
