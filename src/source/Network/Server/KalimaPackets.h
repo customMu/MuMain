@@ -29,6 +29,8 @@ namespace Network::Server::KalimaPackets
     //                   [has lost map] [tier count] [0] tier count x [level, minimum resets: u16, maximum resets: u16]
     //                                                                       - entry dialog of the chamber of Kundun (keeper)
     //   C1 04 FB 0B                                                         - enter the chamber of Kundun (client to server)
+    //   C1 14 FB 20 [16 bytes]                                              - the fingerprint of this computer (client to server,
+    //                                                                         GameLogic/Social/HardwareId.h)
     inline constexpr std::uint8_t HeadCode = 0xFB;
 
     void ReceivePacket(std::span<const std::uint8_t> packet);
@@ -47,4 +49,7 @@ namespace Network::Server::KalimaPackets
 
     // The kill quests: takes the reward which waits for space in the inventory (C1 04 FB 0E).
     void SendKillQuestRewardRequest();
+
+    // The fingerprint of this computer for the rankings (kills between characters of one computer don't count).
+    void SendHardwareId();
 }

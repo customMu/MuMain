@@ -1247,6 +1247,9 @@ BOOL ReceiveJoinMapServer(std::span<const BYTE> ReceiveBuffer)
     GameLogic::Commands::Catalog().Reset();
     GameLogic::Commands::Catalog().RequestOnce();
 
+    // the fingerprint of this computer for the rankings of the server (GameLogic/Social/HardwareId.h)
+    Network::Server::KalimaPackets::SendHardwareId();
+
     // The drop mode which the player chose for new parties; the server answers with the mode (drop mode button).
     if (PartyNumber == 0)
     {

@@ -10,6 +10,7 @@
 #include "GameLogic/Events/KalimaSpots.h"
 #include "GameLogic/Events/KundunChamberEntry.h"
 #include "GameLogic/Items/KundunEssence.h"
+#include "GameLogic/Social/HardwareId.h"
 #include "GameLogic/Travel/MinimapSpots.h"
 #include "Network/Server/WSclient.h"
 #include "Render/Terrain/ZzzLodTerrain.h"
@@ -40,6 +41,7 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t ChamberStatusSubCode = 0x0C;
         constexpr std::uint8_t KillQuestStateSubCode = 0x0D;
         constexpr std::uint8_t KillQuestClaimSubCode = 0x0E;
+        constexpr std::uint8_t HardwareIdSubCode = 0x20;
         constexpr std::uint8_t DropModeVoteSubCode = 0x0F;
         constexpr std::uint8_t DropModeVoteAnswerSubCode = 0x10;
         constexpr std::uint8_t InviteDropModeSubCode = 0x11;
@@ -459,6 +461,19 @@ namespace Network::Server::KalimaPackets
         }
 
         const BYTE packet[DropModePacketSize] = { C1Header, static_cast<BYTE>(DropModePacketSize), HeadCode, DropModeSubCode, static_cast<BYTE>(mode) };
+        SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
+    }
+
+    void SendHardwareId()
+    {
+        if (SocketClient == nullptr)
+        {
+            return;
+        }
+
+        const auto& id = GameLogic::Social::HardwareId::Get();
+        BYTE packet[4 + 16] = { C1Header, static_cast<BYTE>(sizeof(packet)), HeadCode, HardwareIdSubCode };
+        std::copy(id.begin(), id.end(), packet + 4);
         SocketClient->Send(packet, static_cast<int32_t>(sizeof packet));
     }
 
