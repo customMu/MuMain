@@ -759,7 +759,9 @@ static std::uint8_t g_tabBar = 0;
 
         if (pItem->Type == ITEM_DARK_HORSE_ITEM)
         {
-            appendLine(TEXT_COLOR_BLUE, false, true, I18N::Game::AbsorbDAdditionalDamage, (30 + pPetInfo->m_wLevel) / 2);
+            // 5 % + 0.2 % per level (15 % at level 50) - the server option "Damage Receive From Dark Horse Multiplier"
+            // (tools/balance/class_balance_sql.py, class_balance.HORSE); before 15 % + 0.5 % per level.
+            appendLine(TEXT_COLOR_BLUE, false, true, I18N::Game::AbsorbDAdditionalDamage, (25 + pPetInfo->m_wLevel) / 5);
             appendLine(TEXT_COLOR_BLUE, false, false, I18N::Game::IncreaseDPossibleAttackDistance, 2);
         }
 
