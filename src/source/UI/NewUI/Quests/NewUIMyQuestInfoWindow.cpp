@@ -291,7 +291,8 @@ namespace
     {
         using namespace GameLogic::Quests::KillQuest;
         const State& state = GetState();
-        wchar_t text[160];
+        // a reward line is up to 191 characters (192 bytes in FB 0D) plus "Reward: "
+        wchar_t text[256];
         const int x = static_cast<int>(pos.x) + 23;
         int y = static_cast<int>(pos.y) + 62;
         g_pRenderText->SetBgColor(0);
