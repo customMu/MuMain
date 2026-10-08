@@ -33,6 +33,7 @@
 #include "Data/DataHandler/SkillData/SkillDataHandler.h"
 
 #include "Data/DataHandler/ItemData/ItemDataHandler.h"
+#include "GameLogic/Items/JewelryBox.h"
 #include "Network/Server/SocketSystem.h"
 
 ///////////////////////////////////////////
@@ -905,6 +906,7 @@ void OpenItems()
     gLoadData.AccessModel(MODEL_ALE, L"Data\\Item\\", L"Beer", 1);
     gLoadData.AccessModel(MODEL_TOWN_PORTAL_SCROLL, L"Data\\Item\\", L"Scroll", 1);
     gLoadData.AccessModel(MODEL_BOX_OF_LUCK, L"Data\\Item\\", L"MagicBox", 1);
+    GameLogic::Items::JewelryBox::OpenModel();
     gLoadData.AccessModel(MODEL_POTION + 12, L"Data\\Item\\", L"Event", 1);
 
     for (int i = 0; i < 2; i++)
@@ -1355,6 +1357,7 @@ void OpenItemTextures()
         gLoadData.OpenTexture(MODEL_POTION + i, L"Item\\");
         gLoadData.OpenTexture(MODEL_ETC + i, L"Item\\");
     }
+    GameLogic::Items::JewelryBox::OpenTexture();
 
     for (int i = 14; i <= 20; ++i)
         gLoadData.OpenTexture(MODEL_STAFF + i, L"Item\\");
@@ -5609,6 +5612,7 @@ void OpenBasicData(HDC hDC)
 
     mu_swprintf(Text, L"Data\\Local\\%ls\\Item_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     g_ItemDataHandler.Load(Text);
+    GameLogic::Items::JewelryBox::RegisterItem();
 
     mu_swprintf(Text, L"Data\\Local\\%ls\\movereq_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     SEASON3B::CMoveCommandData::OpenMoveReqScript(Text);

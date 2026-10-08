@@ -14,6 +14,7 @@
 #include "Engine/Object/ZzzInterface.h"
 #include "Engine/Object/ZzzInventory.h"
 #include "GameLogic/Items/KundunEssence.h"
+#include "GameLogic/Items/JewelryBox.h"
 #include "GameLogic/Items/SetGuard.h"
 #include "Engine/AI/ZzzAI.h"
 #include "Render/Effects/ZzzEffect.h"
@@ -4244,6 +4245,16 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             TextNum++;
         }
     }
+    if (ip->Type == GameLogic::Items::JewelryBox::Item)
+    {
+        if (const wchar_t* content = GameLogic::Items::JewelryBox::GetContentText(Level))
+        {
+            mu_swprintf(TextList[TextNum], I18N::Game::WhenYouDropItOnTheGround);
+            TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+            mu_swprintf(TextList[TextNum], content);
+            TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        }
+    }
     char tCount = COMGEM::CalcCompiledCount(ip);
     if (tCount > 0)
     {
@@ -6170,6 +6181,7 @@ std::unordered_set<int> yellowTextItems = {
     MODEL_DEVILS_KEY,
     MODEL_DEVILS_INVITATION,
     MODEL_BOX_OF_LUCK,
+    GameLogic::Items::JewelryBox::Model,
     MODEL_FRUITS,
     MODEL_SPIRIT,
     MODEL_EVENT + 16,
