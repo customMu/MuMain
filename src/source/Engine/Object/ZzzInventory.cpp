@@ -13,6 +13,7 @@
 #include "Render/Textures/ZzzTexture.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "GameLogic/Items/JewelryBox.h"
 #include "GameLogic/Items/KundunEssence.h"
 #include "GameLogic/Items/SetGuard.h"
 #include "Engine/AI/ZzzAI.h"
@@ -4244,6 +4245,13 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             TextNum++;
         }
     }
+    if (ip->Type == ITEM_JEWELRY_BOX)
+    {
+        mu_swprintf(TextList[TextNum], Level == GameLogic::Items::JewelryBox::PendantLevel
+            ? I18N::Game::DropItOnTheGroundOneRandomExcellentPendant
+            : I18N::Game::DropItOnTheGroundOneRandomExcellentRing);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
     char tCount = COMGEM::CalcCompiledCount(ip);
     if (tCount > 0)
     {
@@ -7572,6 +7580,7 @@ bool IsSellingBan(ITEM* pItem)
     }
 
     if (pItem->Type == ITEM_BOX_OF_LUCK
+        || pItem->Type == ITEM_JEWELRY_BOX
         || (pItem->Type == ITEM_POTION + 21 && Level == 1)
         || ((pItem->bPeriodItem == true) && (pItem->bExpiredPeriod == false) && (pItem->Type == ITEM_WIZARDS_RING) && (Level == 0))
         || (pItem->Type == ITEM_WIZARDS_RING && (Level == 1 || Level == 2))

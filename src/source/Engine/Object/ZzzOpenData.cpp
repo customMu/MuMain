@@ -23,6 +23,7 @@
 #include "World/MapInfra/MapManager.h"
 #include "GameLogic/Events/Event.h"
 #include "GameLogic/Items/ChangeRingManager.h"
+#include "GameLogic/Items/JewelryBox.h"
 #include "GameLogic/Items/MixMgr.h"
 #include "UI/NewUI/NewUISystem.h"
 #include "UI/NewUI/Dialogs/NewUIHelpWindow.h"
@@ -905,6 +906,7 @@ void OpenItems()
     gLoadData.AccessModel(MODEL_ALE, L"Data\\Item\\", L"Beer", 1);
     gLoadData.AccessModel(MODEL_TOWN_PORTAL_SCROLL, L"Data\\Item\\", L"Scroll", 1);
     gLoadData.AccessModel(MODEL_BOX_OF_LUCK, L"Data\\Item\\", L"MagicBox", 1);
+    gLoadData.AccessModel(MODEL_JEWELRY_BOX, L"Data\\Item\\", L"JewelryBox", 1); // tools/bmd/examples/jewelry_box.py
     gLoadData.AccessModel(MODEL_POTION + 12, L"Data\\Item\\", L"Event", 1);
 
     for (int i = 0; i < 2; i++)
@@ -1324,6 +1326,7 @@ void OpenItemTextures()
         gLoadData.OpenTexture(MODEL_SCROLL_OF_EMPEROR_RING_OF_HONOR + i, L"Item\\");
 
     gLoadData.OpenTexture(MODEL_POTION + 27, L"Item\\");
+    gLoadData.OpenTexture(MODEL_JEWELRY_BOX, L"Item\\");
 
     for (int i = 0; i < 2; i++)
         gLoadData.OpenTexture(MODEL_LOST_MAP + i, L"Item\\");
@@ -5609,6 +5612,7 @@ void OpenBasicData(HDC hDC)
 
     mu_swprintf(Text, L"Data\\Local\\%ls\\Item_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     g_ItemDataHandler.Load(Text);
+    GameLogic::Items::JewelryBox::Register();
 
     mu_swprintf(Text, L"Data\\Local\\%ls\\movereq_%ls.bmd", g_strSelectedML.c_str(), g_strSelectedML.c_str());
     SEASON3B::CMoveCommandData::OpenMoveReqScript(Text);

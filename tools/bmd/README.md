@@ -12,6 +12,7 @@ and their textures (`.OZJ`, `.OZT`). The file layout follows `BMD::Open2` / `BMD
 | `blender_bmd.py` | BMD → Blender (`.blend`, `.glb`, `.fbx`); Blender scene / `.glb` / `.fbx` / `.obj` → BMD + textures; preview renders | Blender 4.4+ |
 | `roundtrip_test.py` | regression test: game models → Blender → BMD, compared pose by pose | Blender 4.4+ |
 | `examples/golem.py` | a rigged, animated monster built from code | Blender 4.4+ |
+| `examples/jewelry_box.py` | a static item built from code: the Jewelry Box (14/170) in `Data/Item/JewelryBox01.bmd` | Blender 4.4+ |
 
 Checked against the game data in `src/bin/Data`: all 5114 models are read to the last byte and written back
 without loss (4 files of version `0x00` the client does not load either); 600 random models went through
@@ -51,6 +52,9 @@ python ozj.py pack work/snowman.jpg out/
 
 # a monster from code
 blender -b -P examples/golem.py -- out/golem
+
+# the Jewelry Box item (copy JewelryBox01.bmd and jewelrybox.OZJ to src/bin/Data/Item)
+blender -b -P examples/jewelry_box.py -- out/jewelry
 ```
 
 ## How a scene must look for the export

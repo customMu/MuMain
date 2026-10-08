@@ -13270,4 +13270,13 @@
   <data name="Fix time of %ls: -%d%%" xml:space="preserve">
     <value>Fix time of %ls: -%d%%</value>
   </data>
+  <data name="Jewelry Box" xml:space="preserve">
+    <value>Jewelry Box</value>
+  </data>
+  <data name="Drop it on the ground: one random excellent ring." xml:space="preserve">
+    <value>Drop it on the ground: one random excellent ring.</value>
+  </data>
+  <data name="Drop it on the ground: one random excellent pendant." xml:space="preserve">
+    <value>Drop it on the ground: one random excellent pendant.</value>
+  </data>
 </root>

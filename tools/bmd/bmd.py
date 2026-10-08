@@ -349,4 +349,5 @@ def _check(folder):
 if __name__ == '__main__':
     if len(sys.argv) != 3 or sys.argv[1] not in ('info', 'check'):
         sys.exit(__doc__)
+    sys.stdout.reconfigure(errors='backslashreplace')  # Korean names on a console without UTF-8 (cp1251)
     (_info if sys.argv[1] == 'info' else _check)(sys.argv[2])
