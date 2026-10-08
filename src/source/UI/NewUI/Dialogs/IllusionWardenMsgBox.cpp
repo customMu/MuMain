@@ -38,9 +38,20 @@ namespace
         return text;
     }
 
+    // the group and number come from the server: only valid indexes are looked up
     const wchar_t* ItemName(const int group, const int number)
     {
+        if (group < 0 || group >= MAX_ITEM_TYPE || number < 0 || number >= MAX_ITEM_INDEX)
+        {
+            return L"?";
+        }
+
         return ItemAttribute[group * MAX_ITEM_INDEX + number].Name;
+    }
+
+    const wchar_t* SkillName(const int skill)
+    {
+        return skill > 0 && skill < MAX_SKILLS ? SkillAttribute[skill].Name : L"-";
     }
 
     const wchar_t* MonsterName(const int number)
@@ -171,7 +182,7 @@ void SEASON3B::CIllusionWardenMsgBox::BuildMain()
     {
         const int skill = GameLogic::Combat::SkillCastTime::OptionSkill(weapon.Group, weapon.Number, weapon.Option, family);
         AddLine(L" ");
-        AddLine(Format(I18N::Game::LsLs, ItemName(weapon.Group, weapon.Number), skill > 0 ? SkillAttribute[skill].Name : L"-"), Violet);
+        AddLine(Format(I18N::Game::LsLs, ItemName(weapon.Group, weapon.Number), SkillName(skill)), Violet);
         std::wstring price = Format(I18N::Game::ResetDLsDLs, weapon.Jewels, ItemName(14, 42), weapon.LesserStones, ItemName(14, 43));
         if (weapon.GreaterStones > 0)
         {
