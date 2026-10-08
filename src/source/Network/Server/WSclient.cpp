@@ -1593,17 +1593,8 @@ void ReceiveMuHelperStatusUpdate(std::span<const BYTE> ReceiveBuffer)
     }
     else
     {
+        // the server has no fee by time: the helper keeps a share of the picked up zen (HelperZenFee.h)
         MUHelper::g_MuHelper.Start();
-
-        if (pMuHelperStatus->Money > 0 && pMuHelperStatus->ConsumeMoney)
-        {
-            MUHelper::g_MuHelper.AddCost(pMuHelperStatus->Money);
-            int iTotalCost = MUHelper::g_MuHelper.GetTotalCost();
-
-            wchar_t Text[100];
-            mu_swprintf(Text, I18N::Game::DZenSHaveBeenSpentInImplementingOfficialMUHelper, iTotalCost);
-            g_pSystemLogBox->AddText(Text, SEASON3B::TYPE_SYSTEM_MESSAGE);
-        }
     }
 
     g_ConsoleDebug->Write(MCD_RECEIVE, L"0x51 [ReceiveMuHelperStatusUpdate]");

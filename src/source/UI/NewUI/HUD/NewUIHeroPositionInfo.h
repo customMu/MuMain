@@ -43,6 +43,8 @@ namespace SEASON3B
         // Bottom edge (screen y) of the MU Helper statistics drawn in the last frame, 0 if none;
         // the system message log starts below it.
         static int GetHelperStatsBottom() { return s_iHelperStatsBottom; }
+        // the right edge of the MU Helper statistics while they are shown, 0 otherwise (the buff icons move right of it)
+        static int GetHelperStatsRight() { return s_iHelperStatsRight; }
 
         void SetPos(int x, int y);
 
@@ -69,6 +71,7 @@ namespace SEASON3B
         void RenderKalimaProgress();
 
         static inline int s_iHelperStatsBottom = 0;
+        static inline int s_iHelperStatsRight = 0;
 
         // The statistics can be collapsed to their first line by clicking it.
         bool m_bHelperStatsCollapsed = false;

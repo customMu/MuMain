@@ -33,8 +33,6 @@ namespace MUHelper
 		bool IsActive() { return m_bActive; }
 		// The hero's attack or skill animation just ended: act now instead of waiting for the next timer tick.
 		void OnHeroSwingFinished();
-		void AddCost(int iCost) { m_iTotalCost += iCost; }
-		int GetTotalCost() { return m_iTotalCost; }
 
 		// Session statistics (shown under the helper buttons, for balance tests): reset on start, kept after stop until the next start.
 		void RecordKill() { if (m_bActive) ++m_iSessionKills; }
@@ -49,7 +47,7 @@ namespace MUHelper
 		int64_t GetSessionMasterExperience() const { return m_iSessionMasterExperience; }
 		int64_t GetSessionZen() const { return m_iSessionZen; }
 		// The zen which the server kept of the picked up zen (MU Helper zen fee) plus the fee by time, if the server takes it.
-		int64_t GetSessionHelperFee() const { return m_iSessionZenFee + m_iTotalCost; }
+		int64_t GetSessionHelperFee() const { return m_iSessionZenFee; }
 
 		// Hits: dealt by the hero to monsters, and taken by the hero (damage 0 = miss).
 		void AddHitDealt(int64_t iDamage) { if (m_bActive) { ++m_iSessionHitsDealt; if (iDamage > 0) m_iSessionDamageDealt += iDamage; else ++m_iSessionMissesDealt; } }
@@ -138,7 +136,6 @@ namespace MUHelper
 		int m_iSecondsAway;
 		bool m_bTimerActivatedBuffOngoing;
 		bool m_bPetActivated;
-		int m_iTotalCost;
 		std::atomic<uint64_t> m_ullSessionStart{ 0 };
 		std::atomic<uint64_t> m_ullSessionStop{ 0 };
 		std::atomic<int> m_iSessionKills{ 0 };

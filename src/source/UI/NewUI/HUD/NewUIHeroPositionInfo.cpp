@@ -9,6 +9,8 @@
 #include "UI/NewUI/NewUISystem.h"
 #include "World/MapInfra/MapManager.h"
 #include "MUHelper/MuHelper.h"
+#include "Character/CharacterManager.h"
+#include "Network/Server/WSclient.h"
 #include "Engine/Object/ZzzInventory.h"
 #include "GameLogic/Events/KalimaSpots.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
@@ -279,7 +281,7 @@ static void RenderChamberStatus(const GameLogic::Events::KalimaSpots::ChamberSta
     };
 
     g_pRenderText->SetFont(g_hFontBold);
-    g_pRenderText->SetBgColor(0, 0, 0, 170);
+    g_pRenderText->SetBgColor(0, 0, 0, 0); // the text alone, without a dark box behind it
     renderLine(line, 255, 210, 90);
 
     wchar_t state[160];
@@ -341,7 +343,7 @@ void CNewUIHeroPositionInfo::RenderKalimaProgress()
     constexpr int BannerWidth = 220;
     constexpr int BannerY = 62;
     g_pRenderText->SetFont(g_hFontBold);
-    g_pRenderText->SetBgColor(0, 0, 0, 170);
+    g_pRenderText->SetBgColor(0, 0, 0, 0); // the text alone, without a dark box behind it
     g_pRenderText->SetTextColor(255, 210, 90, 255);
     g_pRenderText->RenderText(320 - (BannerWidth / 2), BannerY, text, BannerWidth, 16, RT3_SORT_CENTER);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
@@ -355,6 +357,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
 {
     auto& helper = MUHelper::g_MuHelper;
     s_iHelperStatsBottom = 0;
+    s_iHelperStatsRight = 0;
     m_HelperStatsHeader = {};
     s_helperStatsReset = {};
     if (!helper.HasSessionStats())
@@ -376,6 +379,7 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
     int y = static_cast<int>(m_Pos.y + HERO_POSITION_INFO_BASE_WINDOW_HEIGHT) + 1;
     constexpr int lineHeight = 12;
     constexpr int boxWidth = 220;
+    s_iHelperStatsRight = x + boxWidth;
     const auto renderLine = [&]()
     {
         g_pRenderText->RenderText(x, y, line, boxWidth, 0, RT3_SORT_LEFT);
@@ -426,6 +430,40 @@ void CNewUIHeroPositionInfo::RenderHelperStats()
         FormatCompact(rate, std::size(rate), PerHour(masterExperience, ms));
         mu_swprintf(line, I18N::Game::MasterEXPLsLsH, value, rate);
         renderLine();
+    }
+
+    // the time until the next (master) level at the experience rate of this session
+    {
+        const bool master = gCharacterManager.IsMasterExperienceActive(CharacterAttribute->Class, CharacterAttribute->Level);
+        const int64_t remaining = master
+            ? static_cast<int64_t>(Master_Level_Data.lNext_MasterLevel_Experince) - static_cast<int64_t>(Master_Level_Data.lMasterLevel_Experince)
+            : static_cast<int64_t>(CharacterAttribute->NextExperience) - static_cast<int64_t>(CharacterAttribute->Experience);
+        const int64_t perHour = PerHour(master ? masterExperience : experience, ms);
+        if (remaining > 0 && perHour <= 0)
+        {
+            // the first seconds of the session: no rate yet
+            mu_swprintf(line, master ? I18N::Game::NextMasterLevelInLs : I18N::Game::NextLevelInLs, L"...");
+            renderLine();
+        }
+        else if (remaining > 0)
+        {
+            const int64_t minutes = std::max<int64_t>(1, (remaining * 60 + perHour - 1) / perHour);
+            if (minutes >= 60 * 100)
+            {
+                mu_swprintf(extra, L"%lldh", minutes / 60);
+            }
+            else if (minutes >= 60)
+            {
+                mu_swprintf(extra, L"%lldh %02lldm", minutes / 60, minutes % 60);
+            }
+            else
+            {
+                mu_swprintf(extra, L"%lldm", minutes);
+            }
+
+            mu_swprintf(line, master ? I18N::Game::NextMasterLevelInLs : I18N::Game::NextLevelInLs, extra);
+            renderLine();
+        }
     }
 
     FormatCompact(value, std::size(value), zen);

@@ -12,6 +12,7 @@
 #include "GameLogic/Items/SetGuard.h"
 #include "UI/Legacy/UIControls.h"
 #include "UI/NewUI/Dialogs/NewUICommonMessageBox.h"
+#include "UI/NewUI/HUD/NewUIHeroPositionInfo.h"
 
 using namespace SEASON3B;
 
@@ -60,6 +61,13 @@ void SEASON3B::CNewUIBuffWindow::Release()
         m_pNewUIMng->RemoveUIObj(this);
         m_pNewUIMng = NULL;
     }
+}
+
+// The buff icons start right of the MU Helper statistics while they are shown (they would cover each other).
+float SEASON3B::CNewUIBuffWindow::GetIconsX() const
+{
+    const int helperRight = CNewUIHeroPositionInfo::GetHelperStatsRight();
+    return helperRight > 0 ? std::max<float>(static_cast<float>(m_Pos.x), static_cast<float>(helperRight + 4)) : static_cast<float>(m_Pos.x);
 }
 
 void SEASON3B::CNewUIBuffWindow::SetPos(int x, int y)
@@ -233,7 +241,7 @@ bool SEASON3B::CNewUIBuffWindow::UpdateMouseEvent()
         ++iter;
         eBuffState buff = (*tempiter);
 
-        x = m_Pos.x + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
+        x = GetIconsX() + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
         y = m_Pos.y + (buffheightcount * (BUFF_IMG_HEIGHT + BUFF_IMG_SPACE));
 
         if (SEASON3B::CheckMouseIn(x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT))
@@ -323,7 +331,7 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffStatus(BUFF_RENDER renderstate)
         ++iter;
         eBuffState buff = (*tempiter);
 
-        x = m_Pos.x + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
+        x = GetIconsX() + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
         y = m_Pos.y + (buffheightcount * (BUFF_IMG_HEIGHT + BUFF_IMG_SPACE));
 
         if (renderstate == BUFF_RENDER_ICON)
@@ -353,12 +361,13 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffStatus(BUFF_RENDER renderstate)
 
     if (GameLogic::Items::SetGuard::GetHeroState().IsComplete)
     {
-        x = m_Pos.x + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
+        x = GetIconsX() + (buffwidthcount * (BUFF_IMG_WIDTH + BUFF_IMG_SPACE));
         y = m_Pos.y + (buffheightcount * (BUFF_IMG_HEIGHT + BUFF_IMG_SPACE));
         if (renderstate == BUFF_RENDER_ICON)
         {
-            eBuffState icon = eBuff_Defense;
-            RenderBuffIcon(icon, x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT);
+            // its own icon (a complete armor set in a rune circle): the picture is 40 x 56 (tools/hud/set_guard_icon.py),
+            // the loader pads the texture to 64 x 64, so only that part is drawn
+            RenderBitmap(IMAGE_BUFF_SET_GUARD, x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT, 0.f, 0.f, 40.f / 64.f, 56.f / 64.f);
         }
         else if (renderstate == BUFF_RENDER_TOOLTIP && SEASON3B::CheckMouseIn(x, y, BUFF_IMG_WIDTH, BUFF_IMG_HEIGHT))
         {
@@ -456,10 +465,12 @@ void SEASON3B::CNewUIBuffWindow::LoadImages()
 {
     LoadBitmap(L"Interface\\newui_statusicon.jpg", IMAGE_BUFF_STATUS, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_statusicon2.jpg", IMAGE_BUFF_STATUS2, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_setguard.jpg", IMAGE_BUFF_SET_GUARD, GL_LINEAR);
 }
 
 void SEASON3B::CNewUIBuffWindow::UnloadImages()
 {
+    DeleteBitmap(IMAGE_BUFF_SET_GUARD);
     DeleteBitmap(IMAGE_BUFF_STATUS2);
     DeleteBitmap(IMAGE_BUFF_STATUS);
 }

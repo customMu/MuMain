@@ -103,7 +103,6 @@ namespace MUHelper
             return;
         }
 
-        m_iTotalCost = 0;
         m_iComboState = 0;
         m_iCurrentBuffIndex = 0;
         m_iCurrentBuffPartyIndex = 0;
@@ -132,7 +131,6 @@ namespace MUHelper
 
     void CMuHelper::ResetSessionStats()
     {
-        m_iTotalCost = 0;
         m_iSessionKills = 0;
         m_iSessionExperience = 0;
         m_iSessionMasterExperience = 0;

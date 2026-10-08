@@ -15,6 +15,7 @@ namespace SEASON3B
             IMAGE_BUFF_STATUS = BITMAP_BUFFWINDOW_BEGIN,
             IMAGE_BUFF_STATUS2,
             IMAGE_BUFF_STATUS3,
+            IMAGE_BUFF_SET_GUARD,   // Interface\newui_setguard (tools/hud/set_guard_icon.py)
         };
 
         enum BUFF_RENDER
@@ -32,6 +33,7 @@ namespace SEASON3B
 
         void SetPos(int x, int y);
         void SetPos(int iScreenWidth);
+        float GetIconsX() const;
 
         bool UpdateMouseEvent();
         bool UpdateKeyEvent();
