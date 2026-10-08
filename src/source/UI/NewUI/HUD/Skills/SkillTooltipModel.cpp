@@ -8,6 +8,7 @@
 #include "Engine/Object/ZzzInfomation.h"
 #include "Engine/Object/ZzzInventory.h"   // PartyNumber, STRP_*
 #include "GameLogic/Skills/SkillManager.h"
+#include "GameLogic/Combat/SkillCastTimeOptions.h"
 #include "UI/Legacy/UIJewelHarmony.h"     // StrengthenCapability
 #include "UI/Legacy/UIManager.h"          // g_pUIJewelHarmonyinfo
 
@@ -440,6 +441,40 @@ void EmitBodyDamage(Model& m, int skillType)
     EndSection(m, before);
 }
 
+// The casts per second of an attack skill at the attack / magic speed of the hero and the harmony options of the
+// equipped weapons (the same time as the server plugin "Skill cast time"); nothing for skills without a fix time.
+void AddCastRate(Model& m, int skillType)
+{
+    namespace CastTime = GameLogic::Combat::SkillCastTime;
+    int skill = skillType;
+    if (CastTime::CastSeconds(skill, 0.f, 0.f, 0.f) <= 0.f)
+    {
+        skill = gSkillManager.MasterSkillToBaseSkillIndex(static_cast<ActionSkillType>(skillType));
+    }
+
+    const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
+    float cut = 0.f;
+    for (const int slot : { EQUIPMENT_WEAPON_RIGHT, EQUIPMENT_WEAPON_LEFT })
+    {
+        const ITEM& weapon = CharacterMachine->Equipment[slot];
+        if (weapon.Type >= 0 && weapon.Durability > 0
+            && CastTime::OptionSkill(weapon.Type / MAX_ITEM_INDEX, weapon.Type % MAX_ITEM_INDEX, weapon.Jewel_Of_Harmony_Option, family) == skill)
+        {
+            cut += CastTime::OptionCutOf(weapon.Jewel_Of_Harmony_OptionLevel, family);
+        }
+    }
+
+    const float seconds = CastTime::CastSeconds(skill, CharacterAttribute->AttackSpeed, CharacterAttribute->MagicSpeed, cut);
+    if (seconds <= 0.f)
+    {
+        return;
+    }
+
+    wchar_t buf[MAX_TOOLTIP_LINE_TEXT];
+    mu_swprintf(buf, I18N::Game::Speed1fCastsS2fS, 1.f / seconds, seconds);
+    AddRaw(m, buf, LineColor::White);
+}
+
 void EmitBodyStats(Model& m, int skillType, int iDistance, int iMana, int iSkillMana, int iDelayMs)
 {
     const int before = m.count;
@@ -459,6 +494,8 @@ void EmitBodyStats(Model& m, int skillType, int iDistance, int iMana, int iSkill
         mu_swprintf(buf, kCooldownFormat, iDelayMs / kMillisPerSecond);
         AddRaw(m, buf, LineColor::White);
     }
+
+    AddCastRate(m, skillType);
     EndSection(m, before);
 }
 

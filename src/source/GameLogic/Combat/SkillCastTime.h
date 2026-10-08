@@ -54,4 +54,69 @@ namespace GameLogic::Combat::SkillCastTime
         { 0, 34, -1, { 264, 263, 260 } }, // Piercing Blade Glove: Dragon Roar, Dark Side, Killing Blow
         { 0, 35, -1, { 264, 263, 260 } }, // Phoenix Soul Star: Dragon Roar, Dark Side, Killing Blow
     };
+
+    // The stat an attack action follows (None: a fixed play speed).
+    enum class SpeedStat
+    {
+        None,
+        Attack,
+        Magic,
+    };
+
+    struct SkillTime
+    {
+        int Skill;
+        int FixMilliseconds; // the animation at the fix speed, not below the floor
+        SpeedStat Speed;     // the speed the animation follows below and above the fix (None: always the fix time)
+    };
+
+    // the server: SkillCastTimeConfiguration.FixTimes and SpeedCurves (the tooltip shows the casts per second with it)
+    inline constexpr SkillTime SkillTimes[] =
+    {
+        { 2, 279, SpeedStat::Magic }, // Meteorite
+        { 5, 279, SpeedStat::Magic }, // Flame
+        { 8, 279, SpeedStat::Magic }, // Twister
+        { 9, 279, SpeedStat::Magic }, // Evil Spirit
+        { 10, 673, SpeedStat::Magic }, // Hellfire
+        { 12, 536, SpeedStat::Magic }, // Aqua Beam
+        { 13, 279, SpeedStat::Magic }, // Cometfall
+        { 14, 444, SpeedStat::Magic }, // Inferno
+        { 19, 195, SpeedStat::Attack }, // Falling Slash
+        { 24, 171, SpeedStat::Attack }, // Triple Shot
+        { 38, 279, SpeedStat::Magic }, // Decay
+        { 39, 279, SpeedStat::Magic }, // Ice Storm
+        { 41, 329, SpeedStat::Attack }, // Twisting Slash
+        { 42, 1158, SpeedStat::None }, // Rageful Blow
+        { 43, 176, SpeedStat::Attack }, // Death Stab
+        { 44, 195, SpeedStat::Attack }, // Crescent Moon Slash
+        { 45, 279, SpeedStat::None }, // Lance
+        { 46, 171, SpeedStat::Attack }, // Starfall
+        { 47, 220, SpeedStat::Attack }, // Impale
+        { 51, 171, SpeedStat::Attack }, // Ice Arrow
+        { 52, 171, SpeedStat::Attack }, // Penetration
+        { 55, 289, SpeedStat::None }, // Fire Slash
+        { 56, 176, SpeedStat::Attack }, // Power Slash
+        { 57, 253, SpeedStat::None }, // Spiral Slash
+        { 61, 176, SpeedStat::Attack }, // Fire Burst
+        { 62, 268, SpeedStat::Attack }, // Earthshake
+        { 66, 176, SpeedStat::Attack }, // Force Wave
+        { 73, 182, SpeedStat::None }, // Mana Rays
+        { 74, 176, SpeedStat::Attack }, // Fire Blast
+        { 78, 176, SpeedStat::Attack }, // Fire Scream
+        { 214, 293, SpeedStat::Magic }, // Drain Life
+        { 215, 244, SpeedStat::Magic }, // Chain Lightning
+        { 223, 537, SpeedStat::Magic }, // Explosion
+        { 224, 537, SpeedStat::Magic }, // Requiem
+        { 225, 537, SpeedStat::Magic }, // Pollution
+        { 230, 478, SpeedStat::Magic }, // Lightning Shock
+        { 232, 268, SpeedStat::Attack }, // Strike of Destruction
+        { 235, 171, SpeedStat::Attack }, // Multi-Shot
+        { 236, 444, SpeedStat::Magic }, // Flame Strike
+        { 237, 308, SpeedStat::Magic }, // Gigantic Storm
+        { 238, 176, SpeedStat::Attack }, // Chaotic Diseier
+        { 260, 449, SpeedStat::Attack }, // Killing Blow
+        { 263, 536, SpeedStat::Attack }, // Dark Side
+        { 264, 412, SpeedStat::Attack }, // Dragon Roar
+        { 269, 171, SpeedStat::None }, // Charge
+    };
 }

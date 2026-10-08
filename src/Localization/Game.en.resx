@@ -13027,6 +13027,9 @@
   <data name="Master EXP %ls (%ls/h)" xml:space="preserve">
     <value>Master EXP %ls (%ls/h)</value>
   </data>
+  <data name="Speed: %.1f casts/s (%.2f s)" xml:space="preserve">
+    <value>Speed: %.1f casts/s (%.2f s)</value>
+  </data>
   <data name="Next level in ~%ls" xml:space="preserve">
     <value>Next level in ~%ls</value>
   </data>
