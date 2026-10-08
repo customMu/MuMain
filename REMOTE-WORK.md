@@ -89,3 +89,6 @@ mu\
 - Сетевой слой — `ClientLibrary/` (C#): новые пакеты клиент → сервер — `ConnectionManager.ClientToServerFunctions.cs`;
   разбор входящих — `src/source/Network/Server/WSclient.cpp`. Пакет менять вместе с сервером.
 - После правки заголовков краши `c0000374` лечатся полным ребилдом (Delete Cache and Reconfigure → Rebuild All).
+- 3D-модели (`.bmd`) и текстуры (`.OZJ`/`.OZT`) — `tools/bmd/` (Python + Blender 4.4+, без GPU тоже работает):
+  импорт игровой модели в Blender/glTF, экспорт сцены/`.glb`/`.fbx` в BMD с проверкой поз, превью-рендер.
+  В облачной сессии Blender ставится `pip install bpy`; проверить модель в игре — только на ПК (см. `tools/bmd/README.md`).
