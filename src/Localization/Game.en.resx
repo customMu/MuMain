@@ -2658,7 +2658,7 @@
     <comment>legacy_id=697</comment>
   </data>
   <data name="Charisma Requirement: %d" xml:space="preserve">
-    <value>Charisma Requirement: %d</value>
+    <value>Command Requirement: %d</value>
     <comment>legacy_id=698</comment>
   </data>
   <data name="Proceed with quest" xml:space="preserve">
@@ -11653,7 +11653,7 @@
     <comment>legacy_id=3404</comment>
   </data>
   <data name="Leadership available" xml:space="preserve">
-    <value>Leadership available</value>
+    <value>Command available</value>
     <comment>legacy_id=3405</comment>
   </data>
   <data name="General" xml:space="preserve">
