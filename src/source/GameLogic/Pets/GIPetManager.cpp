@@ -526,12 +526,18 @@ static std::uint8_t g_tabBar = 0;
         switch (pPetInfo->m_dwPetType)
         {
         case PET_TYPE_DARK_SPIRIT:
+        {
+            // Dark Raven (08.10.2026, tools/balance/class_balance.py RAVEN_*, class relationships of the DL): damage
+            // (180 + Command / 16 .. 200 + Command / 8) x (1 + 0.3 x resets) (+ the scepter rise on the server), speed
+            // 20 + 0.8 x level, the attack rate of the owner.
+            const float increase = 1.f + 0.3f * static_cast<float>(CharacterAttribute->Resets);
             pPetInfo->m_dwExp2 = ((10 + Level) * Level * Level * Level * 100);
-            pPetInfo->m_wDamageMin = (180 + (pPetInfo->m_wLevel * 15) + (Charisma / 8));
-            pPetInfo->m_wDamageMax = (200 + (pPetInfo->m_wLevel * 15) + (Charisma / 4));
-            pPetInfo->m_wAttackSpeed = (20 + (pPetInfo->m_wLevel * 4 / 5) + (Charisma / 50));
-            pPetInfo->m_wAttackSuccess = (1000 + pPetInfo->m_wLevel) + (pPetInfo->m_wLevel * 15);
+            pPetInfo->m_wDamageMin = static_cast<WORD>(std::min(65535.f, (180 + Charisma / 16) * increase));
+            pPetInfo->m_wDamageMax = static_cast<WORD>(std::min(65535.f, (200 + Charisma / 8) * increase));
+            pPetInfo->m_wAttackSpeed = (20 + (pPetInfo->m_wLevel * 4 / 5));
+            pPetInfo->m_wAttackSuccess = CharacterAttribute->AttackRating;
             break;
+        }
 
         case PET_TYPE_DARK_HORSE:
             pPetInfo->m_dwExp2 = ((10 + Level) * Level * Level * Level * 100);
