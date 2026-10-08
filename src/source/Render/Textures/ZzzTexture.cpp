@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include "ZzzTexture.h"
+#include "UI/Theme/ModernTheme.h"
 
 #include "Network/Server/WSclient.h"
 #include "turbojpeg.h"
@@ -263,6 +264,9 @@ bool LoadBitmap(const wchar_t* szFileName, GLuint uiTextureIndex, GLuint uiFilte
     wcscpy(szFullPath, L"Data\\");
     wcscat(szFullPath, szFileName);
 #endif // KJH_ADD_INGAMESHOP_UI_SYSTEM
+    // the modern interface: Data\Interface\Modern\ holds the textures it replaces (UI/Theme/ModernTheme.h)
+    const std::wstring themedPath = UI::Theme::ResolveTexturePath(szFullPath);
+    wcsncpy(szFullPath, themedPath.c_str(), std::size(szFullPath) - 1);
     if (bCheck)
     {
         if (false == Bitmaps.LoadImage(uiTextureIndex, szFullPath, uiFilter, uiWrapMode))

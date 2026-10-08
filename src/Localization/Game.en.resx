@@ -13027,6 +13027,12 @@
   <data name="Master EXP %ls (%ls/h)" xml:space="preserve">
     <value>Master EXP %ls (%ls/h)</value>
   </data>
+  <data name="Next level in ~%ls" xml:space="preserve">
+    <value>Next level in ~%ls</value>
+  </data>
+  <data name="Next master level in ~%ls" xml:space="preserve">
+    <value>Next master level in ~%ls</value>
+  </data>
   <data name="Zen %ls (%ls/h), helper cost %ls" xml:space="preserve">
     <value>Zen %ls (%ls/h), helper fee %ls</value>
   </data>
@@ -13281,5 +13287,8 @@
   </data>
   <data name="Modern HUD" xml:space="preserve">
     <value>Modern HUD</value>
+  </data>
+  <data name="The windows change their look after a restart." xml:space="preserve">
+    <value>The windows change their look after a restart.</value>
   </data>
 </root>

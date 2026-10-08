@@ -978,6 +978,12 @@ void SEASON3B::CNewUIOptionWindow::ApplyHudStyle()
     {
         g_pMainFrame->ReloadImages();
     }
+
+    // the windows follow the same switch, but load their textures at the start (UI/Theme/ModernTheme.h)
+    if (g_pSystemLogBox)
+    {
+        g_pSystemLogBox->AddText(I18N::Game::TheWindowsChangeTheirLookAfterARestart, SEASON3B::TYPE_SYSTEM_MESSAGE);
+    }
 }
 
 void SEASON3B::CNewUIOptionWindow::ApplyWindowModeToggle()

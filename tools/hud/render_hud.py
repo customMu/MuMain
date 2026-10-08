@@ -1,6 +1,7 @@
 """Blender (Cycles) renders of the modern HUD parts; called by modern_hud.py:
 
-    blender -b -P tools/hud/render_hud.py -- <work_dir>
+    blender -b -P tools/hud/render_hud.py -- <work_dir>        the HUD parts
+    blender -b -P tools/hud/render_hud.py -- <work_dir> ui     the window parts atlas (modern_ui.py): ui.png
 
 Reads the maps modern_hud.py wrote to work_dir (band_height.png, band_gold.png, band_inner.png, icon_<kind>.png) and
 writes there:
@@ -33,6 +34,8 @@ STEEL = (0.035, 0.038, 0.048)
 RELIEF_DEPTH = 5.0  # reference pixels between white and black of band_height
 ORB_OVERLAY = 56  # the ring overlay, reference pixels (modern_hud.ORB_OVERLAY); the liquid is 39
 TUBE_OVERLAY = (26, 48)  # the tube overlay; the liquid is 16 x 39
+UI_ATLAS = (560, 520)  # the window parts atlas of modern_ui.py, reference pixels
+UI_SS = 3
 
 
 # ---------- scene helpers ----------
@@ -131,13 +134,50 @@ def render_band(work):
     scene = reset()
     scene.render.film_transparent = False
     w, h = BAND
-    # real relief, so the rims cast shadows into the slots: a fine grid displaced by the height map
-    bpy.ops.mesh.primitive_grid_add(x_subdivisions=w * 3, y_subdivisions=h * 3, size=1)
+    metal_relief(work, 'band', w, h, 3)
+    camera(scene, (0, 0, 100), (0, 0, 0), w, (w * SS, h * SS))
+    # a warm key light low from the upper left (long shadows in the slots), a cool dim fill from below
+    area_light(scene, (-260, 170, 110), 90, 1.6e6, (1.0, 0.93, 0.82))
+    area_light(scene, (60, -160, 80), 500, 0.3e6, (0.75, 0.84, 1.0))
+    scene.cycles.samples = 64
+    render(scene, os.path.join(work, 'band.png'))
+
+
+def render_ui_atlas(work):
+    """The window parts (modern_ui.py): one atlas of maps ui_height / ui_gold / ui_inner, UI_ATLAS reference pixels,
+    lit by a sun (the same light everywhere on the atlas) from the upper left like the band."""
+    scene = reset()
+    scene.render.film_transparent = False
+    w, h = UI_ATLAS
+    metal_relief(work, 'ui', w, h, 2)
+    camera(scene, (0, 0, 100), (0, 0, 0), max(w, h), (w * UI_SS, h * UI_SS))
+    sun = bpy.data.lights.new('Sun', 'SUN')
+    sun.energy = 3.2
+    sun.angle = math.radians(8)
+    sun.color = (1.0, 0.93, 0.82)
+    obj = bpy.data.objects.new('Sun', sun)
+    scene.collection.objects.link(obj)
+    obj.rotation_euler = (Vector((-260, 170, 110)) * -1).to_track_quat('-Z', 'Y').to_euler()
+    fill = bpy.data.lights.new('Fill', 'SUN')
+    fill.energy = 0.5
+    fill.angle = math.radians(40)
+    fill.color = (0.75, 0.84, 1.0)
+    obj = bpy.data.objects.new('Fill', fill)
+    scene.collection.objects.link(obj)
+    obj.rotation_euler = (Vector((60, -160, 80)) * -1).to_track_quat('-Z', 'Y').to_euler()
+    scene.cycles.samples = 48
+    render(scene, os.path.join(work, 'ui.png'))
+
+
+def metal_relief(work, prefix, w, h, density):
+    """A w x h plane of forged steel, gold and dark insides from the maps <prefix>_height / _gold / _inner: a grid of
+    density vertices per reference pixel, displaced by the height map, so the rims cast real shadows."""
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=w * density, y_subdivisions=h * density, size=1)
     plane = bpy.context.active_object
     plane.scale = (w, h, 1)
     bpy.ops.object.transform_apply(scale=True)
     relief = bpy.data.textures.new('relief', 'IMAGE')
-    relief.image = bpy.data.images.load(os.path.join(work, 'band_height.png'))
+    relief.image = bpy.data.images.load(os.path.join(work, f'{prefix}_height.png'))
     relief.image.colorspace_settings.name = 'Non-Color'
     relief.extension = 'EXTEND'
     displace = plane.modifiers.new('Relief', 'DISPLACE')
@@ -146,12 +186,12 @@ def render_band(work):
     displace.mid_level = 150 / 255  # the panel stays at z 0
     displace.strength = RELIEF_DEPTH
     bpy.ops.object.shade_smooth()
-    mat, nodes, links, out_bsdf = material('band')
+    mat, nodes, links, out_bsdf = material(prefix)
     out = nodes['Material Output']
     nodes.remove(out_bsdf)
-    height = image_node(nodes, os.path.join(work, 'band_height.png'))
-    gold_mask = image_node(nodes, os.path.join(work, 'band_gold.png'))
-    inner_mask = image_node(nodes, os.path.join(work, 'band_inner.png'))
+    height = image_node(nodes, os.path.join(work, f'{prefix}_height.png'))
+    gold_mask = image_node(nodes, os.path.join(work, f'{prefix}_gold.png'))
+    inner_mask = image_node(nodes, os.path.join(work, f'{prefix}_inner.png'))
     bump = nodes.new('ShaderNodeBump')
     bump.inputs['Strength'].default_value = 0.6  # fine detail on top of the displaced relief
     bump.inputs['Distance'].default_value = 1.0
@@ -186,12 +226,7 @@ def render_band(work):
     links.new(inner.outputs['BSDF'], mix_inner.inputs[2])
     links.new(mix_inner.outputs['Shader'], out.inputs['Surface'])
     plane.data.materials.append(mat)
-    camera(scene, (0, 0, 100), (0, 0, 0), w, (w * SS, h * SS))
-    # a warm key light low from the upper left (long shadows in the slots), a cool dim fill from below
-    area_light(scene, (-260, 170, 110), 90, 1.6e6, (1.0, 0.93, 0.82))
-    area_light(scene, (60, -160, 80), 500, 0.3e6, (0.75, 0.84, 1.0))
-    scene.cycles.samples = 64
-    render(scene, os.path.join(work, 'band.png'))
+    return plane
 
 
 # ---------- orbs and tubes ----------
@@ -384,7 +419,10 @@ def render_medallions(work):
         render(scene, os.path.join(work, f'medallion_{kind}.png'))
 
 
-def main(work):
+def main(work, what='hud'):
+    if what == 'ui':
+        render_ui_atlas(work)
+        return
     render_band(work)
     render_orbs(work)
     render_tubes(work)
@@ -393,4 +431,4 @@ def main(work):
 
 if __name__ == '__main__':
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:]
-    main(os.path.abspath(args[0]))
+    main(os.path.abspath(args[0]), *args[1:])
