@@ -543,6 +543,13 @@ static std::uint8_t g_tabBar = 0;
         }
     }
 
+    // Defense of the Dark Horse option: 5 + level / 2 (30 at level 50) - the server option (tools/balance/class_balance_sql.py,
+    // class_balance.HORSE_DEF_*); before 5 + Agility / 20 + 2 x level, which also overflowed the byte of the option value.
+    static std::uint8_t HorseDefense(int level)
+    {
+        return static_cast<std::uint8_t>(5 + level / 2);
+    }
+
     void SetPetItemConvert(ITEM* ip, PET_INFO* pPetInfo)
     {
         if (ip->Type == ITEM_DARK_HORSE_ITEM)
@@ -563,14 +570,14 @@ static std::uint8_t g_tabBar = 0;
             {
                 if (ip->SpecialNum < MAX_ITEM_SPECIAL)
                 {
-                    ip->SpecialValue[ip->SpecialNum] = static_cast<std::uint8_t>((5 + (CharacterAttribute->Dexterity / 20) + pPetInfo->m_wLevel * 2) & 0xFF);
+                    ip->SpecialValue[ip->SpecialNum] = HorseDefense(pPetInfo->m_wLevel);
                     ip->Special[ip->SpecialNum] = AT_SET_OPTION_IMPROVE_DEFENCE;
                     ip->SpecialNum++;
                 }
             }
             else
             {
-                ip->SpecialValue[Index] = static_cast<std::uint8_t>((5 + (CharacterAttribute->Dexterity / 20) + pPetInfo->m_wLevel * 2) & 0xFF);
+                ip->SpecialValue[Index] = HorseDefense(pPetInfo->m_wLevel);
                 ip->Special[Index] = AT_SET_OPTION_IMPROVE_DEFENCE;
             }
         }
