@@ -37,6 +37,13 @@ void CSprite::Create(int nOrgWidth, int nOrgHeight, int nTexID, int nMaxFrame, S
     m_fOrgHeight = (float)nOrgHeight;
     m_nTexID = nTexID;
     m_pTexture = Bitmaps.FindTexture(m_nTexID);
+    if (m_pTexture == nullptr && -1 < m_nTexID)
+    {
+        // a texture which is not loaded (e.g. an object built with other texture indexes - rebuild all): draw nothing
+        // instead of reading its size from a null pointer
+        g_ErrorReport.Write(L"CSprite::Create: texture %d is not loaded\r\n", m_nTexID);
+        m_nTexID = -1;
+    }
 
     m_fScrHeight = (float)WindowHeight / fScaleY;
 
