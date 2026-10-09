@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -11,8 +10,8 @@
 namespace SEASON3B
 {
     // The dialog of Warden Eldrin (Illusion of Noria, GameLogic/Events/IllusionOfNoria.h): the quest of the whistle, the
-    // entry, the daily quest, the reset of the harmony option of the equipped weapons and, after the quest, the shop for
-    // Illusion Shards; every purchase asks for a confirmation.
+    // entry, the daily quest, the reset of the harmony option of the equipped weapons and, after the quest, a random
+    // stone for Illusion Shards (asks for a confirmation).
     class CIllusionWardenMsgBox : public CNewUIMessageBoxBase
     {
     public:
@@ -32,7 +31,6 @@ namespace SEASON3B
         enum class Page
         {
             Main,
-            Shop,
             Confirm,
         };
 
@@ -40,10 +38,18 @@ namespace SEASON3B
         enum class Command
         {
             Action,  // sends the action to the server and closes
-            Shop,    // opens the shop page
             Back,    // back to the main page
-            Buy,     // asks for the confirmation of the purchase
-            Confirm, // sends the purchase
+            Buy,     // asks for the confirmation of the random stone
+            Confirm, // sends the request of the random stone
+        };
+
+        // what a line of the dialog is
+        enum class LineKind
+        {
+            Text,
+            Header,   // a section: gold, a thin line under it
+            Quote,    // what the warden says: light violet, centred
+            Progress, // a bar behind the text (the kills of the daily quest)
         };
 
         struct Line
@@ -51,6 +57,8 @@ namespace SEASON3B
             std::wstring Text;
             DWORD Color;
             bool Bold;
+            LineKind Kind = LineKind::Text;
+            float Progress = 0.f; // 0..1 of a progress line
         };
 
         struct Button
@@ -58,20 +66,27 @@ namespace SEASON3B
             std::wstring Text;
             Command Kind;
             std::uint8_t Action;
-            int Index; // the shop entry of Buy / Confirm
+            int Index; // the entry of the price list (FB 12) of Buy / Confirm
             bool Enabled;
+            float X = 0.f; // set by Layout
+            float Y = 0.f;
         };
 
         static constexpr int MaxButtons = 12;
 
         void Build();
         void BuildMain();
-        void BuildShop();
         void BuildConfirm();
         void Layout();
         void OnButton(int index);
 
         void AddLine(const std::wstring& text, DWORD color = 0xFFFFFFFF, bool bold = false);
+        void AddHeader(const std::wstring& text);
+        void AddQuote(const std::wstring& text);
+        void AddProgress(const std::wstring& text, int value, int maximum);
+        void RenderLines();
+        void RenderFrame();
+        static void RenderButton(const std::wstring& text, float x, float y, float width, bool enabled);
         void AddButton(const std::wstring& text, Command kind, std::uint8_t action = 0, int index = -1, bool enabled = true);
 
         Page m_page = Page::Main;
@@ -79,9 +94,8 @@ namespace SEASON3B
         std::wstring m_title;
         std::vector<Line> m_lines;
         std::vector<Button> m_buttons;
-        std::array<CNewUIMessageBoxButton, MaxButtons> m_buttonControls;
-        CNewUIMessageBoxButton m_close;
-        int m_middleCount = 1;
+        float m_closeX = 0.f;
+        float m_closeY = 0.f;
     };
 
     class CIllusionWardenMsgBoxLayout : public TMsgBoxLayout<CIllusionWardenMsgBox>

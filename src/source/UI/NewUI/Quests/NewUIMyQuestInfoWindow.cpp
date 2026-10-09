@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "GameLogic/Quests/KillQuest.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "Render/Textures/ZzzOpenglUtil.h"
 #include "Render/Renderer/MuRenderer.h"
 
@@ -143,10 +144,9 @@ bool SEASON3B::CNewUIMyQuestInfoWindow::BtnProcess()
         return true;
     }
 
-    if (eTabBtnIndex == TAB_CASTLE_TEMPLE)
+    if (eTabBtnIndex == TAB_DAILY)
     {
-        SocketClient->ToGameServer()->SendMiniGameEventCountRequest(MiniGameType::BloodCastle);
-        SocketClient->ToGameServer()->SendMiniGameEventCountRequest(MiniGameType::CursedTemple);
+        GameLogic::Events::IllusionOfNoria::SendAction(GameLogic::Events::IllusionOfNoria::State); // a fresh state of the daily quest
         return true;
     }
 
@@ -217,11 +217,9 @@ bool SEASON3B::CNewUIMyQuestInfoWindow::Render()
         RenderJobChangeState();
         RenderClassChangeGoal(m_Pos);
     }
-    else if (m_eTabBtnIndex == TAB_CASTLE_TEMPLE)
+    else if (m_eTabBtnIndex == TAB_DAILY)
     {
-        RenderImage(IMAGE_MYQUEST_LINE, m_Pos.x, m_Pos.y + 210, 188.f, 21.f);
-        RenderCastleInfo();
-        RenderTempleInfo();
+        RenderDailyInfo();
     }
 
     DisableAlphaBlend();
@@ -643,44 +641,81 @@ void SEASON3B::CNewUIMyQuestInfoWindow::RenderJobChangeState()
         g_pRenderText->RenderText(m_Pos.x + 23, m_Pos.y + 283 + 18 * i, m_aszMsg[i], 0, 0, RT3_SORT_LEFT);
 }
 
-void SEASON3B::CNewUIMyQuestInfoWindow::RenderCastleInfo()
+void SEASON3B::CNewUIMyQuestInfoWindow::RenderDailyInfo()
 {
-    g_pRenderText->SetFont(g_hFontBold);
-    g_pRenderText->SetTextColor(255, 255, 0, 255);
-    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    namespace Illusion = GameLogic::Events::IllusionOfNoria;
+    const auto& info = Illusion::GetInfo();
+    const float x = m_Pos.x;
+    float y = m_Pos.y + 70.f;
+    wchar_t text[256];
 
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 105, I18N::Game::BloodCastle, 190, 0, RT3_SORT_CENTER);
+    const auto line = [&](const wchar_t* value, const BYTE r, const BYTE g, const BYTE b, const bool bold = false)
+    {
+        g_pRenderText->SetFont(bold ? g_hFontBold : g_hFont);
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
+        g_pRenderText->SetTextColor(r, g, b, 255);
+        g_pRenderText->RenderText(x, y, value, 190, 0, RT3_SORT_CENTER);
+        y += 16.f;
+    };
 
-    g_pRenderText->SetFont(g_hFont);
-    g_pRenderText->SetTextColor(255, 255, 255, 255);
-    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    line(I18N::Game::IllusionOfNoria, 255, 200, 80, true);
+    RenderColorLineARGB(x + 30.f, y - 2.f, x + 160.f, y - 2.f, 1.f, 0xB0C89640u);
+    y += 6.f;
+    if (!Illusion::HasState())
+    {
+        line(I18N::Game::LoadingDaily, 160, 160, 160);
+        return;
+    }
 
-    wchar_t strText[256];
-    mu_swprintf(strText, I18N::Game::EntranceIsAllowedForDTimes, g_csQuest.GetEventCount(2));
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 125, strText, 190, 0, RT3_SORT_CENTER);
+    if (info.QuestState != 2)
+    {
+        line(I18N::Game::UnlocksAfterTheQuest, 200, 200, 200);
+        line(I18N::Game::TheStolenWhistle, 210, 160, 255, true);
+        line(I18N::Game::WardenEldrinNoria183102, 200, 200, 200);
+        mu_swprintf(text, I18N::Game::ResetsNeededDYouHaveD, info.RequiredResets, info.Resets);
+        line(text, info.Resets >= info.RequiredResets ? 120 : 160, info.Resets >= info.RequiredResets ? 255 : 160, info.Resets >= info.RequiredResets ? 120 : 160);
+        return;
+    }
 
-    mu_swprintf(strText, I18N::Game::YouMayEnterOnlyDTimesPerDay, 6);
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 145, strText, 190, 0, RT3_SORT_CENTER);
-}
+    line(I18N::Game::DailyQuest, 255, 255, 255, true);
+    const int state = Illusion::CurrentDailyState();
+    switch (state)
+    {
+    case 0:
+        line(I18N::Game::AvailableTalkToWardenEldrin, 64, 176, 255);
+        line(I18N::Game::InTheTownOfTheIllusion, 64, 176, 255);
+        break;
+    case 1:
+    case 2:
+        line(state == 2 ? I18N::Game::CompletedClaimYourReward : I18N::Game::InProgress, state == 2 ? 255 : 200, state == 2 ? 200 : 200, state == 2 ? 64 : 200);
+        y += 4.f;
+        for (const auto& monster : info.Daily)
+        {
+            const int needed = std::max(1, info.DailyKillsNeeded);
+            const int kills = std::min(monster.Kills, needed);
+            const float progress = static_cast<float>(kills) / static_cast<float>(needed);
+            RenderColorQuadARGB(x + 22.f, y - 1.f, 146.f, 14.f, 0xA0201030u);
+            RenderColorQuadARGB(x + 22.f, y - 1.f, 146.f * progress, 14.f, progress >= 1.f ? 0xC0308040u : 0xC07040B0u);
+            EnableAlphaTest();
+            const wchar_t* name = Illusion::MonsterName(monster.Number);
+            mu_swprintf(text, I18N::Game::LsDD, name != nullptr ? name : getMonsterName(monster.Number), kills, needed);
+            line(text, 255, 255, 255);
+            y += 4.f;
+        }
 
-void SEASON3B::CNewUIMyQuestInfoWindow::RenderTempleInfo()
-{
-    g_pRenderText->SetFont(g_hFontBold);
-    g_pRenderText->SetTextColor(255, 255, 0, 255);
-    g_pRenderText->SetBgColor(0, 0, 0, 0);
+        break;
+    default:
+    {
+        const auto seconds = Illusion::SecondsUntilNextDay();
+        mu_swprintf(text, I18N::Game::DailyQuestDoneNextInDHDMin, static_cast<int>(seconds / 3600), static_cast<int>(seconds % 3600 / 60));
+        line(text, 160, 160, 160);
+        break;
+    }
+    }
 
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 285, I18N::Game::IllusionTemple, 190, 0, RT3_SORT_CENTER);
-
-    g_pRenderText->SetFont(g_hFont);
-    g_pRenderText->SetTextColor(255, 255, 255, 255);
-    g_pRenderText->SetBgColor(0, 0, 0, 0);
-
-    wchar_t strText[256];
-    mu_swprintf(strText, I18N::Game::EntranceIsAllowedForDTimes, g_csQuest.GetEventCount(3));
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 305, strText, 190, 0, RT3_SORT_CENTER);
-
-    mu_swprintf(strText, I18N::Game::YouMayEnterOnlyDTimesPerDay, 6);
-    g_pRenderText->RenderText(m_Pos.x, m_Pos.y + 325, strText, 190, 0, RT3_SORT_CENTER);
+    y += 8.f;
+    mu_swprintf(text, I18N::Game::IllusionShardsU, info.Shards);
+    line(text, 210, 160, 255);
 }
 
 void SEASON3B::CNewUIMyQuestInfoWindow::OpenningProcess()
@@ -723,7 +758,7 @@ CNewUIMyQuestInfoWindow::TAB_BUTTON_INDEX CNewUIMyQuestInfoWindow::UpdateTabBtn(
     else if (CheckMouseIn(m_Pos.x + 57, m_Pos.y + 27, 48, 22))
         m_eTabBtnIndex = TAB_JOB_CHANGE;
     else if (CheckMouseIn(m_Pos.x + 104, m_Pos.y + 27, 72, 22))
-        m_eTabBtnIndex = TAB_CASTLE_TEMPLE;
+        m_eTabBtnIndex = TAB_DAILY;
 
     ::PlayBuffer(SOUND_CLICK01);
 
@@ -744,7 +779,7 @@ void CNewUIMyQuestInfoWindow::RenderTabBtn()
         g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 34, I18N::Game::Quest, 48, 0, RT3_SORT_CENTER);
         g_pRenderText->SetTextColor(181, 181, 181, 181);
         g_pRenderText->RenderText(m_Pos.x + 57, m_Pos.y + 35, I18N::Game::ChangeClass, 48, 0, RT3_SORT_CENTER);
-        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 35, I18N::Game::CastleTemple, 72, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 35, I18N::Game::Daily, 72, 0, RT3_SORT_CENTER);
     }
     else if (m_eTabBtnIndex == TAB_JOB_CHANGE)
     {
@@ -753,13 +788,13 @@ void CNewUIMyQuestInfoWindow::RenderTabBtn()
         g_pRenderText->RenderText(m_Pos.x + 57, m_Pos.y + 34, I18N::Game::ChangeClass, 48, 0, RT3_SORT_CENTER);
         g_pRenderText->SetTextColor(181, 181, 181, 181);
         g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 35, I18N::Game::Quest, 48, 0, RT3_SORT_CENTER);
-        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 35, I18N::Game::CastleTemple, 72, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 35, I18N::Game::Daily, 72, 0, RT3_SORT_CENTER);
     }
-    else if (m_eTabBtnIndex == TAB_CASTLE_TEMPLE)
+    else if (m_eTabBtnIndex == TAB_DAILY)
     {
         RenderImage(IMAGE_MYQUEST_TAB_BIG, m_Pos.x + 104, m_Pos.y + 27, 72.f, 22.f);
         g_pRenderText->SetTextColor(255, 255, 255, 255);
-        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 34, I18N::Game::CastleTemple, 72, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(m_Pos.x + 104, m_Pos.y + 34, I18N::Game::Daily, 72, 0, RT3_SORT_CENTER);
         g_pRenderText->SetTextColor(181, 181, 181, 181);
         g_pRenderText->RenderText(m_Pos.x + 10, m_Pos.y + 35, I18N::Game::Quest, 48, 0, RT3_SORT_CENTER);
         g_pRenderText->RenderText(m_Pos.x + 57, m_Pos.y + 35, I18N::Game::ChangeClass, 48, 0, RT3_SORT_CENTER);

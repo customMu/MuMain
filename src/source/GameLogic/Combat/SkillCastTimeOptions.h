@@ -57,8 +57,8 @@ namespace GameLogic::Combat::SkillCastTime
         return false;
     }
 
-    // The skill whose fix time the harmony option of the weapon lowers, or 0.
-    inline int OptionSkill(int group, int number, int harmonyOption, int family)
+    // The skill whose fix time the skill fix option of the weapon lowers, or 0.
+    inline int OptionSkill(int group, int number, int option, int family)
     {
         const auto* weapon = FindWeapon(group, number, family);
         if (weapon == nullptr)
@@ -68,7 +68,7 @@ namespace GameLogic::Combat::SkillCastTime
 
         for (int i = 0; i < 3; ++i)
         {
-            if (harmonyOption == OptionNumbers[i])
+            if (option == OptionNumbers[i])
             {
                 return weapon->Skills[i];
             }
@@ -77,7 +77,27 @@ namespace GameLogic::Combat::SkillCastTime
         return 0;
     }
 
-    // The share by which the option lowers the fix time at a harmony level (x0.6 for the elf).
+    // The extra options of the skill fix slot (Illusion of Noria, an Echo gives a random one of 4): HP steal 14, MP steal
+    // 15, Double damage 16. Their value at level 10 (5 %, 5 %, 10 %), lower levels on the curve of the fix time cut.
+    // Must match tools/balance/illusion_extra_options.py (server IllusionWeaponOptions).
+    inline constexpr int HealthStealOption = 14;
+    inline constexpr int ManaStealOption = 15;
+    inline constexpr int DoubleDamageOption = 16;
+
+    inline bool IsExtraOption(int option)
+    {
+        return option >= HealthStealOption && option <= DoubleDamageOption;
+    }
+
+    // The value of an extra option at its level, e.g. 0.05 for 5 %.
+    inline float ExtraOptionValue(int option, int level)
+    {
+        const float maximum = option == DoubleDamageOption ? 0.10f : 0.05f;
+        const int index = std::clamp(level, 0, static_cast<int>(std::size(OptionCut)) - 1);
+        return OptionCut[index] / OptionCut[std::size(OptionCut) - 1] * maximum;
+    }
+
+    // The share by which the skill fix option lowers the fix time at its level (x0.6 for the elf).
     inline float OptionCutOf(int harmonyLevel, int family)
     {
         const int level = std::clamp(harmonyLevel, 0, static_cast<int>(std::size(OptionCut)) - 1);
@@ -85,8 +105,8 @@ namespace GameLogic::Combat::SkillCastTime
     }
 
     // The time of one cast of the skill like the server plugin "Skill cast time" (SkillCastTimePlugIn.GetCastTime):
-    // the fix time lowered by the harmony options (cut), not below the floor, and below the fix speed the animation at
-    // the attack / magic speed of the hero. 0 when the skill has no fix time (not checked).
+    // the fix time, below the fix speed the animation at the attack / magic speed of the hero, both cut by the skill fix
+    // options (cut; no speed above the fix is needed for them), not below the floor. 0 when the skill has no fix time.
     inline float CastSeconds(int skill, float attackSpeed, float magicSpeed, float cut)
     {
         for (const auto& entry : SkillTimes)
@@ -97,7 +117,8 @@ namespace GameLogic::Combat::SkillCastTime
             }
 
             const float fix = entry.FixMilliseconds / 1000.f;
-            float seconds = std::max(CastFloorSeconds, fix * (1.f - std::clamp(cut, 0.f, 0.9f)));
+            const float keep = 1.f - std::clamp(cut, 0.f, 0.9f);
+            float seconds = fix;
             if (entry.Speed != SpeedStat::None)
             {
                 const float curve = SpeedCurve(entry.Speed, entry.Speed == SpeedStat::Attack ? attackSpeed : magicSpeed);
@@ -107,7 +128,7 @@ namespace GameLogic::Combat::SkillCastTime
                 }
             }
 
-            return seconds;
+            return std::max(CastFloorSeconds, seconds * keep);
         }
 
         return 0.f;

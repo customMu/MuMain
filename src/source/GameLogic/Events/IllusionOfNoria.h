@@ -29,14 +29,28 @@ namespace GameLogic::Events::IllusionOfNoria
         ClaimDaily = 5,
         Return = 6,
         ResetOption = 0x10, // + slot (0 left hand, 1 right hand)
-        Exchange = 0x20,    // + index of the exchange list
+        BuyLesserStone = 0x20, // a Lesser Mirage Stone for Illusion Shards (the shop of the warden)
+        BuyWard = 0x21,        // the Veil Ward for Illusion Shards (no damage of the Golden Curse)
+        BuyBlessing = 0x22,    // the Blessing of the Veil for Illusion Shards (+50 % damage in the illusion)
+        State = 0x30,       // asks for the state (FB 14) after entering a map
     };
 
+    // the group of the entry of the price list which is the Veil Ward (its number is the magic effect)
+    inline constexpr int WardExchangeGroup = 0xFF;
+
+    // the magic effect of the Veil Ward (server plugin "Illusion of Noria", WardEffectNumber); not in _enum.h
+    inline constexpr int VeilWardEffect = 189;
+    // the magic effect of the Blessing of the Veil (server BlessingEffectNumber): more damage to the illusion; it works
+    // together with the Veil Ward
+    inline constexpr int VeilBlessingEffect = 185;
+
+    // an entry of the price list of the warden: the Lesser Mirage Stone (14/196) or the Veil Ward (group 0xFF) and its
+    // price in Illusion Shards
     struct ExchangeEntry
     {
         int Group = 0;
         int Number = 0;
-        int Price = 0; // Illusion Shards
+        int Price = 0;
     };
 
     struct DailyMonster
@@ -76,53 +90,98 @@ namespace GameLogic::Events::IllusionOfNoria
     };
 
     // The Echoes (14/173-194): add the harmony option of one skill to a rank 7-8 weapon which has it (75 %, like the
-    // Jewel of Illusion); sold by the warden. Server: IllusionOfNoriaConfiguration.Echoes, tools/balance/illusion_of_noria.py.
+    // Jewel of Illusion); a random stone of the warden or of the boss, can be traded. Server: IllusionOfNoriaConfiguration.Echoes, tools/balance/illusion_of_noria.py.
     struct Echo
     {
         int Item;
         int Skill;
         const wchar_t* SkillName; // game names are not translated
+        const wchar_t* Model;     // Data\\Item\\<Model>01.bmd: the jewel in the colour of the class (tools/bmd/examples/illusion_stones.py)
     };
 
     inline constexpr Echo Echoes[] =
     {
-        { ITEM_POTION + 173, 41, L"Twisting Slash" },
-        { ITEM_POTION + 174, 43, L"Death Stab" },
-        { ITEM_POTION + 175, 232, L"Strike of Destruction" },
-        { ITEM_POTION + 176, 56, L"Power Slash" },
-        { ITEM_POTION + 177, 55, L"Fire Slash" },
-        { ITEM_POTION + 178, 9, L"Evil Spirit" },
-        { ITEM_POTION + 179, 237, L"Gigantic Storm" },
-        { ITEM_POTION + 180, 8, L"Twister" },
-        { ITEM_POTION + 181, 38, L"Decay" },
-        { ITEM_POTION + 182, 39, L"Ice Storm" },
-        { ITEM_POTION + 183, 235, L"Multi-Shot" },
-        { ITEM_POTION + 184, 52, L"Penetration" },
-        { ITEM_POTION + 185, 46, L"Starfall" },
-        { ITEM_POTION + 186, 78, L"Fire Scream" },
-        { ITEM_POTION + 187, 61, L"Fire Burst" },
-        { ITEM_POTION + 188, 238, L"Chaotic Diseier" },
-        { ITEM_POTION + 189, 230, L"Lightning Shock" },
-        { ITEM_POTION + 190, 215, L"Chain Lightning" },
-        { ITEM_POTION + 191, 225, L"Pollution" },
-        { ITEM_POTION + 192, 264, L"Dragon Roar" },
-        { ITEM_POTION + 193, 263, L"Dark Side" },
-        { ITEM_POTION + 194, 260, L"Killing Blow" },
+        { ITEM_POTION + 173, 41, L"Twisting Slash", L"EchoDK" },
+        { ITEM_POTION + 174, 43, L"Death Stab", L"EchoDK" },
+        { ITEM_POTION + 175, 232, L"Strike of Destruction", L"EchoDK" },
+        { ITEM_POTION + 176, 56, L"Power Slash", L"EchoMG" },
+        { ITEM_POTION + 177, 55, L"Fire Slash", L"EchoMG" },
+        { ITEM_POTION + 178, 9, L"Evil Spirit", L"EchoDW" },
+        { ITEM_POTION + 179, 237, L"Gigantic Storm", L"EchoMG" },
+        { ITEM_POTION + 180, 8, L"Twister", L"EchoMG" },
+        { ITEM_POTION + 181, 38, L"Decay", L"EchoDW" },
+        { ITEM_POTION + 182, 39, L"Ice Storm", L"EchoDW" },
+        { ITEM_POTION + 183, 235, L"Multi-Shot", L"EchoElf" },
+        { ITEM_POTION + 184, 52, L"Penetration", L"EchoElf" },
+        { ITEM_POTION + 185, 46, L"Starfall", L"EchoElf" },
+        { ITEM_POTION + 186, 78, L"Fire Scream", L"EchoDL" },
+        { ITEM_POTION + 187, 61, L"Fire Burst", L"EchoDL" },
+        { ITEM_POTION + 188, 238, L"Chaotic Diseier", L"EchoDL" },
+        { ITEM_POTION + 189, 230, L"Lightning Shock", L"EchoSUM" },
+        { ITEM_POTION + 190, 215, L"Chain Lightning", L"EchoSUM" },
+        { ITEM_POTION + 191, 225, L"Pollution", L"EchoSUM" },
+        { ITEM_POTION + 192, 264, L"Dragon Roar", L"EchoRF" },
+        { ITEM_POTION + 193, 263, L"Dark Side", L"EchoRF" },
+        { ITEM_POTION + 194, 260, L"Killing Blow", L"EchoRF" },
     };
 
     // The echo of an item, or nullptr.
     const Echo* FindEcho(int itemType);
+
+    // Whether the item is a stone of the skill fix option: Jewel of Illusion, an Echo or a Mirage Stone.
+    bool IsSkillFixStone(int itemType);
+
+    // Whether the stone can be used on the target item (the server checks it again): the Jewel of Illusion and the
+    // Echoes on a rank 7-8 weapon of +10 without the option (an Echo only if the weapon has its skill for this class),
+    // the Mirage Stones on a weapon with the option below the maximum level.
+    bool CanApplyStone(int stoneType, const ITEM& target);
 
     const WardenInfo& GetInfo();
 
     // Parses FB 12 and opens the dialog of the warden.
     void ReceiveWardenDialog(std::span<const std::uint8_t> packet);
 
+    // Parses FB 14: the same state without the dialog (the mark over the warden, the daily quest in the quest window).
+    void ReceiveWardenState(std::span<const std::uint8_t> packet);
+
+    // FB 15 [seconds]: the Golden Curse burns this long from now (renewed every second near the boss).
+    void ReceiveCurseTime(int seconds);
+
+    // The seconds the Golden Curse still burns (the timer of the debuff icon), 0 when unknown or over.
+    int CurseSecondsLeft();
+
+    // FB 16 [seconds, 2 bytes]: the Veil Ward lasts this long from now.
+    void ReceiveWardTime(int seconds);
+
+    // The seconds the Veil Ward still lasts (the timer of its icon), 0 when unknown or over.
+    int WardSecondsLeft();
+
+    // FB 17 [seconds, 2 bytes]: the Blessing of the Veil lasts this long from now (the timer of the buff icon).
+    void ReceiveBlessingTime(int seconds);
+
+    // The seconds the Blessing of the Veil still lasts, 0 when unknown or over.
+    int BlessingSecondsLeft();
+
+    // Whether the state came from the server since the start of the client.
+    bool HasState();
+
+    // The daily quest as it is now: 0 can be taken, 1 active, 2 completed, 3 done today (a new day turns 3 into 0 without
+    // a new packet).
+    int CurrentDailyState();
+
+    // The seconds until the next day of the daily quest, counted down since the last state.
+    std::uint32_t SecondsUntilNextDay();
+
+    // What the mark over Warden Eldrin shows: 0 nothing, 1 a quest or the daily quest can be taken (blue !), 2 a reward
+    // waits (gold !).
+    int WardenMark();
+
+    // Asks the server for the state after a map change and draws the mark over the warden (from CNewUINameWindow::Render).
+    void RenderWardenMark();
+
     // Sends an action of the dialog (C1 05 FB 13 [action]).
     void SendAction(std::uint8_t action);
 
-    // Buys an item of the shop of the warden (C1 08 FB 13 20 [group] [number u16]).
-    void SendBuy(int group, int number);
 
     // The whistle (14/171) and the new names of the jewels of the harmony options; called after the item file is loaded.
     void RegisterItems();

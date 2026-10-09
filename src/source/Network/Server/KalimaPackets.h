@@ -31,7 +31,7 @@ namespace Network::Server::KalimaPackets
     //   C1 04 FB 0B                                                         - enter the chamber of Kundun (client to server)
     //   C2 xx xx FB 12 ...                                                  - the dialog of the warden of the Illusion of Noria
     //                                                                         (GameLogic/Events/IllusionOfNoria.cpp)
-    //   C1 05 FB 13 [action] / C1 08 FB 13 20 [group] [number u16]          - an action / a purchase in that dialog
+    //   C1 05 FB 13 [action]                                                 - an action in that dialog (0x20: a random stone)
     //   C1 14 FB 20 [16 bytes]                                              - the fingerprint of this computer (client to server,
     //                                                                         GameLogic/Social/HardwareId.h)
     inline constexpr std::uint8_t HeadCode = 0xFB;

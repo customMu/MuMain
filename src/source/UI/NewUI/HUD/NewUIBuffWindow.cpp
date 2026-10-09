@@ -2,6 +2,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "I18N/All.h"
 
 #include "UI/NewUI/HUD/NewUIBuffWindow.h"
@@ -193,6 +194,18 @@ void SEASON3B::CNewUIBuffWindow::BuffSort(std::list<eBuffState>& buffstate)
         }
 
         eBuffClass eBuffClassType = g_IsBuffClass(buf);
+
+        // the effects of the Illusion of Noria are not in BuffEffect.bmd (the class would be unknown, the icon hidden)
+        namespace Illusion = GameLogic::Events::IllusionOfNoria;
+        if (buf == EFFECT_GOLDEN_CURSE)
+        {
+            eBuffClassType = eBuffClass_DeBuff;
+        }
+        else if (buf == Illusion::VeilWardEffect || buf == Illusion::VeilBlessingEffect)
+        {
+            eBuffClassType = eBuffClass_Buff;
+        }
+
         if (eBuffClassType == eBuffClass_Buff)
         {
             buffstate.push_front(buf);
@@ -381,10 +394,44 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffIcon(eBuffState& eBuffType, float x, 
     int iWidthIndex, iHeightIndex;
     float u, v;
 
+    if (eBuffType == GameLogic::Events::IllusionOfNoria::VeilWardEffect || eBuffType == GameLogic::Events::IllusionOfNoria::VeilBlessingEffect)
+    {
+        // the buffs of the warden of the Illusion of Noria: their own pictures of 40 x 56 (padded to 64 x 64) and the
+        // minutes left
+        namespace Illusion = GameLogic::Events::IllusionOfNoria;
+        const bool ward = eBuffType == Illusion::VeilWardEffect;
+        RenderBitmap(ward ? IMAGE_BUFF_VEIL_WARD : IMAGE_BUFF_VEIL_BLESSING, x, y, width, height, 0.f, 0.f, 40.f / 64.f, 56.f / 64.f);
+        if (const int seconds = ward ? Illusion::WardSecondsLeft() : Illusion::BlessingSecondsLeft(); seconds > 0)
+        {
+            wchar_t text[8];
+            mu_swprintf(text, L"%d", (seconds + 59) / 60);
+            g_pRenderText->SetFont(g_hFontBold);
+            g_pRenderText->SetBgColor(0, 0, 0, 160);
+            g_pRenderText->SetTextColor(ward ? 160 : 255, ward ? 220 : 170, 255, 255);
+            g_pRenderText->RenderText(x, y + height - 11.f, text, width, 0, RT3_SORT_CENTER);
+            g_pRenderText->SetBgColor(0, 0, 0, 0);
+        }
+
+        return;
+    }
+
     if (eBuffType == EFFECT_GOLDEN_CURSE)
     {
         // the curse of the boss of the Illusion of Noria: its own picture of 40 x 56 (padded to 64 x 64), like the Set Guard
         RenderBitmap(IMAGE_BUFF_GOLDEN_CURSE, x, y, width, height, 0.f, 0.f, 40.f / 64.f, 56.f / 64.f);
+
+        // the seconds left, at the bottom of the icon
+        if (const int seconds = GameLogic::Events::IllusionOfNoria::CurseSecondsLeft(); seconds > 0)
+        {
+            wchar_t text[8];
+            mu_swprintf(text, L"%d", seconds);
+            g_pRenderText->SetFont(g_hFontBold);
+            g_pRenderText->SetBgColor(0, 0, 0, 160);
+            g_pRenderText->SetTextColor(255, 220, 120, 255);
+            g_pRenderText->RenderText(x, y + height - 11.f, text, width, 0, RT3_SORT_CENTER);
+            g_pRenderText->SetBgColor(0, 0, 0, 0);
+        }
+
         return;
     }
 
@@ -425,10 +472,49 @@ void SEASON3B::CNewUIBuffWindow::RenderBuffTooltip(eBuffClass& eBuffClassType, e
         TextListColor[TextNum] = TEXT_COLOR_RED;
         TextBold[TextNum] = true;
         ++TextNum;
-        mu_swprintf(TextList[TextNum], I18N::Game::DHPPerSecond, 300);
+        // under the Veil Ward of the warden the curse stays, but does no damage
+        const bool warded = g_isCharacterBuff((&Hero->Object), static_cast<eBuffState>(GameLogic::Events::IllusionOfNoria::VeilWardEffect));
+        mu_swprintf(TextList[TextNum], I18N::Game::DHPPerSecond, warded ? 0 : 300);
         TextListColor[TextNum] = TEXT_COLOR_WHITE;
         TextBold[TextNum] = false;
         ++TextNum;
+        if (const int seconds = GameLogic::Events::IllusionOfNoria::CurseSecondsLeft(); seconds > 0)
+        {
+            std::wstring time;
+            g_StringTime(seconds, time, true);
+            mu_swprintf(TextList[TextNum], I18N::Game::DurationPeriodS, time.c_str());
+            TextListColor[TextNum] = TEXT_COLOR_PURPLE;
+            TextBold[TextNum] = false;
+            ++TextNum;
+        }
+        RenderTipTextList(x, y, TextNum, 0);
+        return;
+    }
+
+    if (eBuffType == GameLogic::Events::IllusionOfNoria::VeilWardEffect || eBuffType == GameLogic::Events::IllusionOfNoria::VeilBlessingEffect)
+    {
+        // the buffs of the warden of the Illusion of Noria: what they do, that they work together, the time left
+        namespace Illusion = GameLogic::Events::IllusionOfNoria;
+        const bool ward = eBuffType == Illusion::VeilWardEffect;
+        const auto line = [&](const wchar_t* text, const int color, const bool bold)
+        {
+            mu_swprintf(TextList[TextNum], L"%ls", text);
+            TextListColor[TextNum] = color;
+            TextBold[TextNum] = bold;
+            ++TextNum;
+        };
+        line(ward ? I18N::Game::VeilWard : I18N::Game::BlessingOfTheVeil, TEXT_COLOR_BLUE, true);
+        line(ward ? I18N::Game::TheGoldenCurseDoesNoDamage : I18N::Game::_50DamageToTheMonstersOfTheIllusionOfNoria, TEXT_COLOR_WHITE, false);
+        line(ward ? I18N::Game::WorksTogetherWithTheBlessingOfTheVeil : I18N::Game::WorksTogetherWithTheVeilWard, TEXT_COLOR_DARKBLUE, false);
+        if (const int seconds = ward ? Illusion::WardSecondsLeft() : Illusion::BlessingSecondsLeft(); seconds > 0)
+        {
+            std::wstring time;
+            g_StringTime(seconds, time, true);
+            mu_swprintf(TextList[TextNum], I18N::Game::DurationPeriodS, time.c_str());
+            TextListColor[TextNum] = TEXT_COLOR_PURPLE;
+            TextBold[TextNum] = false;
+            ++TextNum;
+        }
         RenderTipTextList(x, y, TextNum, 0);
         return;
     }
@@ -489,12 +575,16 @@ void SEASON3B::CNewUIBuffWindow::LoadImages()
     LoadBitmap(L"Interface\\newui_statusicon2.jpg", IMAGE_BUFF_STATUS2, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_setguard.jpg", IMAGE_BUFF_SET_GUARD, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_goldencurse.jpg", IMAGE_BUFF_GOLDEN_CURSE, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_veilward.jpg", IMAGE_BUFF_VEIL_WARD, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_veilblessing.jpg", IMAGE_BUFF_VEIL_BLESSING, GL_LINEAR);
 }
 
 void SEASON3B::CNewUIBuffWindow::UnloadImages()
 {
     DeleteBitmap(IMAGE_BUFF_SET_GUARD);
     DeleteBitmap(IMAGE_BUFF_GOLDEN_CURSE);
+    DeleteBitmap(IMAGE_BUFF_VEIL_WARD);
+    DeleteBitmap(IMAGE_BUFF_VEIL_BLESSING);
     DeleteBitmap(IMAGE_BUFF_STATUS2);
     DeleteBitmap(IMAGE_BUFF_STATUS);
 }

@@ -57,12 +57,21 @@ ItemCreationParams ParseItemData(std::span<const BYTE> itemData)
 
     if (flags & ItemOptionFlags::HasSockets)
     {
-        params.SocketBonusOption = (itemData[5 + offset] >> 4) & 0xF;
-        params.SocketCount = itemData[5 + offset] & 0xF;
-
-        for (int i = 0; i < params.SocketCount; ++i)
+        if ((itemData[5 + offset] & 0xF) == SkillFixSocketMarker)
         {
-            params.SocketOptions[i] = itemData[6 + offset + i];
+            // the skill fix option of this server (server ItemSerializerExtended): (option - 10) << 4 | level
+            params.SkillFixOption = static_cast<BYTE>(10 + ((itemData[6 + offset] >> 4) & 0xF));
+            params.SkillFixLevel = itemData[6 + offset] & 0xF;
+        }
+        else
+        {
+            params.SocketBonusOption = (itemData[5 + offset] >> 4) & 0xF;
+            params.SocketCount = itemData[5 + offset] & 0xF;
+
+            for (int i = 0; i < params.SocketCount; ++i)
+            {
+                params.SocketOptions[i] = itemData[6 + offset + i];
+            }
         }
     }
 
@@ -165,6 +174,8 @@ ITEM* SEASON3B::CNewUIItemMng::CreateItemByParameters(const ItemCreationParams* 
     pNewItem->AncientDiscriminator = parameters->AncientDiscriminator;
     pNewItem->AncientBonusOption = parameters->AncientBonusOption;
     pNewItem->Jewel_Of_Harmony_Option = parameters->HarmonyOptionType;
+    pNewItem->SkillFixOption = parameters->SkillFixOption;
+    pNewItem->SkillFixLevel = parameters->SkillFixLevel;
     pNewItem->Jewel_Of_Harmony_OptionLevel = parameters->HarmonyOptionLevel;
     pNewItem->option_380 = parameters->HasGuardianOption;
     pNewItem->SocketCount = parameters->SocketCount;

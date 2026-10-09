@@ -41,6 +41,7 @@
 #include "GameLogic/Items/MixMgr.h"
 #include "GameLogic/Items/ItemRequirements.h"
 #include "GameLogic/Items/RepairPrice.h"
+#include "GameLogic/Items/EnchantPrice.h"
 #include "GameLogic/Items/ArmorRanks.h"
 #include "GameLogic/Combat/SkillCastTimeOptions.h"
 #include "GameLogic/Events/IllusionOfNoria.h"
@@ -2692,6 +2693,22 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             TextListColor[TextNum] = static_cast<int>(CharacterAttribute->Resets) < requiredResets ? TEXT_COLOR_RED : TEXT_COLOR_YELLOW;
             TextBold[TextNum] = false;
             TextNum++;
+
+            // the price of the next enchanting (EnchantPrice.h): one short line, only below +15
+            const int level = ip->Level;
+            if (level < 9)
+            {
+                const bool soul = level >= 6;
+                const auto step = GameLogic::Items::GetEnchantStep(ip->Type, soul);
+                const int target = std::min(level + step.Levels, soul ? 9 : 6);
+                mu_swprintf(TextList[TextNum], I18N::Game::NextDDLs, target, step.Jewels, ItemAttribute[soul ? ITEM_JEWEL_OF_SOUL : ITEM_JEWEL_OF_BLESS].Name);
+                TextListColor[TextNum] = TEXT_COLOR_GRAY; TextBold[TextNum] = false; TextNum++;
+            }
+            else if (level < 15)
+            {
+                mu_swprintf(TextList[TextNum], I18N::Game::NextDChaosMachineJewelsXD, level + 1, GameLogic::Items::GetChaosMachineJewelMultiplier(ip->Type));
+                TextListColor[TextNum] = TEXT_COLOR_GRAY; TextBold[TextNum] = false; TextNum++;
+            }
         }
     }
 
@@ -4338,18 +4355,50 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     }
     else if (ip->Type == ITEM_JEWEL_OF_HARMONY)
     {
-        // 09.10.2026: the harmony options lower the fix time of a skill (server HarmonyJewelConsumeHandlerPlugIn)
-        mu_swprintf(TextList[TextNum], I18N::Game::AddsAnOptionToARank78Weapon);
+        mu_swprintf(TextList[TextNum], I18N::Game::JewelForItemReinforcement);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-        mu_swprintf(TextList[TextNum], I18N::Game::TheOptionLowersTheFixTimeOfASkill);
+    }
+    else if (ip->Type == ITEM_LOWER_REFINE_STONE)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::GrantActualPowerToReinforcedItem);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_HIGHER_REFINE_STONE)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::GrantActualPowerToReinforcedItem);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_JEWEL_OF_ILLUSION)
+    {
+        // removes the skill fix option and creates an Echo at the Chaos Goblin of the Illusion of Noria (server
+        // IllusionRemoveSkillFixCrafting, IllusionCreateEchoCrafting)
+        mu_swprintf(TextList[TextNum], I18N::Game::RemovesTheSkillFixOptionOfAWeapon);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::ARandomEchoOneOf22);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::AtTheChaosGoblinOfTheIllusionOfNoria);
+        TextListColor[TextNum] = TEXT_COLOR_VIOLET; TextBold[TextNum] = false; TextNum++;
     }
     else if (const auto* echo = GameLogic::Events::IllusionOfNoria::FindEcho(ip->Type))
     {
         mu_swprintf(TextList[TextNum], I18N::Game::AddsTheOptionOfLsToARank78Weapon, echo->SkillName);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
         mu_swprintf(TextList[TextNum], I18N::Game::TheOptionLowersTheFixTimeOfASkill);
+        TextListColor[TextNum] = TEXT_COLOR_VIOLET; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_LESSER_MIRAGE_STONE)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionFallsBackToLevel1);
+        TextListColor[TextNum] = TEXT_COLOR_RED; TextBold[TextNum] = false; TextNum++;
+    }
+    else if (ip->Type == ITEM_GREATER_MIRAGE_STONE)
+    {
+        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionKeepsItsLevel);
+        TextListColor[TextNum] = TEXT_COLOR_BLUE; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_ILLUSION_SHARD)
     {
@@ -4360,20 +4409,6 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     {
         mu_swprintf(TextList[TextNum], I18N::Game::BringItToWardenEldrinInNoria);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-    }
-    else if (ip->Type == ITEM_LOWER_REFINE_STONE)
-    {
-        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
-        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionFallsBackToLevel1);
-        TextListColor[TextNum] = TEXT_COLOR_RED; TextBold[TextNum] = false; TextNum++;
-    }
-    else if (ip->Type == ITEM_HIGHER_REFINE_STONE)
-    {
-        mu_swprintf(TextList[TextNum], I18N::Game::RaisesTheHarmonyOptionLevel);
-        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-        mu_swprintf(TextList[TextNum], I18N::Game::OnAFailTheOptionKeepsItsLevel);
-        TextListColor[TextNum] = TEXT_COLOR_BLUE; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_POTION + 160)
     {
@@ -5203,33 +5238,6 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
 
                     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
                 }
-                else if (const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4,
-                         skill = GameLogic::Combat::SkillCastTime::OptionSkill(ip->Type / MAX_ITEM_INDEX, ip->Type % MAX_ITEM_INDEX, ip->Jewel_Of_Harmony_Option, family);
-                         skill > 0)
-                {
-                    // harmony options 11, 12, 13 of the rank 7-8 weapons: the fix time of a skill of the class (session 12)
-                    mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
-                    namespace CastTime = GameLogic::Combat::SkillCastTime;
-                    const int harmonyLevel = ip->Jewel_Of_Harmony_OptionLevel;
-                    const int percent = static_cast<int>(CastTime::OptionCutOf(harmonyLevel, family) * 100.f + 0.5f);
-                    wchar_t fixText[100];
-                    wchar_t levelText[40];
-                    mu_swprintf(fixText, I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
-                    if (harmonyLevel >= CastTime::MaxOptionLevel)
-                    {
-                        mu_swprintf(levelText, I18N::Game::DLvlMax, CastTime::MaxOptionLevel);
-                    }
-                    else
-                    {
-                        // the option level and the chance of the refine stones to raise it
-                        mu_swprintf(levelText, I18N::Game::LvlDNextD, harmonyLevel, CastTime::RefineChance[std::max(0, harmonyLevel) + 1]);
-                    }
-
-                    mu_swprintf(TextList[TextNum], L"%ls %ls", fixText, levelText);
-                    TextListColor[TextNum] = TEXT_COLOR_YELLOW;
-                    TextBold[TextNum] = true; TextNum++;
-                    mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
-                }
                 else
                 {
                     mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
@@ -5253,6 +5261,53 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
                 }
             }
         }
+
+    if (ip->SkillFixOption != 0)
+    {
+        // the skill fix option of this server (Illusion of Noria, not a harmony option): the fix time of a skill of the
+        // class on the rank 7-8 weapons, its level and the chance of the next Mirage Stone
+        namespace CastTime = GameLogic::Combat::SkillCastTime;
+        const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
+        const int skill = CastTime::OptionSkill(ip->Type / MAX_ITEM_INDEX, ip->Type % MAX_ITEM_INDEX, ip->SkillFixOption, family);
+        const bool extra = CastTime::IsExtraOption(ip->SkillFixOption); // HP steal, MP steal, Double damage
+        if ((skill > 0 && skill < MAX_SKILLS) || extra)
+        {
+            const int level = ip->SkillFixLevel;
+            wchar_t fixText[100];
+            wchar_t levelText[40];
+            if (extra)
+            {
+                wchar_t value[16];
+                mu_swprintf(value, L"%.2f%%", CastTime::ExtraOptionValue(ip->SkillFixOption, level) * 100.f);
+                const wchar_t* format = ip->SkillFixOption == CastTime::HealthStealOption ? I18N::Game::HPStealLs
+                    : ip->SkillFixOption == CastTime::ManaStealOption ? I18N::Game::MPStealLs : I18N::Game::DoubleDamageChanceLs;
+                mu_swprintf(fixText, format, value);
+            }
+            else
+            {
+                const int percent = static_cast<int>(CastTime::OptionCutOf(level, family) * 100.f + 0.5f);
+                mu_swprintf(fixText, I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
+            }
+
+            if (level >= CastTime::MaxOptionLevel)
+            {
+                mu_swprintf(levelText, I18N::Game::DLvlMax, CastTime::MaxOptionLevel);
+            }
+            else
+            {
+                mu_swprintf(levelText, I18N::Game::LvlDNextD, level, CastTime::RefineChance[std::max(0, level) + 1]);
+            }
+
+            mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
+            mu_swprintf(TextList[TextNum], L"%ls %ls", fixText, levelText);
+            TextListColor[TextNum] = TEXT_COLOR_VIOLET;
+            TextBold[TextNum] = true; TextNum++;
+            mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::OnlyInTheLeftWeaponSlot); // server SkillCastTimePlugIn
+            TextListColor[TextNum] = TEXT_COLOR_GRAY;
+            TextBold[TextNum] = false; TextNum++;
+            mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
+        }
+    }
 
     TextNum = g_csItemOption.RenderDefaultOptionText(ip, TextNum);
 
@@ -8394,6 +8449,21 @@ void RenderObjectScreen(int Type, int ItemLevel, int excellentFlags, int ancient
         Position[1] += 0.02f;
         Vector(270.f, -10.f, 0.f, ObjectSelect.Angle);
     }
+    else if (Type >= MODEL_WHISTLE_OF_THE_VEIL && Type <= MODEL_GREATER_MIRAGE_STONE)
+    {
+        // the items of the Illusion of Noria stand upright (z of the model up) around the centre of their cell; the
+        // models are centred on their origin, except the shard (its base at the origin)
+        if (Type == MODEL_ILLUSION_SHARD)
+        {
+            Position[1] -= 0.043f;
+        }
+        else if (Type == MODEL_JEWEL_OF_ILLUSION || (Type >= MODEL_ECHO_FIRST && Type <= MODEL_ECHO_LAST))
+        {
+            Position[1] += 0.008f;
+        }
+
+        Vector(270.f, -10.f, 0.f, ObjectSelect.Angle);
+    }
     else if (Type == MODEL_LOWER_REFINE_STONE || Type == MODEL_HIGHER_REFINE_STONE)
     {
         Position[0] -= 0.04f;
@@ -9856,6 +9926,19 @@ void RenderObjectScreen(int Type, int ItemLevel, int excellentFlags, int ancient
     CameraProjection::WorldToScreen(g_Camera, Position, &ScreenPos_X, &ScreenPos_Y);
 #endif //PBG_ADD_ITEMRESIZE
 
+    // the items of the Illusion of Noria (a separate if: the chain above is at the nesting limit of the compiler)
+    if (Type >= MODEL_WHISTLE_OF_THE_VEIL && Type <= MODEL_GREATER_MIRAGE_STONE)
+    {
+        if (Type == MODEL_WHISTLE_OF_THE_VEIL)
+            Scale = 0.0034f; // 49 units long: a 1x2 cell
+        else if (Type == MODEL_ILLUSION_SHARD || Type == MODEL_LESSER_MIRAGE_STONE)
+            Scale = 0.0027f;
+        else if (Type == MODEL_GREATER_MIRAGE_STONE)
+            Scale = 0.0024f; // 38 units: still bigger than the Lesser stone
+        else
+            Scale = 0.0026f; // the Jewel of Illusion and the Echoes: 34 units high
+    }
+
     o->Scale = Scale;
 
     VectorCopy(Position, o->Position);
@@ -10186,6 +10269,12 @@ void RenderItem3D(float sx, float sy, float Width, float Height, int Type, int L
     {
         sx += Width * 0.55f;
         sy += Height * 0.82f;
+    }
+    else if (Type >= ITEM_WHISTLE_OF_THE_VEIL && Type <= ITEM_GREATER_MIRAGE_STONE)
+    {
+        // the centre of the cell (the models of the Illusion of Noria are centred, see RenderObjectScreen)
+        sx += Width * 0.5f;
+        sy += Height * 0.5f;
     }
     else if (Type >= ITEM_POTION && Type < ITEM_POTION + MAX_ITEM_INDEX)
     {

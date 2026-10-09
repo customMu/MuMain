@@ -447,8 +447,8 @@ static void SetWorldClearColor()
         rgb8(178, 178, 178);                           // Gray
     else if (world == WD_65DOPPLEGANGER1)
         rgb8(148, 179, 223);                           // Light blue
-    else if (world == WD_82ILLUSION_NORIA)
-        rgb8(46, 22, 74);                              // Violet haze of the illusion
+    else if (world == WD_82ILLUSION_NORIA && SceneFlag == MAIN_SCENE && LoadingWorld <= 30)
+        rgb8(46, 22, 74);                              // Violet haze of the illusion (black on the screens of a scene change and of a warp)
     else
         SetClearAndFogColor(0.f, 0.f, 0.f);            // Black (default)
 

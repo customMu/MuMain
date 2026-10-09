@@ -3,6 +3,7 @@
 #include "GameLogic/Combat/ClassAttack.h"
 #include "GameLogic/Combat/CombatTarget.h"
 #include "GameLogic/Combat/SkillCast.h" // per-class executors this dispatches to
+#include "GameLogic/Combat/SkillWeaponRequirement.h"
 #include "Character/CharacterManager.h"   // gCharacterManager
 
 // Includes mirror ZzzInterface.cpp, the unit this was extracted from.
@@ -149,6 +150,12 @@ bool CanExecuteSkill(CHARACTER* c, ActionSkillType Skill, float Distance)
     }
 
     if (!gSkillManager.AreSkillAttributeRequirementsMet(Skill))
+    {
+        return false;
+    }
+
+    // Twisting Slash, Death Stab ... need a weapon in hand (also for the MU Helper)
+    if (c == Hero && !SkillWeaponRequirement::CanUse(Skill))
     {
         return false;
     }

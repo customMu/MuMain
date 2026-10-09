@@ -17,6 +17,8 @@ namespace SEASON3B
             IMAGE_BUFF_STATUS3,
             IMAGE_BUFF_SET_GUARD,   // Interface\newui_setguard (tools/hud/set_guard_icon.py)
             IMAGE_BUFF_GOLDEN_CURSE, // Interface\newui_goldencurse (tools/hud/golden_curse_icon.py), EFFECT_GOLDEN_CURSE
+            IMAGE_BUFF_VEIL_WARD,     // Interface\newui_veilward (tools/hud/veil_icons.py), the Veil Ward (189)
+            IMAGE_BUFF_VEIL_BLESSING, // Interface\newui_veilblessing (tools/hud/veil_icons.py), the Blessing of the Veil (185)
         };
 
         enum BUFF_RENDER

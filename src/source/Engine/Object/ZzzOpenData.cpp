@@ -910,8 +910,12 @@ void OpenItems()
     gLoadData.AccessModel(MODEL_JEWELRY_BOX, L"Data\\Item\\", L"JewelryBox", 1); // tools/bmd/examples/jewelry_box.py
     gLoadData.AccessModel(MODEL_WHISTLE_OF_THE_VEIL, L"Data\\Item\\", L"Whistle", 1); // tools/bmd/examples/whistle.py
     gLoadData.AccessModel(MODEL_ILLUSION_SHARD, L"Data\\Item\\", L"IllusionShard", 1); // tools/bmd/examples/illusion_shard.py
-    for (int i = MODEL_ECHO_FIRST; i <= MODEL_ECHO_LAST; i++)
-        gLoadData.AccessModel(i, L"Data\\Item\\", L"jos"); // the Echoes look like the Jewel of Illusion
+    // the stones of the skill fix option (tools/bmd/examples/illusion_stones.py): the Echoes in the colour of their class
+    for (const auto& echo : GameLogic::Events::IllusionOfNoria::Echoes)
+        gLoadData.AccessModel(MODEL_ITEM + echo.Item, L"Data\\Item\\", echo.Model, 1);
+    gLoadData.AccessModel(MODEL_JEWEL_OF_ILLUSION, L"Data\\Item\\", L"IllusionJewel", 1);
+    gLoadData.AccessModel(MODEL_LESSER_MIRAGE_STONE, L"Data\\Item\\", L"MirageLesser", 1);
+    gLoadData.AccessModel(MODEL_GREATER_MIRAGE_STONE, L"Data\\Item\\", L"MirageGreater", 1);
     gLoadData.AccessModel(MODEL_POTION + 12, L"Data\\Item\\", L"Event", 1);
 
     for (int i = 0; i < 2; i++)
@@ -1334,7 +1338,7 @@ void OpenItemTextures()
     gLoadData.OpenTexture(MODEL_JEWELRY_BOX, L"Item\\");
     gLoadData.OpenTexture(MODEL_WHISTLE_OF_THE_VEIL, L"Item\\");
     gLoadData.OpenTexture(MODEL_ILLUSION_SHARD, L"Item\\");
-    for (int i = MODEL_ECHO_FIRST; i <= MODEL_ECHO_LAST; i++)
+    for (int i = MODEL_ECHO_FIRST; i <= MODEL_GREATER_MIRAGE_STONE; i++)
         gLoadData.OpenTexture(i, L"Item\\");
 
     for (int i = 0; i < 2; i++)

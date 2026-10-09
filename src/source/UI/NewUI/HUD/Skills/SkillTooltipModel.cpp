@@ -454,13 +454,14 @@ void AddCastRate(Model& m, int skillType)
 
     const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
     float cut = 0.f;
-    for (const int slot : { EQUIPMENT_WEAPON_RIGHT, EQUIPMENT_WEAPON_LEFT })
+    // only the weapon in slot 0 (the left weapon slot of the inventory window, server LeftHandSlot) counts
+    for (const int slot : { EQUIPMENT_WEAPON_RIGHT })
     {
         const ITEM& weapon = CharacterMachine->Equipment[slot];
         if (weapon.Type >= 0 && weapon.Durability > 0
-            && CastTime::OptionSkill(weapon.Type / MAX_ITEM_INDEX, weapon.Type % MAX_ITEM_INDEX, weapon.Jewel_Of_Harmony_Option, family) == skill)
+            && CastTime::OptionSkill(weapon.Type / MAX_ITEM_INDEX, weapon.Type % MAX_ITEM_INDEX, weapon.SkillFixOption, family) == skill)
         {
-            cut += CastTime::OptionCutOf(weapon.Jewel_Of_Harmony_OptionLevel, family);
+            cut = std::max(cut, CastTime::OptionCutOf(weapon.SkillFixLevel, family)); // two weapons: the better option
         }
     }
 

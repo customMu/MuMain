@@ -44,7 +44,7 @@ namespace SEASON3B
             TAB_NON = -1,
             TAB_QUEST = 0,
             TAB_JOB_CHANGE,
-            TAB_CASTLE_TEMPLE,
+            TAB_DAILY,
         };
 
     public:
@@ -89,8 +89,7 @@ namespace SEASON3B
         void RenderQuestInfo();
         void RenderJobChangeContents();
         void RenderJobChangeState();
-        void RenderCastleInfo();
-        void RenderTempleInfo();
+        void RenderDailyInfo(); // the daily quest of the Illusion of Noria (was Castle/Temple: entries of Blood Castle / Illusion Temple)
 
         TAB_BUTTON_INDEX UpdateTabBtn();
         void RenderTabBtn();

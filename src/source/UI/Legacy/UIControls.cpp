@@ -78,6 +78,9 @@ int CutStr(const wchar_t* pszSrcText, wchar_t* pTextOut, const int iTargetPixelW
         {
             // we can copy that to the destination
             tempString.copy(pTextOut, tempString.length(), 0);
+            // std::wstring::copy doesn't end the string: a shorter line kept the end of the line before in the buffer
+            // (the Chaos Machine showed "Jewel of Soul x22 x1 Create +10 item")
+            pTextOut[tempString.length()] = L'\0';
             iLineIndex++;
             processedSourceCharacters += tempString.length();
 

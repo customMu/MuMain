@@ -3,8 +3,16 @@
 
 #pragma once
 
+#include <map>
+#include <utility>
+
 namespace SEASON3A
 {
+    // the mixes of the Chaos Goblin of the Illusion of Noria (server IllusionSkillFixCrafting.AddNumber / RemoveNumber)
+    inline constexpr int MIXID_ILLUSION_ADD = 90;
+    inline constexpr int MIXID_ILLUSION_REMOVE = 91;
+    inline constexpr int MIXID_ILLUSION_ECHO = 92; // a random Echo (server IllusionCreateEchoCrafting.Number)
+
     class CMixItem
     {
     public:
@@ -48,6 +56,7 @@ namespace SEASON3A
         BOOL m_bFenrirAddedItem;
         WORD m_wHarmonyOption;
         WORD m_wHarmonyOptionLevel;
+        BYTE m_bySkillFixOption; // the skill fix option of the Illusion of Noria (0: none)
         BYTE m_bySocketCount;
         BYTE m_bySocketSeedID[MAX_SOCKETS];
         BYTE m_bySocketSphereLv[MAX_SOCKETS];
@@ -195,6 +204,10 @@ namespace SEASON3A
         BOOL IsReadyToMix() { return (m_iCurMixIndex > 0); }
         int GetSuccessRate() { return m_iSuccessRate; }
         DWORD GetReqiredZen() { return m_dwRequiredZen; }
+        // the price of enchanting by rank (GameLogic/Items/EnchantPrice.h): the Bless and Soul of the mixes +10..+15
+        // are multiplied by the rank of the item; the multiplier and the grade of the item in the mix (0: none)
+        int GetEnchantMultiplier() const { return m_iEnchantMultiplier; }
+        int GetEnchantGrade() const { return m_iEnchantGrade; }
         int GetFirstItemSocketCount() { return m_byFirstItemSocketCount; }
         int GetFirstItemSocketSeedID(int iIndex) { if (iIndex >= m_byFirstItemSocketCount) return SOCKET_EMPTY; else return m_byFirstItemSocketSeedID[iIndex]; }
         int GetFirstItemSocketShpereLv(int iIndex) { if (iIndex >= m_byFirstItemSocketCount) return 0; else return m_byFirstItemSocketSphereLv[iIndex]; }
@@ -206,6 +219,23 @@ namespace SEASON3A
         WORD GetTotalCharmCount() { return m_wTotalCharmBonus; }
 #endif //LJH_MOD_CANNOT_USE_CHARMITEM_AND_CHAOSCHARMITEM_SIMULTANEOUSLY
 
+    protected:
+        // scales the Bless and Soul of the mixes +10..+15 by the rank of the item in the mix (the counts of the file
+        // are kept in m_EnchantBaseCounts); the stones of the removal of the skill fix option (mix 91) by the rank too
+        void ApplyEnchantPrice(int iNumMixItems, CMixItem* pMixItems);
+    public:
+        // the mixes of the Chaos Goblin of the Illusion of Noria (not in Mix.bmd): 90 adds, 91 removes the skill fix
+        // option of a rank 7-8 weapon (server IllusionSkillFixCrafting)
+        void AddIllusionRecipes();
+        // the tab of the Chaos Machine of the Illusion of Noria: only this mix is checked (0: all mixes)
+        void SetOnlyMixID(int iMixID) { m_iOnlyMixID = iMixID; }
+        int GetOnlyMixID() const { return m_iOnlyMixID; }
+    protected:
+        bool IsRecipeAllowed(const MIX_RECIPE& rRecipe) const { return m_iOnlyMixID == 0 || rRecipe.m_iMixID == m_iOnlyMixID; }
+        bool IllusionEchoFitsWeapon(int iNumMixItems, CMixItem* pMixItems);
+    public:
+        // the mix 90 has all items, but the skill of the Echo is not on the weapon for the class of the hero
+        bool IsIllusionEchoMismatch() const { return m_bIllusionEchoMismatch; }
     protected:
         bool IsOptionItem(MIX_RECIPE_ITEM& rItem) { return (rItem.m_iCountMin == 0); }	// 옵션(안넣어도 되는) 아이템인가
         BOOL CheckRecipeSub(std::vector<MIX_RECIPE*>::iterator iter, int iNumMixItems, CMixItem* pMixItems);
@@ -256,6 +286,11 @@ namespace SEASON3A
         int m_iMostSimilarMixSourceTest[MAX_MIX_SOURCES];
         int m_iMixRateIter;
         MIXRATE_TOKEN* m_pMixRates;
+        int m_iEnchantMultiplier = 1;
+        int m_iEnchantGrade = 0;
+        int m_iOnlyMixID = 0;
+        bool m_bIllusionEchoMismatch = false;
+        std::map<std::pair<const MIX_RECIPE*, int>, std::pair<int, int>> m_EnchantBaseCounts;
     };
 
     class CMixRecipeMgr
@@ -307,6 +342,27 @@ namespace SEASON3A
         int GetReqiredZen()
         {
             return m_MixRecipe[GetMixInventoryType()].GetReqiredZen();
+        }
+        // the tab of the Chaos Machine of the Illusion of Noria (the Chaos Goblin there): 0, MIXID_ILLUSION_ADD or _REMOVE
+        void SetIllusionMix(int iMixID)
+        {
+            m_MixRecipe[MIXTYPE_GOBLIN_NORMAL].SetOnlyMixID(iMixID);
+        }
+        int GetIllusionMix()
+        {
+            return m_MixRecipe[MIXTYPE_GOBLIN_NORMAL].GetOnlyMixID();
+        }
+        bool IsIllusionEchoMismatch()
+        {
+            return m_MixRecipe[MIXTYPE_GOBLIN_NORMAL].IsIllusionEchoMismatch();
+        }
+        int GetEnchantMultiplier()
+        {
+            return m_MixRecipe[GetMixInventoryType()].GetEnchantMultiplier();
+        }
+        int GetEnchantGrade()
+        {
+            return m_MixRecipe[GetMixInventoryType()].GetEnchantGrade();
         }
         int GetCurMixID()
         {

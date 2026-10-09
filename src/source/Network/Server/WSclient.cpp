@@ -1709,7 +1709,7 @@ int CalcItemLength(std::span<const BYTE> ReceiveBuffer)
     {
         auto socketCount = ReceiveBuffer[size] & 0xF;
         size++;
-        size += socketCount;
+        size += socketCount == SkillFixSocketMarker ? 1 : socketCount; // 15: the skill fix option (one byte)
     }
 
     return size;

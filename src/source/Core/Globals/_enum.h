@@ -169,6 +169,10 @@ enum ItemOptionFlags : BYTE
 
 DEFINE_ENUM_FLAG_OPERATORS(ItemOptionFlags);
 
+// HasSockets with the socket count 15: the skill fix option of this server (one byte (option - 10) << 4 | level) instead
+// of the sockets (server ItemSerializerExtended)
+inline constexpr BYTE SkillFixSocketMarker = 0xF;
+
 // scene start
 constexpr const char* MUSIC_PUB = "data\\music\\Pub.mp3";
 constexpr const char* MUSIC_MUTHEME = "data\\music\\Mutheme.mp3";
@@ -2145,6 +2149,9 @@ enum
     MODEL_ILLUSION_SHARD = MODEL_POTION + 172,
     MODEL_ECHO_FIRST = MODEL_POTION + 173, // the Echoes of the Illusion of Noria (173-194)
     MODEL_ECHO_LAST = MODEL_POTION + 194,
+    MODEL_JEWEL_OF_ILLUSION = MODEL_POTION + 195,
+    MODEL_LESSER_MIRAGE_STONE = MODEL_POTION + 196,
+    MODEL_GREATER_MIRAGE_STONE = MODEL_POTION + 197,
     MODEL_SCROLL_OF_POISON = MODEL_ETC + 0,
     MODEL_SCROLL_OF_METEORITE = MODEL_ETC + 1,
     MODEL_SCROLL_OF_LIGHTING = MODEL_ETC + 2,
@@ -2837,6 +2844,9 @@ enum
     ITEM_ILLUSION_SHARD = ITEM_POTION + 172,      // the currency of the warden of the Illusion of Noria (stacks, can be traded)
     ITEM_ECHO_FIRST = ITEM_POTION + 173,          // the Echoes: add the harmony option of one skill (GameLogic/Events/IllusionOfNoria.h)
     ITEM_ECHO_LAST = ITEM_POTION + 194,
+    ITEM_JEWEL_OF_ILLUSION = ITEM_POTION + 195,    // adds the skill fix option (a random skill of the weapon), Illusion of Noria
+    ITEM_LESSER_MIRAGE_STONE = ITEM_POTION + 196,  // raises it; on a fail back to level 1
+    ITEM_GREATER_MIRAGE_STONE = ITEM_POTION + 197, // raises it; on a fail the level stays
     ITEM_SCROLL_OF_POISON = ITEM_ETC + 0,
     ITEM_SCROLL_OF_METEORITE = ITEM_ETC + 1,
     ITEM_SCROLL_OF_LIGHTING = ITEM_ETC + 2,

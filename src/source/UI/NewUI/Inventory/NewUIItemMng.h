@@ -39,6 +39,8 @@ struct ItemCreationParams
 
     bool HasGuardianOption;
     BYTE SocketCount;
+    BYTE SkillFixOption; // the skill fix option of this server (11, 12, 13), sent instead of the sockets (count 15)
+    BYTE SkillFixLevel;
     BYTE SocketOptions[MAX_SOCKETS];
     BYTE SocketBonusOption;
 

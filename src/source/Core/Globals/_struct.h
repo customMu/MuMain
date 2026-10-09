@@ -171,6 +171,8 @@ typedef struct tagITEM
     BYTE AncientBonusOption;
     WORD  Jewel_Of_Harmony_Option;
     WORD  Jewel_Of_Harmony_OptionLevel;
+    BYTE  SkillFixOption;      // the skill fix option of this server (11, 12, 13; 0 = none), not a harmony option
+    BYTE  SkillFixLevel;       // its level 1..10
     bool HasSkill;
     bool HasLuck;
     BYTE  Part;

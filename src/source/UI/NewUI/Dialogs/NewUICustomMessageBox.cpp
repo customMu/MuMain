@@ -12,6 +12,7 @@
 #include "GameLogic/Events/MatchEvent.h"
 #include "GameLogic/Events/w_CursedTemple.h"
 #include "GameLogic/Items/MixMgr.h"
+#include "World/MapInfra/MapManager.h"
 #include "GameLogic/Items/PersonalShopTitleImp.h"
 #include "GameLogic/NPCs/npcBreeder.h"
 #include "GameLogic/Commands/ChatCommandCatalog.h"
@@ -2930,6 +2931,7 @@ bool SEASON3B::CChaosMixMenuMsgBox::Create(float fPriority)
 {
     int x, y, width, height;
 
+    m_bIllusion = gMapManager.IsIllusionOfNoria();
     SetAddCallbackFunc();
 
     x = (SCREEN_WIDTH / 2) - (MSGBOX_WIDTH / 2);
@@ -3002,6 +3004,8 @@ CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::LButtonUp(class CNewUIMessageBoxB
 CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::GeneralMixBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
     g_MixRecipeMgr.SetMixType(0);
+    const auto* pMsgBox = dynamic_cast<CChaosMixMenuMsgBox*>(pOwner);
+    g_MixRecipeMgr.SetIllusionMix(pMsgBox != nullptr && pMsgBox->m_bIllusion ? SEASON3A::MIXID_ILLUSION_ADD : 0);
 
     PlayBuffer(SOUND_CLICK01);
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
@@ -3011,7 +3015,11 @@ CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::GeneralMixBtnDown(class CNewUIMes
 
 CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::ChaosMixBtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
-    g_MixRecipeMgr.SetMixType(1);
+    // the Illusion of Noria: the regular Chaos Machine with the removal of the skill fix option
+    const auto* pMsgBox = dynamic_cast<CChaosMixMenuMsgBox*>(pOwner);
+    const bool illusion = pMsgBox != nullptr && pMsgBox->m_bIllusion;
+    g_MixRecipeMgr.SetMixType(illusion ? 0 : 1);
+    g_MixRecipeMgr.SetIllusionMix(illusion ? SEASON3A::MIXID_ILLUSION_REMOVE : 0);
 
     PlayBuffer(SOUND_CLICK01);
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
@@ -3021,7 +3029,11 @@ CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::ChaosMixBtnDown(class CNewUIMessa
 
 CALLBACK_RESULT SEASON3B::CChaosMixMenuMsgBox::Mix380BtnDown(class CNewUIMessageBoxBase* pOwner, const leaf::xstreambuf& xParam)
 {
-    g_MixRecipeMgr.SetMixType(2);
+    // the Illusion of Noria: the regular Chaos Machine with the mix of a random Echo
+    const auto* pMsgBox = dynamic_cast<CChaosMixMenuMsgBox*>(pOwner);
+    const bool illusion = pMsgBox != nullptr && pMsgBox->m_bIllusion;
+    g_MixRecipeMgr.SetMixType(illusion ? 0 : 2);
+    g_MixRecipeMgr.SetIllusionMix(illusion ? SEASON3A::MIXID_ILLUSION_ECHO : 0);
 
     PlayBuffer(SOUND_CLICK01);
     g_MessageBox->SendEvent(pOwner, MSGBOX_EVENT_DESTROY);
@@ -3062,15 +3074,15 @@ void SEASON3B::CChaosMixMenuMsgBox::SetButtonInfo()
     x = GetPos().x + msgboxhalfwidth - btnhalfwidth;
     y = GetPos().y + 85;
     m_BtnGeneralMix.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-    m_BtnGeneralMix.SetText(I18N::Game::RegularCombination);
+    m_BtnGeneralMix.SetText(m_bIllusion ? I18N::Game::AddOption : I18N::Game::RegularCombination);
 
     y = GetPos().y + 155;
     m_BtnChaosMix.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-    m_BtnChaosMix.SetText(I18N::Game::ChaosWeaponCombination);
+    m_BtnChaosMix.SetText(m_bIllusion ? I18N::Game::RemoveOption : I18N::Game::ChaosWeaponCombination);
 
     y = GetPos().y + 225;
     m_BtnMix380.SetInfo(CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY, x, y, width, height, CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
-    m_BtnMix380.SetText(I18N::Game::ItemOptionCombination);
+    m_BtnMix380.SetText(m_bIllusion ? I18N::Game::CreateEcho : I18N::Game::ItemOptionCombination);
 
     width = MSGBOX_BTN_EMPTY_SMALL_WIDTH;
     btnhalfwidth = width / 2.f;
@@ -3116,6 +3128,22 @@ void SEASON3B::CChaosMixMenuMsgBox::RenderTexts()
     fPos_y += 15;
     g_pRenderText->SetTextColor(255, 255, 255, 255);
     g_pRenderText->SetFont(g_hFont);
+
+    if (m_bIllusion)
+    {
+        // the Chaos Goblin of the Illusion of Noria (server IllusionSkillFixCrafting)
+        g_pRenderText->RenderText(fPos_x, fPos_y + 1 * 15, I18N::Game::AWeaponOfRank7Or8, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(fPos_x, fPos_y + 2 * 15, I18N::Game::Plus10OrMoreWithoutTheSkillFixOption, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(fPos_x, fPos_y + 3 * 15, I18N::Game::AnEchoGivesTheOptionOfItsSkill, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+
+        fPos_y += 100;
+        g_pRenderText->RenderText(fPos_x, fPos_y + 0 * 15, I18N::Game::RemovesTheSkillFixOptionOfAWeapon, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(fPos_x, fPos_y + 1 * 15, I18N::Game::JewelOfIllusionAndMirageStones, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+
+        fPos_y += 85;
+        g_pRenderText->RenderText(fPos_x, fPos_y + 0 * 15, I18N::Game::ARandomEchoOneOf22, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);
+        return;
+    }
 
     mu_swprintf(szText, I18N::Game::Wings7TypesFruitDevilSInvitation);
     g_pRenderText->RenderText(fPos_x, fPos_y + 1 * 15, szText, MSGBOX_WIDTH - 20.0f, 0, RT3_SORT_CENTER);

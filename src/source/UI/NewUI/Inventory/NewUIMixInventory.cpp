@@ -19,6 +19,7 @@
 #include "Audio/DSPlaySound.h"
 #include "Network/Server/SocketSystem.h"
 #include "UI/Scaling/UITransform.h"
+#include "World/MapInfra/MapManager.h"
 
 using namespace SEASON3B;
 
@@ -140,6 +141,8 @@ void CNewUIMixInventory::OpeningProcess()
 
     SetMixState(SEASON3B::CNewUIMixInventory::MIX_READY);
 
+    // the Illusion of Noria: the menu chooses adding or removing the skill fix option (adding until then)
+    g_MixRecipeMgr.SetIllusionMix(IsIllusionMix() ? SEASON3A::MIXID_ILLUSION_ADD : 0);
     if (g_MixRecipeMgr.GetMixInventoryType() == SEASON3A::MIXTYPE_GOBLIN_NORMAL)
     {
         SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CChaosMixMenuMsgBoxLayout));
@@ -182,6 +185,7 @@ bool CNewUIMixInventory::ClosingProcess()
     }
     g_pMixInventory->DeleteAllItems();
     g_MixRecipeMgr.ClearCheckRecipeResult();
+    g_MixRecipeMgr.SetIllusionMix(0);
     return true;
 }
 
@@ -191,6 +195,11 @@ void CNewUIMixInventory::SetPos(int x, int y)
     m_Pos.y = y;
 
     m_pNewInventoryCtrl->SetPos(x + 15, y + 110);
+}
+
+bool CNewUIMixInventory::IsIllusionMix()
+{
+    return g_MixRecipeMgr.GetMixInventoryType() == SEASON3A::MIXTYPE_GOBLIN_NORMAL && gMapManager.IsIllusionOfNoria();
 }
 
 bool CNewUIMixInventory::UpdateMouseEvent()
@@ -359,10 +368,13 @@ void CNewUIMixInventory::RenderFrame()
     g_pRenderText->SetTextColor(220, 220, 220, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
 
+    const bool illusion = IsIllusionMix();
     switch (g_MixRecipeMgr.GetMixInventoryType())
     {
     case SEASON3A::MIXTYPE_GOBLIN_NORMAL:
-        mu_swprintf(szText, L"%ls", I18N::Game::RegularCombination);
+        mu_swprintf(szText, L"%ls", !illusion ? I18N::Game::RegularCombination
+            : g_MixRecipeMgr.GetIllusionMix() == SEASON3A::MIXID_ILLUSION_REMOVE ? I18N::Game::RemoveSkillFixOption
+            : g_MixRecipeMgr.GetIllusionMix() == SEASON3A::MIXID_ILLUSION_ECHO ? I18N::Game::CreateEcho : I18N::Game::AddSkillFixOption);
         break;
     case SEASON3A::MIXTYPE_GOBLIN_CHAOSITEM:
         mu_swprintf(szText, L"%ls", I18N::Game::ChaosWeaponCombination);
@@ -450,9 +462,12 @@ void CNewUIMixInventory::RenderFrame()
     g_MixRecipeMgr.GetCurRecipeName(szText, 1);
     g_pRenderText->RenderText(fPos_x, fPos_y + fLine_y, szText);
     fLine_y += 10;
-    if (g_MixRecipeMgr.GetCurRecipeName(szText, 2))
-        g_pRenderText->RenderText(fPos_x, fPos_y + fLine_y, szText);
-    fLine_y += 10;
+    if (!illusion) // the name is one line there (the mode of the menu)
+    {
+        if (g_MixRecipeMgr.GetCurRecipeName(szText, 2))
+            g_pRenderText->RenderText(fPos_x, fPos_y + fLine_y, szText);
+        fLine_y += 10;
+    }
 
     switch (g_MixRecipeMgr.GetMixInventoryType())
     {
@@ -545,7 +560,8 @@ void CNewUIMixInventory::RenderFrame()
 
         wchar_t szTempText[2][100] = { 0 };
         int iTextLines = 0;
-        if (!g_MixRecipeMgr.IsReadyToMix() && g_MixRecipeMgr.GetMostSimilarRecipeName(szTempText[0], 1) == TRUE)
+        // (the Illusion of Noria: the mix is the one of the menu, its name is above)
+        if (!illusion && !g_MixRecipeMgr.IsReadyToMix() && g_MixRecipeMgr.GetMostSimilarRecipeName(szTempText[0], 1) == TRUE)
         {
             mu_swprintf(szText, I18N::Game::AssemblyPredictionS, szTempText[0]);
             iTextLines = CutStr(szText, szTempText[0], 150, 2, 100);
@@ -576,6 +592,19 @@ void CNewUIMixInventory::RenderFrame()
                     break;
 
                 g_pRenderText->RenderText(fPos_x, fPos_y + fLine_y + (iTextPos_y * 15), szTempText[i]);
+                iTextPos_y++;
+            }
+        }
+
+        // the price of enchanting by rank: the Bless and Soul of the mixes +10..+15 are multiplied (EnchantPrice.h)
+        if (const int multiplier = g_MixRecipeMgr.GetEnchantMultiplier(); multiplier > 1 && g_MixRecipeMgr.GetEnchantGrade() > 0)
+        {
+            const int id = g_MixRecipeMgr.GetMostSimilarRecipe()->m_iMixID;
+            if (id == 3 || id == 4 || id == 22 || id == 23 || id == 49 || id == 50)
+            {
+                g_pRenderText->SetTextColor(255, 200, 80, 255);
+                mu_swprintf(szText, I18N::Game::GradeDBlessAndSoulXD, g_MixRecipeMgr.GetEnchantGrade(), multiplier);
+                g_pRenderText->RenderText(fPos_x, fPos_y + fLine_y + (iTextPos_y * 15), szText);
                 iTextPos_y++;
             }
         }
@@ -684,6 +713,9 @@ void CNewUIMixInventory::RenderMixDescriptions(float fPos_x, float fPos_y)
     switch (g_MixRecipeMgr.GetMixInventoryType())
     {
     case SEASON3A::MIXTYPE_GOBLIN_NORMAL:
+        if (IsIllusionMix())
+            RenderIllusionDescriptions(fPos_x, fPos_y);
+        break;
     case SEASON3A::MIXTYPE_GOBLIN_CHAOSITEM:
     case SEASON3A::MIXTYPE_GOBLIN_ADD380:
         break;
@@ -800,6 +832,35 @@ void CNewUIMixInventory::RenderMixDescriptions(float fPos_x, float fPos_y)
         break;
     default:
         break;
+    }
+}
+
+void CNewUIMixInventory::RenderIllusionDescriptions(float fPos_x, float fPos_y)
+{
+    g_pRenderText->SetFont(g_hFont);
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    g_pRenderText->SetTextColor(200, 200, 200, 255);
+    const bool add = g_MixRecipeMgr.GetIllusionMix() == SEASON3A::MIXID_ILLUSION_ADD;
+    if (g_MixRecipeMgr.GetIllusionMix() == SEASON3A::MIXID_ILLUSION_ECHO)
+    {
+        g_pRenderText->RenderText(fPos_x, fPos_y + 325, I18N::Game::ARandomEchoOneOf22, 160.0f, 0, RT3_SORT_CENTER);
+        g_pRenderText->RenderText(fPos_x, fPos_y + 337, I18N::Game::AlwaysSucceeds, 160.0f, 0, RT3_SORT_CENTER);
+        return;
+    }
+
+    const wchar_t* lines[] = {
+        I18N::Game::AWeaponOfRank7Or8,
+        add ? I18N::Game::Plus10OrMoreWithoutTheSkillFixOption : I18N::Game::WithTheSkillFixOption,
+        add ? I18N::Game::AnEchoGivesTheOptionOfItsSkill : I18N::Game::TheStonesDependOnTheRankOfTheWeapon,
+        add ? I18N::Game::AlwaysSucceeds : I18N::Game::TheWeaponStaysTheOptionIsRemoved,
+    };
+    for (int i = 0; i < 4; ++i)
+        g_pRenderText->RenderText(fPos_x, fPos_y + 325 + i * 12, lines[i], 160.0f, 0, RT3_SORT_CENTER);
+
+    if (add && g_MixRecipeMgr.IsIllusionEchoMismatch())
+    {
+        g_pRenderText->SetTextColor(255, 50, 20, 255);
+        g_pRenderText->RenderText(fPos_x, fPos_y + 313, I18N::Game::TheWeaponHasNoSuchSkillForYourClass, 160.0f, 0, RT3_SORT_CENTER);
     }
 }
 
@@ -993,7 +1054,9 @@ bool CNewUIMixInventory::AutoMoveItem(CNewUIInventoryCtrl* srcCtrl, STORAGE_TYPE
     if (CNewUIInventoryCtrl::GetPickedItem())
         return false;
 
-    if (srcCtrl == nullptr || dstCtrl == nullptr || GetMixState() != MIX_READY)
+    // after a mix (success or fail) the items left in the machine can still be taken back with a right click
+    const bool canMove = GetMixState() == MIX_READY || (GetMixState() == MIX_FINISHED && srcCtrl == m_pNewInventoryCtrl);
+    if (srcCtrl == nullptr || dstCtrl == nullptr || !canMove)
         return false;
 
     ITEM* pItemObj = srcCtrl->FindItemAtPt(MouseX, MouseY);

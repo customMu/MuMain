@@ -13286,13 +13286,13 @@
     <value>(%d lvl max)</value>
   </data>
   <data name="Adds an option to a rank 7-8 weapon" xml:space="preserve">
-    <value>Adds an option to a rank 7-8 weapon +10 or higher (75%%)</value>
+    <value>Adds an option to a rank 7-8 weapon +10 or higher: Chaos Goblin of the Illusion of Noria</value>
   </data>
   <data name="The option lowers the fix time of a skill" xml:space="preserve">
     <value>The option lowers the fix time of one of its skills: -5%% .. -25%%</value>
   </data>
   <data name="Raises the harmony option level" xml:space="preserve">
-    <value>Raises the harmony option level (up to 10)</value>
+    <value>Raises the level of the skill fix option (up to 10)</value>
   </data>
   <data name="On a fail the option falls back to level 1" xml:space="preserve">
     <value>On a fail the option falls back to level 1</value>
@@ -13448,10 +13448,10 @@
     <value>For %d Illusion Shards</value>
   </data>
   <data name="Adds the option of %ls to a rank 7-8 weapon" xml:space="preserve">
-    <value>Adds the option of %ls to a rank 7-8 weapon +10 (75%%)</value>
+    <value>A rank 7-8 weapon +10 gets a random one: the fix time of %ls, HP steal, MP steal or Double damage (Chaos Goblin of the Illusion of Noria)</value>
   </data>
   <data name="The currency of Warden Eldrin in Noria" xml:space="preserve">
-    <value>The currency of Warden Eldrin (Noria): his shop</value>
+    <value>The currency of Warden Eldrin (Noria): a random stone for 40 shards</value>
   </data>
   <data name="Bring it to Warden Eldrin in Noria." xml:space="preserve">
     <value>Bring it to Warden Eldrin in Noria.</value>
@@ -13464,5 +13464,179 @@
   </data>
   <data name="Buy it" xml:space="preserve">
     <value>Buy</value>
+  </data>
+  <data name="Random stone (%d shards)" xml:space="preserve">
+    <value>Random stone (%d shards)</value>
+  </data>
+  <data name="Get a random stone?" xml:space="preserve">
+    <value>Get a random stone?</value>
+  </data>
+  <data name="Jewel of Illusion, Mirage Stone or Echo" xml:space="preserve">
+    <value>Jewel of Illusion, Mirage Stone or Echo</value>
+  </data>
+  <data name="Warden quote stolen" xml:space="preserve">
+    <value>&quot;The Veil still hums... but my whistle is gone. Without it the way is closed.&quot;</value>
+  </data>
+  <data name="Warden quote hunt" xml:space="preserve">
+    <value>&quot;Condra hides in Karutan. I can still hear the whistle calling from there.&quot;</value>
+  </data>
+  <data name="Warden quote whistle sings" xml:space="preserve">
+    <value>&quot;Do you hear it? The whistle sings again - give it to me!&quot;</value>
+  </data>
+  <data name="Warden quote veil open" xml:space="preserve">
+    <value>&quot;The Veil is thin today. Shall I open it for you?&quot;</value>
+  </data>
+  <data name="Warden quote illusion" xml:space="preserve">
+    <value>&quot;Echoes everywhere... and somewhere the golden one sleeps.&quot;</value>
+  </data>
+  <data name="The Stolen Whistle" xml:space="preserve">
+    <value>The Stolen Whistle</value>
+  </data>
+  <data name="Skill fix option" xml:space="preserve">
+    <value>Skill fix option</value>
+  </data>
+  <data name="Random stone" xml:space="preserve">
+    <value>Random stone</value>
+  </data>
+  <data name="Illusion Shards: %u / %d" xml:space="preserve">
+    <value>Illusion Shards: %u / %d</value>
+  </data>
+  <data name="Daily" xml:space="preserve">
+    <value>Daily</value>
+  </data>
+  <data name="Loading daily" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Unlocks after the quest" xml:space="preserve">
+    <value>Unlocks after the quest</value>
+  </data>
+  <data name="Warden Eldrin, Noria 183, 102" xml:space="preserve">
+    <value>Warden Eldrin, Noria 183, 102</value>
+  </data>
+  <data name="Available: talk to Warden Eldrin" xml:space="preserve">
+    <value>Available: talk to Warden Eldrin</value>
+  </data>
+  <data name="in the town of the illusion" xml:space="preserve">
+    <value>in the town of the illusion</value>
+  </data>
+  <data name="Completed! Claim your reward" xml:space="preserve">
+    <value>Completed! Claim your reward</value>
+  </data>
+  <data name="In progress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="Grade %d: Bless and Soul x%d" xml:space="preserve">
+    <value>Grade %d: Bless and Soul x%d</value>
+  </data>
+  <data name="Next +%d: %d %ls" xml:space="preserve">
+    <value>Next +%d: %d %ls</value>
+  </data>
+  <data name="Next +%d: Chaos Machine, jewels x%d" xml:space="preserve">
+    <value>Next +%d: Chaos Machine, jewels x%d</value>
+  </data>
+  <data name="Add skill fix option" xml:space="preserve">
+    <value>Add skill fix option</value>
+  </data>
+  <data name="Remove skill fix option" xml:space="preserve">
+    <value>Remove skill fix option</value>
+  </data>
+  <data name="Jewel of Illusion or an Echo" xml:space="preserve">
+    <value>Jewel of Illusion or an Echo</value>
+  </data>
+  <data name="Illusion Combination" xml:space="preserve">
+    <value>Illusion Combination</value>
+  </data>
+  <data name="Remove option" xml:space="preserve">
+    <value>Remove option</value>
+  </data>
+  <data name="A weapon of rank 7 or 8" xml:space="preserve">
+    <value>A weapon of rank 7 or 8</value>
+  </data>
+  <data name="Plus 10 or more without the skill fix option" xml:space="preserve">
+    <value>+10 or more, without the skill fix option</value>
+  </data>
+  <data name="With the skill fix option" xml:space="preserve">
+    <value>with the skill fix option</value>
+  </data>
+  <data name="An Echo gives its skill the Jewel a random one" xml:space="preserve">
+    <value>An Echo gives its skill, the Jewel - a random one</value>
+  </data>
+  <data name="The stones depend on the rank of the weapon" xml:space="preserve">
+    <value>The stones depend on the rank of the weapon</value>
+  </data>
+  <data name="Always succeeds" xml:space="preserve">
+    <value>Success rate: 100%</value>
+  </data>
+  <data name="The weapon stays the option is removed" xml:space="preserve">
+    <value>The weapon stays, the option is removed</value>
+  </data>
+  <data name="An Echo of a skill of the weapon" xml:space="preserve">
+    <value>an Echo of a skill of the weapon</value>
+  </data>
+  <data name="An Echo gives the option of its skill" xml:space="preserve">
+    <value>Echo: its skill or HP/MP steal, x2 damage</value>
+  </data>
+  <data name="The weapon has no such skill for your class" xml:space="preserve">
+    <value>The weapon has no such skill for your class</value>
+  </data>
+  <data name="Removes the skill fix option of a weapon" xml:space="preserve">
+    <value>Removes the skill fix option of a weapon</value>
+  </data>
+  <data name="At the Chaos Goblin of the Illusion of Noria" xml:space="preserve">
+    <value>at the Chaos Goblin of the Illusion of Noria</value>
+  </data>
+  <data name="Ls D shards" xml:space="preserve">
+    <value>%ls - %d shards</value>
+  </data>
+  <data name="Raises the skill fix option by one level" xml:space="preserve">
+    <value>Raises the skill fix option by one level</value>
+  </data>
+  <data name="Jewel of Illusion and Mirage Stones" xml:space="preserve">
+    <value>Jewel of Illusion and Mirage Stones by the rank</value>
+  </data>
+  <data name="Veil Ward" xml:space="preserve">
+    <value>Veil Ward</value>
+  </data>
+  <data name="The Golden Curse does no damage" xml:space="preserve">
+    <value>The Golden Curse does no damage</value>
+  </data>
+  <data name="Create Echo" xml:space="preserve">
+    <value>Create Echo</value>
+  </data>
+  <data name="A random Echo one of 22" xml:space="preserve">
+    <value>A random Echo (one of 22)</value>
+  </data>
+  <data name="Blessing of the Veil" xml:space="preserve">
+    <value>Blessing of the Veil</value>
+  </data>
+  <data name="+50% damage to the monsters of the Illusion of Noria" xml:space="preserve">
+    <value>+50% damage to the monsters of the Illusion of Noria</value>
+  </data>
+  <data name="Works together with the Veil Ward" xml:space="preserve">
+    <value>Works together with the Veil Ward</value>
+  </data>
+  <data name="Works together with the Blessing of the Veil" xml:space="preserve">
+    <value>Works together with the Blessing of the Veil</value>
+  </data>
+  <data name="1 hour, works together with the Veil Ward" xml:space="preserve">
+    <value>1 hour, works together with the Veil Ward</value>
+  </data>
+  <data name="30 minutes, works together with the Blessing" xml:space="preserve">
+    <value>30 minutes, works together with the Blessing</value>
+  </data>
+  <data name="Jewel of Illusion: a random skill of the weapon" xml:space="preserve">
+    <value>Jewel of Illusion: a random skill of the weapon</value>
+  </data>
+  <data name="Only in the left weapon slot" xml:space="preserve">
+    <value>(only in the left weapon slot)</value>
+  </data>
+  <data name="HP steal Ls" xml:space="preserve">
+    <value>HP steal: %ls of the damage</value>
+  </data>
+  <data name="MP steal Ls" xml:space="preserve">
+    <value>MP steal: %ls of the damage</value>
+  </data>
+  <data name="Double damage chance Ls" xml:space="preserve">
+    <value>Double damage chance: %ls</value>
   </data>
 </root>

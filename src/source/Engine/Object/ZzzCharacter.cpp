@@ -1058,7 +1058,8 @@ namespace
         const int baseSkill = gSkillManager.MasterSkillToBaseSkillIndex(static_cast<ActionSkillType>(skill));
         const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
         float cut = 0.f;
-        for (const int slot : { EQUIPMENT_WEAPON_RIGHT, EQUIPMENT_WEAPON_LEFT })
+        // only the weapon in slot 0 (the left weapon slot of the inventory window, server LeftHandSlot) counts
+        for (const int slot : { EQUIPMENT_WEAPON_RIGHT })
         {
             const ITEM& item = CharacterMachine->Equipment[slot];
             if (item.Type < 0 || item.Durability == 0)
@@ -1066,9 +1067,9 @@ namespace
                 continue;
             }
 
-            if (OptionSkill(item.Type / MAX_ITEM_INDEX, item.Type % MAX_ITEM_INDEX, item.Jewel_Of_Harmony_Option, family) == baseSkill)
+            if (OptionSkill(item.Type / MAX_ITEM_INDEX, item.Type % MAX_ITEM_INDEX, item.SkillFixOption, family) == baseSkill)
             {
-                cut += OptionCutOf(item.Jewel_Of_Harmony_OptionLevel, family);
+                cut = std::max(cut, OptionCutOf(item.SkillFixLevel, family)); // two weapons: the better option (server SkillCastTimePlugIn)
             }
         }
 
@@ -1106,9 +1107,11 @@ void SetAttackSpeed()
         const float curve = stats[action] == SpeedStat::Attack  ? attackCurve
                             : stats[action] == SpeedStat::Magic ? magicCurve
                                                                 : 1.f;
+        // never faster than at the fix; the skill fix option of the current skill makes it faster by its cut
+        // (09.10.2026: directly, no speed above the fix is needed), not faster than the floor
         const float fixSpeed = std::min(atFix, keys / (FixFloorSeconds * 25.f));
-        const float maxSpeed = std::min(fixSpeed / (1.f - cut), keys / (CastFloorSeconds * 25.f));
-        animation.PlaySpeed = std::min(atFix * curve, maxSpeed);
+        const float speed = std::min(atFix * curve, fixSpeed) / (1.f - cut);
+        animation.PlaySpeed = std::min(speed, keys / (CastFloorSeconds * 25.f));
     }
 }
 
@@ -1671,6 +1674,87 @@ void CalcAddPosition(OBJECT* o, float x, float y, float z, vec3_t Position)
 
 vec3_t BossHeadPosition;
 
+namespace
+{
+    // The Illusion of Noria: the monsters strike with "skills of the Veil" (only the look, the damage is the server's):
+    // the melee ones a violet shock wave at the target, the Hunter and the Beetle Monster a lightning to the target, the
+    // Stone Golems a quake around them, the boss all of it in gold.
+    bool AttackEffectIllusionOfNoria(CHARACTER* c, OBJECT* o, BMD* b)
+    {
+        namespace Illusion = GameLogic::Events::IllusionOfNoria;
+        if (!Illusion::IsIllusionMonster(c->MonsterIndex) && !Illusion::IsBoss(c->MonsterIndex))
+        {
+            return false;
+        }
+
+        if (o->CurrentAction != MONSTER01_ATTACK1 && o->CurrentAction != MONSTER01_ATTACK2)
+        {
+            return true;
+        }
+
+        OBJECT* to = c->TargetCharacter >= 0 && c->TargetCharacter < MAX_CHARACTERS_CLIENT ? &CharactersClient[c->TargetCharacter].Object : nullptr;
+        const bool boss = Illusion::IsBoss(c->MonsterIndex);
+        vec3_t violet = { 0.7f, 0.3f, 1.f };
+        vec3_t gold = { 1.f, 0.7f, 0.2f };
+        float* light = boss || c->MonsterIndex == MONSTER_ILLUSION_ELITE_GOBLIN ? gold : violet;
+        vec3_t angle, position, p = { 0.f, 0.f, 0.f };
+        VectorCopy(o->Angle, angle);
+
+        switch (c->MonsterIndex)
+        {
+        case MONSTER_ILLUSION_HUNTER:
+        case MONSTER_ILLUSION_BEETLE_MONSTER:
+            if (to != nullptr && c->CheckAttackTime(6))
+            {
+                VectorCopy(o->Position, position);
+                position[2] += 120.f;
+                CreateJoint(BITMAP_JOINT_THUNDER, position, to->Position, angle, 2, to, 40.f);
+                CreateEffect(BITMAP_SHOCK_WAVE, to->Position, angle, light, 1);
+                PlayBuffer(SOUND_THUNDER01);
+                c->SetLastAttackEffectTime();
+            }
+
+            break;
+        case MONSTER_ILLUSION_STONE_GOLEM:
+        case MONSTER_GILDED_COLOSSUS:
+            if (c->CheckAttackTime(8))
+            {
+                CreateEffect(BITMAP_SHOCK_WAVE, o->Position, angle, light, 1);
+                for (int i = 0; i < (boss ? 8 : 4); ++i)
+                {
+                    Vector(o->Position[0] + static_cast<float>(rand() % 300 - 150), o->Position[1] + static_cast<float>(rand() % 300 - 150), o->Position[2], position);
+                    CreateEffect(MODEL_STONE1 + rand() % 2, position, angle, light);
+                }
+
+                if (boss && to != nullptr)
+                {
+                    VectorCopy(o->Position, position);
+                    position[2] += 250.f;
+                    CreateJoint(BITMAP_JOINT_THUNDER, position, to->Position, angle, 2, to, 60.f);
+                }
+
+                PlayBuffer(SOUND_EARTH_QUAKE);
+                c->SetLastAttackEffectTime();
+            }
+
+            break;
+        default:
+            if (to != nullptr && c->CheckAttackTime(7))
+            {
+                CreateEffect(BITMAP_SHOCK_WAVE, to->Position, angle, light, 1);
+                b->TransformPosition(o->BoneTransform[0], p, position, true);
+                position[2] += 60.f;
+                CreateJoint(BITMAP_JOINT_THUNDER, position, to->Position, angle, 2, to, 20.f);
+                c->SetLastAttackEffectTime();
+            }
+
+            break;
+        }
+
+        return true;
+    }
+}
+
 void AttackEffect(CHARACTER* c)
 {
     OBJECT* o = &c->Object;
@@ -1697,6 +1781,8 @@ void AttackEffect(CHARACTER* c)
             return;
     }
     if (M31HuntingGround::AttackEffectHuntingGroundMonster(c, o, b) == true)
+        return;
+    if (AttackEffectIllusionOfNoria(c, o, b))
         return;
     if (battleCastle::AttackEffect_BattleCastleMonster(c, o, b) == true)
         return;
@@ -8802,7 +8888,8 @@ void RenderCharacter(CHARACTER* c, OBJECT* o, int Select)
         }
     }
 
-    if (GameLogic::Events::IllusionOfNoria::IsIllusionMonster(c->MonsterIndex) || GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex))
+    if (GameLogic::Events::IllusionOfNoria::IsIllusionMonster(c->MonsterIndex) || GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex)
+        || (c->MonsterIndex == MONSTER_CHAOS_GOBLIN && gMapManager.IsIllusionOfNoria()))
     {
         // the Illusion of Noria: a violet glow which pulses (the elites and the boss gold) and sparks around the body
         const bool gold = GameLogic::Events::IllusionOfNoria::IsBoss(c->MonsterIndex)

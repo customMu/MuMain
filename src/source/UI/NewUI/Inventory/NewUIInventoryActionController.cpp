@@ -19,11 +19,11 @@
 #include "UI/Legacy/UIManager.h"
 #include "GameLogic/Items/ChangeRingManager.h"
 #include "GameLogic/Items/StackableJewels.h"
+#include "UI/NewUI/Dialogs/SplitStackMsgBox.h"
 #include "GameLogic/Items/SellConfirmation.h"
 #include "World/MapInfra/PortalMgr.h"
 #include "GameLogic/Quests/CSQuest.h"
 #include "I18N/All.h"
-#include "GameLogic/Combat/SkillCastTimeOptions.h"
 #include "GameLogic/Events/IllusionOfNoria.h"
 
 namespace SEASON3B
@@ -52,6 +52,17 @@ bool CNewUIInventoryActionController::HandleInventoryActions(CNewUIInventoryCtrl
     if (hasPickedItem && IsRelease(VK_LBUTTON))
     {
         return HandlePickedItemPlacement(targetControl);
+    }
+
+    // Shift + right click on a stack of jewels opens the popup to split the stack (like Shift + left click)
+    if (!hasPickedItem && IsPress(VK_RBUTTON) && IsRepeat(VK_SHIFT) && targetControl->GetStorageType() == STORAGE_TYPE::INVENTORY)
+    {
+        if (ITEM* pItem = targetControl->FindItemAtPt(MouseX, MouseY);
+            pItem != nullptr && GameLogic::Items::IsStackableJewel(pItem->Type) && pItem->Durability > 1
+            && CSplitStackMsgBoxLayout::Open(targetControl->GetIndexByItem(pItem)))
+        {
+            return true;
+        }
     }
 
     if (m_pContext->GetRepairMode() == REPAIR_MODE_OFF && IsPress(VK_RBUTTON))
@@ -464,7 +475,7 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
                               pPickItem->Type == ITEM_LOWER_REFINE_STONE ||
                               pPickItem->Type == ITEM_HIGHER_REFINE_STONE || pPickItem->Type == ITEM_POTION + 160 ||
                               pPickItem->Type == ITEM_POTION + 161 ||
-                              GameLogic::Events::IllusionOfNoria::FindEcho(pPickItem->Type) != nullptr;
+                              GameLogic::Events::IllusionOfNoria::IsSkillFixStone(pPickItem->Type);
 
     if (!bIsJewelType)
     {
@@ -527,28 +538,19 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
         }
         else
         {
-            // 09.10.2026: only the rank 7-8 weapons of +10 take the jewel (the options which lower the fix time of a skill)
-            namespace CastTime = GameLogic::Combat::SkillCastTime;
-            bSuccess = CastTime::IsOptionWeapon(pItem->Type / MAX_ITEM_INDEX, pItem->Type % MAX_ITEM_INDEX)
-                && pItem->Level >= CastTime::RequiredItemLevel;
+            const StrengthenItem strengthitem = g_pUIJewelHarmonyinfo->GetItemType(static_cast<int>(pItem->Type));
+
+            if (strengthitem == SI_None)
+            {
+                bSuccess = false;
+            }
         }
     }
 
-    if (const auto* echo = GameLogic::Events::IllusionOfNoria::FindEcho(pPickItem->Type))
+    if (GameLogic::Events::IllusionOfNoria::IsSkillFixStone(pPickItem->Type))
     {
-        // an Echo: like the Jewel of Illusion, but only on a weapon whose options have its skill (for this class)
-        namespace CastTime = GameLogic::Combat::SkillCastTime;
-        const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
-        const int group = pItem->Type / MAX_ITEM_INDEX;
-        const int number = pItem->Type % MAX_ITEM_INDEX;
-        bool hasSkill = false;
-        for (const int option : CastTime::OptionNumbers)
-        {
-            hasSkill = hasSkill || CastTime::OptionSkill(group, number, option, family) == echo->Skill;
-        }
-
-        bSuccess = hasSkill && pItem->Jewel_Of_Harmony_Option == 0 && pItem->Level >= CastTime::RequiredItemLevel
-            && !g_SocketItemMgr.IsSocketItem(pItem);
+        // the stones of the skill fix option (Illusion of Noria): Jewel of Illusion, Echoes, Mirage Stones
+        bSuccess = GameLogic::Events::IllusionOfNoria::CanApplyStone(pPickItem->Type, *pItem);
     }
 
     if (pPickItem->Type == ITEM_LOWER_REFINE_STONE || pPickItem->Type == ITEM_HIGHER_REFINE_STONE)
@@ -557,8 +559,7 @@ bool CNewUIInventoryActionController::ApplyJewels(CNewUIInventoryCtrl* targetCon
         {
             bSuccess = false;
         }
-        else if (pItem->Jewel_Of_Harmony_Option == 0
-            || pItem->Jewel_Of_Harmony_OptionLevel >= GameLogic::Combat::SkillCastTime::MaxOptionLevel)
+        else if (pItem->Jewel_Of_Harmony_Option == 0)
         {
             bSuccess = false;
         }

@@ -24,7 +24,7 @@ namespace GameLogic::Items
         case ITEM_ILLUSION_SHARD:
             return true;
         default:
-            return itemType >= ITEM_ECHO_FIRST && itemType <= ITEM_ECHO_LAST;
+            return itemType >= ITEM_ECHO_FIRST && itemType <= ITEM_GREATER_MIRAGE_STONE; // Echoes, Jewel of Illusion, Mirage Stones
         }
     }
 }

@@ -44,6 +44,10 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t KillQuestClaimSubCode = 0x0E;
         constexpr std::uint8_t HardwareIdSubCode = 0x20;
         constexpr std::uint8_t IllusionWardenSubCode = 0x12; // C2: the dialog of the warden of the Illusion of Noria
+        constexpr std::uint8_t IllusionStateSubCode = 0x14;  // C2: the same state without the dialog
+        constexpr std::uint8_t IllusionCurseTimeSubCode = 0x15; // C1 05 FB 15 [seconds]: the timer of the Golden Curse
+        constexpr std::uint8_t IllusionWardTimeSubCode = 0x16;  // C1 06 FB 16 [seconds, 2 bytes]: the timer of the Veil Ward
+        constexpr std::uint8_t IllusionBlessingTimeSubCode = 0x17; // C1 06 FB 17 [seconds, 2 bytes]: the timer of the Blessing of the Veil
         constexpr std::uint8_t DropModeVoteSubCode = 0x0F;
         constexpr std::uint8_t DropModeVoteAnswerSubCode = 0x10;
         constexpr std::uint8_t InviteDropModeSubCode = 0x11;
@@ -398,6 +402,34 @@ namespace Network::Server::KalimaPackets
             if (!isC1)
             {
                 GameLogic::Events::IllusionOfNoria::ReceiveWardenDialog(packet);
+            }
+
+            break;
+        case IllusionStateSubCode:
+            if (!isC1)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveWardenState(packet);
+            }
+
+            break;
+        case IllusionCurseTimeSubCode:
+            if (isC1 && packet.size() >= 5)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveCurseTime(packet[4]);
+            }
+
+            break;
+        case IllusionWardTimeSubCode:
+            if (isC1 && packet.size() >= 6)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveWardTime(packet[4] | (packet[5] << 8));
+            }
+
+            break;
+        case IllusionBlessingTimeSubCode:
+            if (isC1 && packet.size() >= 6)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveBlessingTime(packet[4] | (packet[5] << 8));
             }
 
             break;

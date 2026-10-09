@@ -19,6 +19,7 @@
 #include "Camera/CameraState.h"
 #include "UI/Combat/MonsterHealthBar.h"
 #include "GameLogic/Monsters/MonsterLevels.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "Render/Renderer/MuRenderer.h"
 
 // DevEditor forward declarations (must be at global scope)
@@ -159,6 +160,7 @@ bool SEASON3B::CNewUINameWindow::Render()
     matchEvent::RenderMatchTimes();
     UI::Chat::RenderBooleans();
     RenderMonsterHealthBars();
+    GameLogic::Events::IllusionOfNoria::RenderWardenMark();
     DrawPersonalShopTitleImp();
     DisableAlphaBlend();
 

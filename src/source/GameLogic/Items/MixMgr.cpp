@@ -10,6 +10,19 @@
 #include "GameLogic/Skills/SkillManager.h"
 #include "GameLogic/Items/StackableJewels.h"
 #include "GameLogic/Items/ItemResetRequirements.h"
+#include "GameLogic/Items/EnchantPrice.h"
+#include "GameLogic/Combat/SkillCastTimeOptions.h"
+#include "World/MapInfra/MapManager.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
+#include "Character/CharacterManager.h"
+#include "Engine/Object/ZzzInfomation.h"
+
+namespace
+{
+    constexpr int IllusionAddMix = SEASON3A::MIXID_ILLUSION_ADD;
+    constexpr int IllusionRemoveMix = SEASON3A::MIXID_ILLUSION_REMOVE;
+    constexpr int IllusionEchoMix = SEASON3A::MIXID_ILLUSION_ECHO;
+}
 
 using namespace SEASON3A;
 
@@ -34,6 +47,7 @@ void CMixItem::Reset()
     m_bIsJewelItem = FALSE;
     m_wHarmonyOption = 0;
     m_wHarmonyOptionLevel = 0;
+    m_bySkillFixOption = 0;
     m_bMixLuck = FALSE;
     m_bIsEquipment = FALSE;
     m_bIsWing = FALSE;
@@ -59,6 +73,7 @@ void CMixItem::SetItem(ITEM* pItem, DWORD dwMixValue)
     m_iLevel = pItem->Level;
     
     m_iDurability = pItem->Durability;
+    m_bySkillFixOption = pItem->SkillFixOption;
     for (int i = 0; i < pItem->SpecialNum; i++)
     {
         switch (pItem->Special[i])
@@ -292,6 +307,11 @@ BOOL CMixRecipes::IsMixSource(ITEM* pItem)
 
     for (std::vector<MIX_RECIPE*>::iterator iter = m_Recipes.begin(); iter != m_Recipes.end(); ++iter)
     {
+        if (!IsRecipeAllowed(**iter))
+        {
+            continue;
+        }
+
         for (int j = 0; j < (*iter)->m_iNumMixSoruces; ++j)
         {
             if (m_wTotalCharmBonus > 0 && (*iter)->m_bCharmOption != 'A')
@@ -337,19 +357,117 @@ void CMixRecipes::ClearCheckRecipeResult()
     m_wTotalCharmBonus = 0;
 }
 
+void CMixRecipes::ApplyEnchantPrice(int iNumMixItems, CMixItem* pMixItems)
+{
+    // the item of the mix: the one which is not a jewel
+    m_iEnchantMultiplier = 1;
+    m_iEnchantGrade = 0;
+    for (int i = 0; i < iNumMixItems; ++i)
+    {
+        const int type = pMixItems[i].m_sType;
+        if (type != ITEM_JEWEL_OF_BLESS && type != ITEM_JEWEL_OF_SOUL && type != ITEM_JEWEL_OF_CHAOS && GameLogic::Items::GetItemRank(type) > 0)
+        {
+            m_iEnchantMultiplier = GameLogic::Items::GetChaosMachineJewelMultiplier(type);
+            m_iEnchantGrade = GameLogic::Items::GetItemRank(type);
+            break;
+        }
+    }
+
+    for (auto* recipe : m_Recipes)
+    {
+        const int id = recipe->m_iMixID;
+        if (id == IllusionRemoveMix)
+        {
+            // rank 7: 1 Jewel of Illusion + 4 Lesser + 1 Greater Mirage Stone + 10 shards; rank 8: 2 + 10 + 2 + 20
+            // (server ResetPriceRank7/8)
+            const bool rank8 = m_iEnchantGrade == 8;
+            const int counts[] = { 1, rank8 ? 2 : 1, rank8 ? 10 : 4, rank8 ? 2 : 1, rank8 ? 20 : 10 };
+            for (int j = 0; j < recipe->m_iNumMixSoruces && j < 5; ++j)
+            {
+                recipe->m_MixSources[j].m_iCountMin = counts[j];
+                recipe->m_MixSources[j].m_iCountMax = counts[j];
+            }
+
+            continue;
+        }
+
+        if (id != 3 && id != 4 && id != 22 && id != 23 && id != 49 && id != 50)
+        {
+            continue;
+        }
+
+        for (int j = 0; j < recipe->m_iNumMixSoruces; ++j)
+        {
+            auto& source = recipe->m_MixSources[j];
+            if (source.m_sTypeMin != source.m_sTypeMax || (source.m_sTypeMin != ITEM_JEWEL_OF_BLESS && source.m_sTypeMin != ITEM_JEWEL_OF_SOUL))
+            {
+                continue;
+            }
+
+            const auto key = std::make_pair(static_cast<const MIX_RECIPE*>(recipe), j);
+            const auto base = m_EnchantBaseCounts.try_emplace(key, source.m_iCountMin, source.m_iCountMax).first->second;
+            source.m_iCountMin = base.first * m_iEnchantMultiplier;
+            source.m_iCountMax = base.second * m_iEnchantMultiplier;
+        }
+    }
+}
+
+// The Echo of the mix 90 must be of a skill of the weapon for the class of the hero (an MG gets the MG skills of a
+// sword); the server checks the same (IllusionAddSkillFixCrafting, EchoOfIllusionConsumeHandler.GetOptionNumber).
+bool CMixRecipes::IllusionEchoFitsWeapon(int iNumMixItems, CMixItem* pMixItems)
+{
+    const GameLogic::Events::IllusionOfNoria::Echo* echo = nullptr;
+    int weapon = -1;
+    for (int i = 0; i < iNumMixItems; ++i)
+    {
+        if (const auto* found = GameLogic::Events::IllusionOfNoria::FindEcho(pMixItems[i].m_sType))
+            echo = found;
+        else if (pMixItems[i].m_sType < ITEM_SHIELD)
+            weapon = pMixItems[i].m_sType;
+    }
+
+    if (echo == nullptr || weapon < 0)
+        return true;
+
+    namespace CastTime = GameLogic::Combat::SkillCastTime;
+    const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
+    for (const int option : CastTime::OptionNumbers)
+    {
+        if (CastTime::OptionSkill(weapon / MAX_ITEM_INDEX, weapon % MAX_ITEM_INDEX, option, family) == echo->Skill)
+            return true;
+    }
+
+    return false;
+}
+
 int CMixRecipes::CheckRecipe(int iNumMixItems, CMixItem* pMixItems)
 {
     m_iCurMixIndex = 0;
+    m_bIllusionEchoMismatch = false;
+    ApplyEnchantPrice(iNumMixItems, pMixItems);
 
     std::vector<MIX_RECIPE*>::iterator iter;
     for (iter = m_Recipes.begin(); iter != m_Recipes.end(); ++iter)
     {
+        if (!IsRecipeAllowed(**iter))
+        {
+            continue;
+        }
+
         for (int i = 0; i < iNumMixItems; ++i)
         {
             pMixItems[i].m_iTestCount = pMixItems[i].m_iCount;
         }
         if (CheckRecipeSub(iter, iNumMixItems, pMixItems) == TRUE)
         {
+            if ((*iter)->m_iMixID == IllusionAddMix && !IllusionEchoFitsWeapon(iNumMixItems, pMixItems))
+            {
+                m_bIllusionEchoMismatch = true;
+                m_iSuccessRate = 0;
+                m_dwRequiredZen = 0;
+                continue;
+            }
+
             m_iCurMixIndex = (*iter)->m_iMixIndex + 1;
             EvaluateMixItems(iNumMixItems, pMixItems);
             CalcCharmBonusRate(iNumMixItems, pMixItems);
@@ -432,7 +550,7 @@ BOOL CMixRecipes::CheckRecipeSub(std::vector<MIX_RECIPE*>::iterator iter, int iN
 
 int CMixRecipes::CheckRecipeSimilarity(int iNumMixItems, CMixItem* pMixItems)
 {
-    if (iNumMixItems == 0 && m_Recipes.size() == 1)
+    if (iNumMixItems == 0 && m_Recipes.size() == 1 && m_iOnlyMixID == 0)
     {
         m_iMostSimilarMixIndex = 1;
         for (int i = 0; i < (*m_Recipes.begin())->m_iNumMixSoruces; ++i)
@@ -450,6 +568,11 @@ int CMixRecipes::CheckRecipeSimilarity(int iNumMixItems, CMixItem* pMixItems)
     int iSimilarityPoint;
     for (auto iter = m_Recipes.begin(); iter != m_Recipes.end(); ++iter)
     {
+        if (!IsRecipeAllowed(**iter))
+        {
+            continue;
+        }
+
         memset(m_iMixSourceTest, 0, sizeof(int) * MAX_MIX_SOURCES);
         for (int i = 0; i < (*iter)->m_iNumMixSoruces; ++i)
             m_iMixSourceTest[i] = (*iter)->m_MixSources[i].m_iCountMax;
@@ -471,6 +594,25 @@ int CMixRecipes::CheckRecipeSimilarity(int iNumMixItems, CMixItem* pMixItems)
             }
         }
     }
+    // a tab of the Illusion of Noria: its mix is shown with the required items even with an empty machine
+    if (iMostSimiliarRecipe == 0 && m_iOnlyMixID != 0)
+    {
+        for (const auto* recipe : m_Recipes)
+        {
+            if (recipe->m_iMixID == m_iOnlyMixID)
+            {
+                iMostSimiliarRecipe = recipe->m_iMixIndex + 1;
+                memset(m_iMostSimilarMixSourceTest, 0, sizeof(int) * MAX_MIX_SOURCES);
+                for (int i = 0; i < recipe->m_iNumMixSoruces; ++i)
+                {
+                    m_iMostSimilarMixSourceTest[i] = recipe->m_MixSources[i].m_iCountMax; // nothing of it is there
+                }
+
+                break;
+            }
+        }
+    }
+
     m_iMostSimilarMixIndex = iMostSimiliarRecipe;
     return iMostSimiliarRecipe;
 }
@@ -544,6 +686,26 @@ bool CMixRecipes::CheckRecipeItem(MIX_RECIPE& rRecipe, MIX_RECIPE_ITEM& rItem, C
         return false;
     }
 
+    // the mixes of the Illusion of Noria: only there; the weapon is a rank 7-8 weapon with the skill fix options,
+    // without the option to add it, with the option to remove it (the server checks the rest, e.g. the skill of an Echo)
+    if (rRecipe.m_iMixID == IllusionAddMix || rRecipe.m_iMixID == IllusionRemoveMix || rRecipe.m_iMixID == IllusionEchoMix)
+    {
+        if (!gMapManager.IsIllusionOfNoria())
+        {
+            return false;
+        }
+
+        if (rSource.m_sType < ITEM_SHIELD)
+        {
+            namespace CastTime = GameLogic::Combat::SkillCastTime;
+            const int group = rSource.m_sType / MAX_ITEM_INDEX;
+            const int number = rSource.m_sType % MAX_ITEM_INDEX;
+            const bool fixWeapon = CastTime::IsOptionWeapon(group, number);
+            const bool hasOption = rSource.m_bySkillFixOption != 0;
+            return fixWeapon && (rRecipe.m_iMixID == IllusionAddMix ? !hasOption : hasOption);
+        }
+    }
+
     // Chaos weapon (mix 1): the server takes only an armor piece or weapon of rank 4 as the item (+4 with the option),
     // not any item (the jewels are sources of a single type).
     constexpr int ChaosWeaponMix = 1;
@@ -608,6 +770,20 @@ BOOL CMixRecipes::GetRecipeName(MIX_RECIPE* pRecipe, wchar_t* pszNameOut, int iN
 {
     if (pRecipe == NULL) return FALSE;
     if (iNameLine > 2 || iNameLine < 1) return FALSE;
+    if (pRecipe->m_iMixID == IllusionEchoMix)
+    {
+        if (iNameLine != 1) return FALSE;
+        mu_swprintf(pszNameOut, L"%ls", I18N::Game::CreateEcho);
+        return TRUE;
+    }
+
+    if (pRecipe->m_iMixID == IllusionAddMix || pRecipe->m_iMixID == IllusionRemoveMix)
+    {
+        if (iNameLine != 1) return FALSE;
+        mu_swprintf(pszNameOut, L"%ls", pRecipe->m_iMixID == IllusionAddMix ? I18N::Game::AddSkillFixOption : I18N::Game::RemoveSkillFixOption);
+        return TRUE;
+    }
+
     if (pRecipe->m_bMixOption == 'C')
     {
         std::vector<std::wstring> optionTextlist;
@@ -736,6 +912,8 @@ int CMixRecipes::GetSourceName(int iItemNum, wchar_t* pszNameOut, int iNumMixIte
         else if (pMixRecipeItem->m_sTypeMin == pMixRecipeItem->m_sTypeMax &&
             (pMixRecipeItem->m_sTypeMin == ITEM_CHAOS_DRAGON_AXE || pMixRecipeItem->m_sTypeMin == ITEM_CHAOS_NATURE_BOW || pMixRecipeItem->m_sTypeMin == ITEM_CHAOS_LIGHTNING_STAFF))
             mu_swprintf(szTempName, I18N::Game::ChaosWeapon);
+        else if (pMixRecipeItem->m_sTypeMin == ITEM_POTION + 173 && pMixRecipeItem->m_sTypeMax == ITEM_POTION + 194)
+            mu_swprintf(szTempName, I18N::Game::AnEchoOfASkillOfTheWeapon);
         else if (pMixRecipeItem->m_sTypeMin == ITEM_SEED_FIRE && pMixRecipeItem->m_sTypeMax == ITEM_SEED_EARTH)
             mu_swprintf(szTempName, I18N::Game::Seed);
         else if (pMixRecipeItem->m_sTypeMin == ITEM_SPHERE_MONO && pMixRecipeItem->m_sTypeMax == ITEM_SPHERE_5)
@@ -1147,6 +1325,69 @@ BOOL CMixRecipes::IsJewelItem(CMixItem& rSource)
     return rSource.m_bIsJewelItem;
 }
 
+void CMixRecipes::AddIllusionRecipes()
+{
+    const auto source = [](int typeMin, int typeMax, int levelMin, int count)
+    {
+        MIX_RECIPE_ITEM item{};
+        item.m_sTypeMin = static_cast<short>(typeMin);
+        item.m_sTypeMax = static_cast<short>(typeMax);
+        item.m_iLevelMin = levelMin;
+        item.m_iLevelMax = levelMin == 0 ? 255 : 15;
+        item.m_iOptionMin = 0;
+        item.m_iOptionMax = 255;
+        item.m_iDurabilityMin = 0;
+        item.m_iDurabilityMax = 255;
+        item.m_iCountMin = count;
+        item.m_iCountMax = count;
+        return item;
+    };
+    const auto recipe = [this](int id, DWORD zen, std::initializer_list<MIX_RECIPE_ITEM> sources)
+    {
+        auto* r = new MIX_RECIPE{};
+        r->m_iMixIndex = static_cast<int>(m_Recipes.size());
+        r->m_iMixID = id;
+        r->m_iWidth = 1;
+        r->m_iHeight = 1;
+        r->m_bRequiredZenType = 'A';
+        r->m_dwRequiredZen = zen;
+        r->m_iNumRateData = 1;
+        r->m_RateToken[0].op = MRCP_NUMBER;
+        r->m_RateToken[0].value = 100.f;
+        r->m_iSuccessRate = 100;
+        for (const auto& s : sources)
+        {
+            r->m_MixSources[r->m_iNumMixSoruces++] = s;
+        }
+
+        AddRecipe(r);
+    };
+
+    const int weaponMin = ITEM_SWORD;
+    const int weaponMax = ITEM_STAFF + MAX_ITEM_INDEX - 1;
+    recipe(IllusionAddMix, 5000000, {
+        source(weaponMin, weaponMax, 10, 1),
+        source(ITEM_POTION + 173, ITEM_POTION + 194, 0, 1), // an Echo (of a skill of the weapon)
+        source(ITEM_JEWEL_OF_SOUL, ITEM_JEWEL_OF_SOUL, 0, 10),
+        source(ITEM_JEWEL_OF_BLESS, ITEM_JEWEL_OF_BLESS, 0, 10),
+        source(ITEM_JEWEL_OF_CHAOS, ITEM_JEWEL_OF_CHAOS, 0, 10),
+        source(ITEM_JEWEL_OF_CREATION, ITEM_JEWEL_OF_CREATION, 0, 10),
+        source(ITEM_JEWEL_OF_LIFE, ITEM_JEWEL_OF_LIFE, 0, 10),
+        source(ITEM_ILLUSION_SHARD, ITEM_ILLUSION_SHARD, 0, 10), // server AddOptionShards
+    });
+    recipe(IllusionEchoMix, 0, {
+        source(ITEM_JEWEL_OF_ILLUSION, ITEM_JEWEL_OF_ILLUSION, 0, 1),
+        source(ITEM_ILLUSION_SHARD, ITEM_ILLUSION_SHARD, 0, 20), // server EchoJewels / EchoShards
+    });
+    recipe(IllusionRemoveMix, 0, {
+        source(weaponMin, weaponMax, 0, 1),
+        source(ITEM_JEWEL_OF_ILLUSION, ITEM_JEWEL_OF_ILLUSION, 0, 1),
+        source(ITEM_LESSER_MIRAGE_STONE, ITEM_LESSER_MIRAGE_STONE, 0, 4),
+        source(ITEM_GREATER_MIRAGE_STONE, ITEM_GREATER_MIRAGE_STONE, 0, 1),
+        source(ITEM_ILLUSION_SHARD, ITEM_ILLUSION_SHARD, 0, 10),
+    });
+}
+
 void CMixRecipeMgr::OpenRecipeFile(const wchar_t* szFileName)
 {
     int i, j;
@@ -1193,6 +1434,7 @@ void CMixRecipeMgr::OpenRecipeFile(const wchar_t* szFileName)
         }
     }
     fclose(fp);
+    m_MixRecipe[MIXTYPE_GOBLIN_NORMAL].AddIllusionRecipes();
 }
 
 int CMixRecipeMgr::GetMixInventoryType()

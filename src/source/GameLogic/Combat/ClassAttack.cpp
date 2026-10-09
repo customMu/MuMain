@@ -505,10 +505,6 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
         || Skill == AT_SKILL_FIRE_SCREAM_STR
         || Skill == AT_SKILL_GIGANTIC_STORM
         || Skill == AT_SKILL_CHAOTIC_DISEIER
-        || Skill == AT_SKILL_TWISTING_SLASH
-        || Skill == AT_SKILL_TWISTING_SLASH_STR
-        || Skill == AT_SKILL_TWISTING_SLASH_STR_MG
-        || Skill == AT_SKILL_TWISTING_SLASH_MASTERY
         ))
     {
         bool Success = true;

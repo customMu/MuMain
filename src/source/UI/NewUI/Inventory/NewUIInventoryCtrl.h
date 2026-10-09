@@ -18,6 +18,9 @@ namespace UI::Items::Drag
     POINT PickupOffset(int itemLeft, int itemTop, int itemWidth, int itemHeight,
                        int pointerX, int pointerY, bool preserveAnchor);
     POINT ItemTopLeft(int pointerX, int pointerY, const POINT& pickupOffset);
+    // the point which picks the target cell: the centre of the first cell of the held item, so the item snaps to the
+    // nearest cell (the top left corner would switch to the upper cell already above the middle of a cell)
+    POINT SnapPoint(const POINT& itemTopLeft);
     bool ShouldConsumePanelPress(bool hasPickedItem, bool leftButtonPressed);
 }
 

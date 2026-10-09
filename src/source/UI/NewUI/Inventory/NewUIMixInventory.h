@@ -83,6 +83,10 @@ namespace SEASON3B
         static void UI2DEffectCallback(LPVOID pClass, DWORD dwParamA, DWORD dwParamB);
 
     private:
+        // the Chaos Goblin on the map of the Illusion of Noria: only the mix of the skill fix option chosen in the menu
+        static bool IsIllusionMix();
+        void RenderIllusionDescriptions(float fPos_x, float fPos_y);
+
         void LoadImages();
         void UnloadImages();
 

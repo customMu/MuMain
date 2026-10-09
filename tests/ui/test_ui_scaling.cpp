@@ -273,6 +273,24 @@ TEST_CASE("inventory drag keeps border drops in their original slots [ui][invent
     CHECK((rightTopLeft.y - gridTop) / SEASON3B::INVENTORY_SQUARE_HEIGHT == 0);
 }
 
+TEST_CASE("inventory drag snaps a held item to the nearest cell [ui][inventory]")
+{
+    constexpr int gridTop = 200;
+    const POINT offset = UI::Items::Drag::PickupOffset(0, 0, 20, 20, 0, 0, false); // a 1x1 item, held by its centre
+
+    // the pointer a bit above the middle of the second row still means the second row
+    const POINT above = UI::Items::Drag::SnapPoint(UI::Items::Drag::ItemTopLeft(110, gridTop + 28, offset));
+    CHECK((above.y - gridTop) / SEASON3B::INVENTORY_SQUARE_HEIGHT == 1);
+
+    // the upper row only once the item is more over it than over the second row
+    const POINT upper = UI::Items::Drag::SnapPoint(UI::Items::Drag::ItemTopLeft(110, gridTop + 19, offset));
+    CHECK((upper.y - gridTop) / SEASON3B::INVENTORY_SQUARE_HEIGHT == 0);
+
+    // an item put down where it was picked up stays in its cell
+    const POINT same = UI::Items::Drag::SnapPoint(UI::Items::Drag::ItemTopLeft(110, gridTop + 30, offset));
+    CHECK((same.y - gridTop) / SEASON3B::INVENTORY_SQUARE_HEIGHT == 1);
+}
+
 TEST_CASE("inventory drag anchor survives dock scaling [ui][inventory]")
 {
     const auto dock = UI::Scaling::DockRightTransform(1920, 1080);

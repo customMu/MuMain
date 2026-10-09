@@ -524,6 +524,9 @@ namespace SEASON3B
         CNewUIMessageBoxButton m_BtnChaosMix;
         CNewUIMessageBoxButton m_BtnMix380;
         CNewUIMessageBoxButton m_BtnCancel;
+
+        // the Chaos Goblin of the Illusion of Noria: the 1st button adds, the 2nd removes the skill fix option, no 3rd
+        bool m_bIllusion = false;
     };
 
     class CTrainerMenuMsgBox : public CNewUIMessageBoxBase
