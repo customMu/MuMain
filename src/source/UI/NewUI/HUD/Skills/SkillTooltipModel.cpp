@@ -9,6 +9,7 @@
 #include "Engine/Object/ZzzInventory.h"   // PartyNumber, STRP_*
 #include "GameLogic/Skills/SkillManager.h"
 #include "GameLogic/Combat/SkillCastTimeOptions.h"
+#include "GameLogic/Events/IllusionOfNoria.h"
 #include "UI/Legacy/UIJewelHarmony.h"     // StrengthenCapability
 #include "UI/Legacy/UIManager.h"          // g_pUIJewelHarmonyinfo
 
@@ -466,14 +467,22 @@ void AddCastRate(Model& m, int skillType)
     }
 
     const float seconds = CastTime::CastSeconds(skill, CharacterAttribute->AttackSpeed, CharacterAttribute->MagicSpeed, cut);
-    if (seconds <= 0.f)
+    if (seconds > 0.f)
     {
-        return;
+        wchar_t buf[MAX_TOOLTIP_LINE_TEXT];
+        mu_swprintf(buf, I18N::Game::Speed1fCastsS2fS, 1.f / seconds, seconds);
+        AddRaw(m, buf, LineColor::White);
     }
 
-    wchar_t buf[MAX_TOOLTIP_LINE_TEXT];
-    mu_swprintf(buf, I18N::Game::Speed1fCastsS2fS, 1.f / seconds, seconds);
-    AddRaw(m, buf, LineColor::White);
+    // the illusion option of the weapon in slot 0 for this skill (Haste, Vampiric, Siphon or Fury)
+    const ITEM& weapon = CharacterMachine->Equipment[EQUIPMENT_WEAPON_RIGHT];
+    if (weapon.Type >= 0 && weapon.Durability > 0 && weapon.SkillFixOption != 0
+        && CastTime::IllusionOptionSkill(weapon.Type / MAX_ITEM_INDEX, weapon.Type % MAX_ITEM_INDEX, weapon.SkillFixOption, family) == skill)
+    {
+        wchar_t text[MAX_TOOLTIP_LINE_TEXT];
+        GameLogic::Events::IllusionOfNoria::FormatOption(text, std::size(text), weapon.SkillFixOption, weapon.SkillFixLevel, family, SkillAttribute[skill].Name);
+        AddRaw(m, text, LineColor::Blue);
+    }
 }
 
 void EmitBodyStats(Model& m, int skillType, int iDistance, int iMana, int iSkillMana, int iDelayMs)

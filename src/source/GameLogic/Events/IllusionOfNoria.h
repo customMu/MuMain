@@ -150,6 +150,10 @@ namespace GameLogic::Events::IllusionOfNoria
     // The seconds the Golden Curse still burns (the timer of the debuff icon), 0 when unknown or over.
     int CurseSecondsLeft();
 
+    // The text of an illusion option of a weapon for its skill, e.g. "Vampiric Twisting Slash: 5.00% of the damage to HP"
+    // (Haste, Vampiric, Siphon, Fury - GameLogic/Combat/SkillCastTimeOptions.h); empty for other options.
+    void FormatOption(wchar_t* out, size_t size, int option, int level, int family, const wchar_t* skillName);
+
     // FB 16 [seconds, 2 bytes]: the Veil Ward lasts this long from now.
     void ReceiveWardTime(int seconds);
 

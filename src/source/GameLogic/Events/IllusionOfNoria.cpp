@@ -127,6 +127,35 @@ namespace GameLogic::Events::IllusionOfNoria
         s_curseEndsAt = GetTickCount64() + static_cast<std::uint64_t>(std::max(0, seconds)) * 1000;
     }
 
+    void FormatOption(wchar_t* out, const size_t size, const int option, const int level, const int family, const wchar_t* skillName)
+    {
+        namespace CastTime = GameLogic::Combat::SkillCastTime;
+        wchar_t value[16];
+        mu_swprintf_s(value, std::size(value), L"%.2f%%", CastTime::ExtraOptionValue(option, level) * 100.f);
+        switch (CastTime::EffectOf(option))
+        {
+        case CastTime::IllusionEffect::Haste:
+            mu_swprintf_s(out, size, I18N::Game::HasteOfLsD, skillName, static_cast<int>(CastTime::OptionCutOf(level, family) * 100.f + 0.5f));
+            break;
+        case CastTime::IllusionEffect::Vampiric:
+            mu_swprintf_s(out, size, I18N::Game::VampiricLsLs, skillName, value);
+            break;
+        case CastTime::IllusionEffect::Siphon:
+            mu_swprintf_s(out, size, I18N::Game::SiphonLsLs, skillName, value);
+            break;
+        case CastTime::IllusionEffect::Fury:
+            mu_swprintf_s(out, size, I18N::Game::FuryOfLsLs, skillName, value);
+            break;
+        default:
+            if (size > 0)
+            {
+                out[0] = L'\0';
+            }
+
+            break;
+        }
+    }
+
     int CurseSecondsLeft()
     {
         const auto now = GetTickCount64();

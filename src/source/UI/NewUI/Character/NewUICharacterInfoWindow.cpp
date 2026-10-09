@@ -2,6 +2,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "GameLogic/Combat/SkillCastTime.h"
 #include "UI/Chat/Chat.h"
 #include "UI/NewUI/Character/NewUICharacterInfoWindow.h"
 #include "UI/NewUI/NewUISystem.h"
@@ -1100,10 +1101,12 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
     g_pRenderText->SetBgColor(0);
     g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iY, strBlocking);
 
-    WORD wAttackSpeed = CLASS_WIZARD == iBaseClass || CLASS_SUMMONER == iBaseClass
-        ? CharacterAttribute->MagicSpeed : CharacterAttribute->AttackSpeed;
-
-    mu_swprintf(strBlocking, I18N::Game::AttackSpeedD, wAttackSpeed);
+    // both speeds; at the speed at which the skills reach their fix time (the maximum of the stat, server
+    // config."AttributeDefinition", Server/speed-cap-at-fix.sql) a red MAX: more speed does nothing
+    const int attackSpeed = CharacterAttribute->AttackSpeed;
+    const int magicSpeed = CharacterAttribute->MagicSpeed;
+    const bool attackSpeedMax = attackSpeed >= static_cast<int>(GameLogic::Combat::SkillCastTime::AttackSpeedAtFix);
+    const bool magicSpeedMax = magicSpeed >= static_cast<int>(GameLogic::Combat::SkillCastTime::MagicSpeedAtFix);
     iY += 13;
 
     g_pRenderText->SetFont(g_hFont);
@@ -1132,7 +1135,36 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
         }
     }
     g_pRenderText->SetBgColor(0);
-    g_pRenderText->RenderText(m_Pos.x + 20, m_Pos.y + iY, strBlocking);
+    {
+        // "Attack / Magic Speed: N / M" - the parts after each other
+        int x = m_Pos.x + 20;
+        const DWORD color = g_pRenderText->GetTextColor();
+        const auto renderPart = [&](const wchar_t* text, bool red)
+        {
+            g_pRenderText->SetTextColor(red ? RGBA(255, 40, 40, 255) : color);
+            g_pRenderText->RenderText(x, m_Pos.y + iY, text);
+            x += g_pRenderText->MeasureText(text, static_cast<int>(wcslen(text))).cx;
+        };
+
+        const auto width = [](const wchar_t* text) { return static_cast<int>(g_pRenderText->MeasureText(text, static_cast<int>(wcslen(text))).cx); };
+        wchar_t attack[16];
+        wchar_t magic[16];
+        mu_swprintf(attack, L"%d", attackSpeed);
+        mu_swprintf(magic, L"%d", magicSpeed);
+        const wchar_t* max = L" MAX";
+
+        // the numbers stay, a red MAX after the one at the maximum; a shorter label when the line is too wide
+        const int numbersWidth = width(attack) + width(L" / ") + width(magic) + (attackSpeedMax ? width(max) : 0) + (magicSpeedMax ? width(max) : 0);
+        const wchar_t* label = width(I18N::Game::AttackMagicSpeed) + numbersWidth <= CHAINFO_WINDOW_WIDTH - 36
+            ? I18N::Game::AttackMagicSpeed : I18N::Game::Speed;
+        renderPart(label, false);
+        renderPart(attack, false);
+        if (attackSpeedMax) renderPart(max, true);
+        renderPart(L" / ", false);
+        renderPart(magic, false);
+        if (magicSpeedMax) renderPart(max, true);
+        g_pRenderText->SetTextColor(color);
+    }
 
     if (itemoption380Defense != 0 || iDefenseRate != 0)
     {

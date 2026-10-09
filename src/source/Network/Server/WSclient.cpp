@@ -3514,18 +3514,17 @@ void ReceiveAttackDamage(CHARACTER* c, OBJECT* o, const bool success, const int 
                 Position[2] += 10.f;
                 CreatePoint(Position, damage, Light, scale + 10.f);
             }
-            else if (bDoubleEnable) //  Double Damage
+            if (bDoubleEnable && !bComboEnable)
             {
-                vec3_t Position, Light2;
-                VectorCopy(o->Position, Position);
-                Vector(Light[0] - 0.4f, Light[1] - 0.4f, Light[2] - 0.4f, Light2);
-                CreatePoint(Position, damage, Light2, scale);
-                Position[2] += 10.f;
-                Vector(Light[0] - 0.2f, Light[1] - 0.2f, Light[2] - 0.2f, Light2);
-                CreatePoint(Position, damage, Light2, scale + 5.f);
+                // double damage (the number is already doubled): one bigger golden number, not three stacked copies
+                vec3_t Gold;
+                Vector(1.f, 0.75f, 0.2f, Gold);
+                CreatePoint(o->Position, damage, Gold, scale + 8.f);
             }
-
-            CreatePoint(o->Position, damage, Light, scale);
+            else
+            {
+                CreatePoint(o->Position, damage, Light, scale);
+            }
         }
 
         if (shieldDamage > 0 && !SuppressOptionalPresentation)

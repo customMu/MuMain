@@ -253,7 +253,7 @@
     <comment>legacy_id=63</comment>
   </data>
   <data name="Attack speed: %d" xml:space="preserve">
-    <value>Attack speed: %d</value>
+    <value>Attack Speed: %d</value>
     <comment>legacy_id=64</comment>
   </data>
   <data name="Defense: %d" xml:space="preserve">
@@ -13292,7 +13292,7 @@
     <value>The option lowers the fix time of one of its skills: -5%% .. -25%%</value>
   </data>
   <data name="Raises the harmony option level" xml:space="preserve">
-    <value>Raises the level of the skill fix option (up to 10)</value>
+    <value>Raises the level of the illusion option (up to 10)</value>
   </data>
   <data name="On a fail the option falls back to level 1" xml:space="preserve">
     <value>On a fail the option falls back to level 1</value>
@@ -13493,7 +13493,7 @@
     <value>The Stolen Whistle</value>
   </data>
   <data name="Skill fix option" xml:space="preserve">
-    <value>Skill fix option</value>
+    <value>Illusion option</value>
   </data>
   <data name="Random stone" xml:space="preserve">
     <value>Random stone</value>
@@ -13535,10 +13535,10 @@
     <value>Next +%d: Chaos Machine, jewels x%d</value>
   </data>
   <data name="Add skill fix option" xml:space="preserve">
-    <value>Add skill fix option</value>
+    <value>Add illusion option</value>
   </data>
   <data name="Remove skill fix option" xml:space="preserve">
-    <value>Remove skill fix option</value>
+    <value>Remove illusion option</value>
   </data>
   <data name="Jewel of Illusion or an Echo" xml:space="preserve">
     <value>Jewel of Illusion or an Echo</value>
@@ -13553,10 +13553,10 @@
     <value>A weapon of rank 7 or 8</value>
   </data>
   <data name="Plus 10 or more without the skill fix option" xml:space="preserve">
-    <value>+10 or more, without the skill fix option</value>
+    <value>+10 or more, without the illusion option</value>
   </data>
   <data name="With the skill fix option" xml:space="preserve">
-    <value>with the skill fix option</value>
+    <value>with the illusion option</value>
   </data>
   <data name="An Echo gives its skill the Jewel a random one" xml:space="preserve">
     <value>An Echo gives its skill, the Jewel - a random one</value>
@@ -13580,7 +13580,7 @@
     <value>The weapon has no such skill for your class</value>
   </data>
   <data name="Removes the skill fix option of a weapon" xml:space="preserve">
-    <value>Removes the skill fix option of a weapon</value>
+    <value>Removes the illusion option of a weapon</value>
   </data>
   <data name="At the Chaos Goblin of the Illusion of Noria" xml:space="preserve">
     <value>at the Chaos Goblin of the Illusion of Noria</value>
@@ -13589,7 +13589,7 @@
     <value>%ls - %d shards</value>
   </data>
   <data name="Raises the skill fix option by one level" xml:space="preserve">
-    <value>Raises the skill fix option by one level</value>
+    <value>Raises the illusion option by one level</value>
   </data>
   <data name="Jewel of Illusion and Mirage Stones" xml:space="preserve">
     <value>Jewel of Illusion and Mirage Stones by the rank</value>
@@ -13638,5 +13638,35 @@
   </data>
   <data name="Double damage chance Ls" xml:space="preserve">
     <value>Double damage chance: %ls</value>
+  </data>
+  <data name="Illusion option" xml:space="preserve">
+    <value>Illusion option</value>
+  </data>
+  <data name="Haste of Ls D" xml:space="preserve">
+    <value>Haste of %ls: casts %d%% faster</value>
+  </data>
+  <data name="Vampiric Ls Ls" xml:space="preserve">
+    <value>Vampiric %ls: %ls of the damage to HP</value>
+  </data>
+  <data name="Siphon Ls Ls" xml:space="preserve">
+    <value>Siphon %ls: %ls of the damage to MP</value>
+  </data>
+  <data name="Fury of Ls Ls" xml:space="preserve">
+    <value>Fury of %ls: %ls chance of double damage</value>
+  </data>
+  <data name="A random illusion option of Ls" xml:space="preserve">
+    <value>A random illusion option of %ls:</value>
+  </data>
+  <data name="Haste Vampiric Siphon or Fury" xml:space="preserve">
+    <value>Haste, Vampiric, Siphon or Fury</value>
+  </data>
+  <data name="For a rank 7-8 weapon plus 10" xml:space="preserve">
+    <value>for a rank 7-8 weapon +10 (Chaos Goblin of the Illusion)</value>
+  </data>
+  <data name="Attack Magic Speed" xml:space="preserve">
+    <value>Attack / Magic Speed: </value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>Speed: </value>
   </data>
 </root>

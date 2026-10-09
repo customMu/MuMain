@@ -77,22 +77,41 @@ namespace GameLogic::Combat::SkillCastTime
         return 0;
     }
 
-    // The extra options of the skill fix slot (Illusion of Noria, an Echo gives a random one of 4): HP steal 14, MP steal
-    // 15, Double damage 16. Their value at level 10 (5 %, 5 %, 10 %), lower levels on the curve of the fix time cut.
-    // Must match tools/balance/illusion_extra_options.py (server IllusionWeaponOptions).
-    inline constexpr int HealthStealOption = 14;
-    inline constexpr int ManaStealOption = 15;
-    inline constexpr int DoubleDamageOption = 16;
-
-    inline bool IsExtraOption(int option)
+    // The illusion options of the rank 7-8 weapons (Illusion of Noria): option = 11 + 3 x effect + the index of the skill
+    // on the weapon; an Echo gives a random effect for its skill. Only the weapon in slot 0 counts, each option only for
+    // its skill. Must match the server (IllusionWeaponOptions) and tools/balance/illusion_extra_options.py.
+    enum class IllusionEffect
     {
-        return option >= HealthStealOption && option <= DoubleDamageOption;
+        None = -1,
+        Haste = 0,    // the cast time of the skill (OptionCut)
+        Vampiric = 1, // health from the damage of the skill: 5 % at level 10
+        Siphon = 2,   // mana from the damage of the skill: 5 %
+        Fury = 3,     // the chance of a double hit of the skill: 10 %
+    };
+
+    inline IllusionEffect EffectOf(int option)
+    {
+        const int offset = option - OptionNumbers[0];
+        return offset >= 0 && offset < 12 ? static_cast<IllusionEffect>(offset / 3) : IllusionEffect::None;
     }
 
-    // The value of an extra option at its level, e.g. 0.05 for 5 %.
+    // The skill of an illusion option of any effect on the weapon for the class, or 0.
+    inline int IllusionOptionSkill(int group, int number, int option, int family)
+    {
+        const int offset = option - OptionNumbers[0];
+        if (offset < 0 || offset >= 12)
+        {
+            return 0;
+        }
+
+        const auto* weapon = FindWeapon(group, number, family);
+        return weapon != nullptr ? weapon->Skills[offset % 3] : 0;
+    }
+
+    // The value of a Vampiric / Siphon / Fury option at its level, e.g. 0.05 for 5 % (the curve of the cast time cut).
     inline float ExtraOptionValue(int option, int level)
     {
-        const float maximum = option == DoubleDamageOption ? 0.10f : 0.05f;
+        const float maximum = EffectOf(option) == IllusionEffect::Fury ? 0.10f : 0.05f;
         const int index = std::clamp(level, 0, static_cast<int>(std::size(OptionCut)) - 1);
         return OptionCut[index] / OptionCut[std::size(OptionCut) - 1] * maximum;
     }

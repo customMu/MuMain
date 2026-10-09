@@ -4381,10 +4381,13 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
     }
     else if (const auto* echo = GameLogic::Events::IllusionOfNoria::FindEcho(ip->Type))
     {
-        mu_swprintf(TextList[TextNum], I18N::Game::AddsTheOptionOfLsToARank78Weapon, echo->SkillName);
+        // a random illusion option of the skill of the Echo (server EchoOfIllusionConsumeHandler)
+        mu_swprintf(TextList[TextNum], I18N::Game::ARandomIllusionOptionOfLs, echo->SkillName);
         TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
-        mu_swprintf(TextList[TextNum], I18N::Game::TheOptionLowersTheFixTimeOfASkill);
+        mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::HasteVampiricSiphonOrFury);
         TextListColor[TextNum] = TEXT_COLOR_VIOLET; TextBold[TextNum] = false; TextNum++;
+        mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::ForARank78WeaponPlus10);
+        TextListColor[TextNum] = TEXT_COLOR_WHITE; TextBold[TextNum] = false; TextNum++;
     }
     else if (ip->Type == ITEM_LESSER_MIRAGE_STONE)
     {
@@ -5268,26 +5271,13 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         // class on the rank 7-8 weapons, its level and the chance of the next Mirage Stone
         namespace CastTime = GameLogic::Combat::SkillCastTime;
         const int family = gCharacterManager.GetBaseClass(CharacterAttribute->Class) * 4;
-        const int skill = CastTime::OptionSkill(ip->Type / MAX_ITEM_INDEX, ip->Type % MAX_ITEM_INDEX, ip->SkillFixOption, family);
-        const bool extra = CastTime::IsExtraOption(ip->SkillFixOption); // HP steal, MP steal, Double damage
-        if ((skill > 0 && skill < MAX_SKILLS) || extra)
+        const int skill = CastTime::IllusionOptionSkill(ip->Type / MAX_ITEM_INDEX, ip->Type % MAX_ITEM_INDEX, ip->SkillFixOption, family);
+        if (skill > 0 && skill < MAX_SKILLS)
         {
             const int level = ip->SkillFixLevel;
-            wchar_t fixText[100];
+            wchar_t fixText[160];
             wchar_t levelText[40];
-            if (extra)
-            {
-                wchar_t value[16];
-                mu_swprintf(value, L"%.2f%%", CastTime::ExtraOptionValue(ip->SkillFixOption, level) * 100.f);
-                const wchar_t* format = ip->SkillFixOption == CastTime::HealthStealOption ? I18N::Game::HPStealLs
-                    : ip->SkillFixOption == CastTime::ManaStealOption ? I18N::Game::MPStealLs : I18N::Game::DoubleDamageChanceLs;
-                mu_swprintf(fixText, format, value);
-            }
-            else
-            {
-                const int percent = static_cast<int>(CastTime::OptionCutOf(level, family) * 100.f + 0.5f);
-                mu_swprintf(fixText, I18N::Game::FixTimeOfLsD, SkillAttribute[skill].Name, percent);
-            }
+            GameLogic::Events::IllusionOfNoria::FormatOption(fixText, std::size(fixText), ip->SkillFixOption, level, family, SkillAttribute[skill].Name);
 
             if (level >= CastTime::MaxOptionLevel)
             {
@@ -5299,6 +5289,9 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
             }
 
             mu_swprintf(TextList[TextNum], L"\n"); TextNum++; SkipNum++;
+            mu_swprintf(TextList[TextNum], L"%ls", I18N::Game::IllusionOption);
+            TextListColor[TextNum] = TEXT_COLOR_VIOLET;
+            TextBold[TextNum] = false; TextNum++;
             mu_swprintf(TextList[TextNum], L"%ls %ls", fixText, levelText);
             TextListColor[TextNum] = TEXT_COLOR_VIOLET;
             TextBold[TextNum] = true; TextNum++;
