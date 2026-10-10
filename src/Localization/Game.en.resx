@@ -13669,4 +13669,19 @@
   <data name="Speed" xml:space="preserve">
     <value>Speed: </value>
   </data>
+  <data name="Weekly quest" xml:space="preserve">
+    <value>Weekly quest</value>
+  </data>
+  <data name="Take part in %d defeats of the boss" xml:space="preserve">
+    <value>Take part in %d defeats of the boss</value>
+  </data>
+  <data name="%ls of the damage: you or your party" xml:space="preserve">
+    <value>at least %ls of the damage: you or your party</value>
+  </data>
+  <data name="Claim the weekly reward" xml:space="preserve">
+    <value>Claim the weekly reward</value>
+  </data>
+  <data name="Weekly quest done. Next in %d d %d h" xml:space="preserve">
+    <value>Weekly quest done. Next in %d d %d h</value>
+  </data>
 </root>

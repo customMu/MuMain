@@ -25,6 +25,8 @@ namespace GameLogic::Events::IllusionOfNoria
         constexpr std::size_t DailySize = 4;
         constexpr std::size_t WeaponSize = 11;
         constexpr std::size_t ExchangeSize = 5;
+        constexpr std::size_t WeeklySize = 10;
+        constexpr std::size_t WeeklyRewardSize = 5;
 
         WardenInfo s_info;
         bool s_hasState = false;
@@ -195,6 +197,28 @@ namespace GameLogic::Events::IllusionOfNoria
         return elapsed >= s_info.SecondsUntilNextDay ? 0 : s_info.SecondsUntilNextDay - elapsed;
     }
 
+    std::uint32_t SecondsUntilNextWeek()
+    {
+        const auto elapsed = static_cast<std::uint32_t>((GetTickCount64() - s_receivedAt) / 1000);
+        return elapsed >= s_info.SecondsUntilNextWeek ? 0 : s_info.SecondsUntilNextWeek - elapsed;
+    }
+
+    int CurrentWeeklyState()
+    {
+        // a new week: the weekly quest done this week starts again
+        if (s_info.WeeklyState == 2 && SecondsUntilNextWeek() == 0)
+        {
+            return 0;
+        }
+
+        return s_info.WeeklyState;
+    }
+
+    int CurrentWeeklyKills()
+    {
+        return s_info.WeeklyState != 1 && SecondsUntilNextWeek() == 0 ? 0 : s_info.WeeklyKills;
+    }
+
     int CurrentDailyState()
     {
         // a new day: the daily quest done today (or not claimed) can be taken again
@@ -218,6 +242,11 @@ namespace GameLogic::Events::IllusionOfNoria
             if (s_info.QuestState != 2)
             {
                 return 0;
+            }
+
+            if (CurrentWeeklyState() == 1)
+            {
+                return 2;
             }
 
             switch (CurrentDailyState())
@@ -330,17 +359,43 @@ namespace GameLogic::Events::IllusionOfNoria
         }
 
         offset += 1 + (weaponCount * WeaponSize);
-        if (packet.size() >= offset + 5)
+        if (packet.size() < offset + 5)
         {
-            info.Shards = Read32(packet.subspan(offset));
-            const std::size_t exchangeCount = packet[offset + 4];
-            if (packet.size() >= offset + 5 + (exchangeCount * ExchangeSize))
+            return true;
+        }
+
+        info.Shards = Read32(packet.subspan(offset));
+        const std::size_t exchangeCount = packet[offset + 4];
+        if (packet.size() < offset + 5 + (exchangeCount * ExchangeSize))
+        {
+            return true;
+        }
+
+        for (std::size_t i = 0; i < exchangeCount; ++i)
+        {
+            const auto entry = packet.subspan(offset + 5 + (i * ExchangeSize), ExchangeSize);
+            info.Exchange.push_back({ entry[0], Read16(entry.subspan(1)), Read16(entry.subspan(3)) });
+        }
+
+        // the weekly quest (servers since 10.10.2026)
+        offset += 5 + (exchangeCount * ExchangeSize);
+        if (packet.size() < offset + WeeklySize)
+        {
+            return true;
+        }
+
+        info.WeeklyState = packet[offset];
+        info.WeeklyKills = packet[offset + 1];
+        info.WeeklyKillsNeeded = packet[offset + 2];
+        info.WeeklyMinimumDamageTenths = Read16(packet.subspan(offset + 3));
+        info.SecondsUntilNextWeek = Read32(packet.subspan(offset + 5));
+        const std::size_t rewardCount = packet[offset + 9];
+        if (packet.size() >= offset + WeeklySize + (rewardCount * WeeklyRewardSize))
+        {
+            for (std::size_t i = 0; i < rewardCount; ++i)
             {
-                for (std::size_t i = 0; i < exchangeCount; ++i)
-                {
-                    const auto entry = packet.subspan(offset + 5 + (i * ExchangeSize), ExchangeSize);
-                    info.Exchange.push_back({ entry[0], Read16(entry.subspan(1)), Read16(entry.subspan(3)) });
-                }
+                const auto entry = packet.subspan(offset + WeeklySize + (i * WeeklyRewardSize), WeeklyRewardSize);
+                info.WeeklyRewards.push_back({ entry[0], Read16(entry.subspan(1)), Read16(entry.subspan(3)) });
             }
         }
 

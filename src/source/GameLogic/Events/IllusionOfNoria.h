@@ -28,6 +28,7 @@ namespace GameLogic::Events::IllusionOfNoria
         TakeDaily = 4,
         ClaimDaily = 5,
         Return = 6,
+        ClaimWeekly = 7, // the reward of the weekly quest (the boss)
         ResetOption = 0x10, // + slot (0 left hand, 1 right hand)
         BuyLesserStone = 0x20, // a Lesser Mirage Stone for Illusion Shards (the shop of the warden)
         BuyWard = 0x21,        // the Veil Ward for Illusion Shards (no damage of the Golden Curse)
@@ -51,6 +52,14 @@ namespace GameLogic::Events::IllusionOfNoria
         int Group = 0;
         int Number = 0;
         int Price = 0;
+    };
+
+    // an item of the reward of the weekly quest
+    struct WeeklyReward
+    {
+        int Group = 0;
+        int Number = 0;
+        int Amount = 0;
     };
 
     struct DailyMonster
@@ -87,6 +96,15 @@ namespace GameLogic::Events::IllusionOfNoria
         std::vector<ResetWeapon> Weapons;
         std::uint32_t Shards = 0;
         std::vector<ExchangeEntry> Exchange;
+
+        // the weekly quest: take part in the defeats of the Gilded Colossus (the player or its party with at least the
+        // minimum share of the damage); it counts by itself after the quest of the whistle
+        int WeeklyState = 0; // 0 active, 1 completed (reward waits), 2 done this week
+        int WeeklyKills = 0;
+        int WeeklyKillsNeeded = 0;
+        int WeeklyMinimumDamageTenths = 0; // tenths of a percent
+        std::uint32_t SecondsUntilNextWeek = 0;
+        std::vector<WeeklyReward> WeeklyRewards;
     };
 
     // The Echoes (14/173-194): add the harmony option of one skill to a rank 7-8 weapon which has it (75 %, like the
@@ -175,6 +193,15 @@ namespace GameLogic::Events::IllusionOfNoria
 
     // The seconds until the next day of the daily quest, counted down since the last state.
     std::uint32_t SecondsUntilNextDay();
+
+    // The weekly quest as it is now: 0 active, 1 completed, 2 done this week (a new week turns 2 into 0 without a new packet).
+    int CurrentWeeklyState();
+
+    // The boss kills of the weekly quest as they are now (0 in a new week).
+    int CurrentWeeklyKills();
+
+    // The seconds until the next week of the weekly quest, counted down since the last state.
+    std::uint32_t SecondsUntilNextWeek();
 
     // What the mark over Warden Eldrin shows: 0 nothing, 1 a quest or the daily quest can be taken (blue !), 2 a reward
     // waits (gold !).

@@ -713,6 +713,37 @@ void SEASON3B::CNewUIMyQuestInfoWindow::RenderDailyInfo()
     }
     }
 
+    // the weekly quest: take part in the defeats of the Gilded Colossus
+    if (info.WeeklyKillsNeeded > 0)
+    {
+        y += 8.f;
+        line(I18N::Game::WeeklyQuest, 255, 255, 255, true);
+        const int weekly = Illusion::CurrentWeeklyState();
+        if (weekly == 2)
+        {
+            const auto seconds = Illusion::SecondsUntilNextWeek();
+            mu_swprintf(text, I18N::Game::WeeklyQuestDoneNextInDDDH, static_cast<int>(seconds / 86400), static_cast<int>(seconds % 86400 / 3600));
+            line(text, 160, 160, 160);
+        }
+        else
+        {
+            if (weekly == 1)
+            {
+                line(I18N::Game::CompletedClaimYourReward, 255, 200, 64);
+            }
+
+            const int needed = std::max(1, info.WeeklyKillsNeeded);
+            const int kills = std::min(Illusion::CurrentWeeklyKills(), needed);
+            const float progress = static_cast<float>(kills) / static_cast<float>(needed);
+            y += 4.f;
+            RenderColorQuadARGB(x + 22.f, y - 1.f, 146.f, 14.f, 0xA0201030u);
+            RenderColorQuadARGB(x + 22.f, y - 1.f, 146.f * progress, 14.f, progress >= 1.f ? 0xC0308040u : 0xC0B08030u);
+            EnableAlphaTest();
+            mu_swprintf(text, I18N::Game::LsDD, I18N::Game::GildedColossus, kills, needed);
+            line(text, 255, 255, 255);
+        }
+    }
+
     y += 8.f;
     mu_swprintf(text, I18N::Game::IllusionShardsU, info.Shards);
     line(text, 210, 160, 255);

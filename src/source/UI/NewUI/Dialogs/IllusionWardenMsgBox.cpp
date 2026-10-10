@@ -232,6 +232,41 @@ void SEASON3B::CIllusionWardenMsgBox::BuildMain()
             AddLine(Format(I18N::Game::DailyQuestDoneNextInDHDMin, static_cast<int>(info.SecondsUntilNextDay / 3600), static_cast<int>(info.SecondsUntilNextDay % 3600 / 60)), Gray);
             break;
         }
+
+        // the weekly quest: take part in the defeats of the Gilded Colossus, it counts by itself
+        if (info.QuestState == 2 && info.WeeklyKillsNeeded > 0)
+        {
+            AddHeader(I18N::Game::WeeklyQuest);
+            if (info.WeeklyState == 2)
+            {
+                const auto seconds = info.SecondsUntilNextWeek;
+                AddLine(Format(I18N::Game::WeeklyQuestDoneNextInDDDH, static_cast<int>(seconds / 86400), static_cast<int>(seconds % 86400 / 3600)), Gray);
+            }
+            else
+            {
+                AddLine(Format(I18N::Game::TakePartInDDefeatsOfTheBoss, info.WeeklyKillsNeeded));
+                wchar_t share[16];
+                mu_swprintf_s(share, std::size(share), L"%d.%d%%", info.WeeklyMinimumDamageTenths / 10, info.WeeklyMinimumDamageTenths % 10);
+                AddLine(Format(I18N::Game::LsOfTheDamageYouOrYourParty, share), Gray);
+                AddProgress(Format(I18N::Game::LsDD, I18N::Game::GildedColossus, std::min(info.WeeklyKills, info.WeeklyKillsNeeded), info.WeeklyKillsNeeded),
+                            info.WeeklyKills, info.WeeklyKillsNeeded);
+                std::wstring reward;
+                for (const auto& item : info.WeeklyRewards)
+                {
+                    reward += Format(I18N::Game::DLs, item.Amount, ItemName(item.Group, item.Number)); // ", %d %ls"
+                }
+
+                if (reward.size() > 2)
+                {
+                    AddLine(Format(I18N::Game::RewardLs, reward.c_str() + 2), Violet);
+                }
+
+                if (info.WeeklyState == 1)
+                {
+                    AddButton(I18N::Game::ClaimTheWeeklyReward, Command::Action, Illusion::ClaimWeekly);
+                }
+            }
+        }
     }
 
     // the reset of the skill fix option of the equipped weapons
