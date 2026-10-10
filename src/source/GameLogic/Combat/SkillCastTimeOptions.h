@@ -84,8 +84,8 @@ namespace GameLogic::Combat::SkillCastTime
     {
         None = -1,
         Haste = 0,    // the cast time of the skill (OptionCut)
-        Vampiric = 1, // health from the damage of the skill: 5 % at level 10
-        Siphon = 2,   // mana from the damage of the skill: 5 %
+        Vampiric = 1, // a chance per hit of the skill (5 % at level 10) to get StealRestoreShare of its damage as health
+        Siphon = 2,   // the same as mana
         Fury = 3,     // the chance of a double hit of the skill: 10 %
     };
 
@@ -108,7 +108,11 @@ namespace GameLogic::Combat::SkillCastTime
         return weapon != nullptr ? weapon->Skills[offset % 3] : 0;
     }
 
-    // The value of a Vampiric / Siphon / Fury option at its level, e.g. 0.05 for 5 % (the curve of the cast time cut).
+    // The share of the damage of the hit which a proc of Vampiric / Siphon gives as health / mana (server IllusionWeaponOptions.RestoreShare).
+    inline constexpr float StealRestoreShare = 0.05f;
+
+    // The value of a Vampiric / Siphon / Fury option at its level - the chance, e.g. 0.05 for 5 % (the curve of the cast
+    // time cut; server tools/balance/illusion_extra_options.py).
     inline float ExtraOptionValue(int option, int level)
     {
         const float maximum = EffectOf(option) == IllusionEffect::Fury ? 0.10f : 0.05f;

@@ -48,6 +48,8 @@ namespace Network::Server::KalimaPackets
         constexpr std::uint8_t IllusionCurseTimeSubCode = 0x15; // C1 05 FB 15 [seconds]: the timer of the Golden Curse
         constexpr std::uint8_t IllusionWardTimeSubCode = 0x16;  // C1 06 FB 16 [seconds, 2 bytes]: the timer of the Veil Ward
         constexpr std::uint8_t IllusionBlessingTimeSubCode = 0x17; // C1 06 FB 17 [seconds, 2 bytes]: the timer of the Blessing of the Veil
+        constexpr std::uint8_t IllusionBossStateSubCode = 0x18; // C1 05 FB 18 [state]: the boss banished / ritual / awakened
+        constexpr std::uint8_t IllusionRestoredSubCode = 0x19;  // C1 09 FB 19 [0 health, 1 mana] [amount u32]: Vampiric / Siphon
         constexpr std::uint8_t DropModeVoteSubCode = 0x0F;
         constexpr std::uint8_t DropModeVoteAnswerSubCode = 0x10;
         constexpr std::uint8_t InviteDropModeSubCode = 0x11;
@@ -430,6 +432,21 @@ namespace Network::Server::KalimaPackets
             if (isC1 && packet.size() >= 6)
             {
                 GameLogic::Events::IllusionOfNoria::ReceiveBlessingTime(packet[4] | (packet[5] << 8));
+            }
+
+            break;
+        case IllusionBossStateSubCode:
+            if (isC1 && packet.size() >= 5)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveBossState(packet[4]);
+            }
+
+            break;
+        case IllusionRestoredSubCode:
+            if (isC1 && packet.size() >= 9)
+            {
+                GameLogic::Events::IllusionOfNoria::ReceiveRestored(packet[4] != 0,
+                    static_cast<std::uint32_t>(packet[5] | (packet[6] << 8) | (packet[7] << 16) | (static_cast<std::uint32_t>(packet[8]) << 24)));
             }
 
             break;

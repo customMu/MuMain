@@ -264,7 +264,7 @@ enum
     BITMAP_CURSEDTEMPLE_END = BITMAP_CURSEDTEMPLE_BEGIN + 50,
 
     BITMAP_BUFFWINDOW_BEGIN,
-    BITMAP_BUFFWINDOW_END = BITMAP_BUFFWINDOW_BEGIN + 6, // CNewUIBuffWindow: status icons 1-3, Set Guard, Golden Curse, Veil Ward, Blessing of the Veil
+    BITMAP_BUFFWINDOW_END = BITMAP_BUFFWINDOW_BEGIN + 9, // CNewUIBuffWindow: status icons 1-3, Set Guard, Golden Curse, Veil Ward, Blessing of the Veil, the boss of the Illusion of Noria (banished, ritual, awakened)
 
     BITMAP_CURSEDTEMPLE_MONSTER_MANTLE,
     BITMAP_CURSEDTEMPLE_NPC_MESH_EFFECT,

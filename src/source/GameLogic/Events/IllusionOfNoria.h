@@ -184,6 +184,18 @@ namespace GameLogic::Events::IllusionOfNoria
     // The seconds the Blessing of the Veil still lasts, 0 when unknown or over.
     int BlessingSecondsLeft();
 
+    // FB 18 [state]: the state of the Gilded Colossus - 0 banished (the cooldown after its defeat), 1 the ritual (the kills
+    // of the map wake it), 2 awakened. The server sends it on the map of the illusion when it changes and after entering.
+    void ReceiveBossState(int state);
+
+    // FB 19 [0 health, 1 mana] [amount u32]: a Vampiric / Siphon proc of the weapon - the amount flies up over the hero,
+    // right of the damage numbers (green health, blue mana).
+    void ReceiveRestored(bool mana, std::uint32_t amount);
+
+    // Draws the icon of the state of the boss in the top right corner of the screen on the map of the illusion, with the
+    // name of the state and a tooltip (from CNewUINameWindow::Render).
+    void RenderBossState();
+
     // Whether the state came from the server since the start of the client.
     bool HasState();
 

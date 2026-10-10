@@ -13,6 +13,10 @@
 #include "Render/Textures/ZzzOpenglUtil.h"
 #include "Scenes/SceneCore.h"
 #include "World/MapInfra/MapManager.h"
+#include "Engine/Object/ZzzObject.h"
+#include "UI/NewUI/HUD/NewUIBuffWindow.h"
+#include "UI/NewUI/NewUISystem.h"
+#include "Render/Effects/ZzzEffect.h"
 
 namespace GameLogic::Events::IllusionOfNoria
 {
@@ -35,6 +39,7 @@ namespace GameLogic::Events::IllusionOfNoria
         std::uint64_t s_curseEndsAt = 0; // GetTickCount64
         std::uint64_t s_wardEndsAt = 0;  // GetTickCount64
         std::uint64_t s_blessingEndsAt = 0; // GetTickCount64
+        int s_bossState = -1; // FB 18, -1 unknown
 
         // the mark: a bar and a dot with a dark outline, bobbing over the head
         void DrawMark(const float x, const float y, const unsigned int color)
@@ -140,10 +145,10 @@ namespace GameLogic::Events::IllusionOfNoria
             mu_swprintf_s(out, size, I18N::Game::HasteOfLsD, skillName, static_cast<int>(CastTime::OptionCutOf(level, family) * 100.f + 0.5f));
             break;
         case CastTime::IllusionEffect::Vampiric:
-            mu_swprintf_s(out, size, I18N::Game::VampiricLsLs, skillName, value);
+            mu_swprintf_s(out, size, I18N::Game::VampiricLsLsChanceToGetDOfTheDamageAsHP, skillName, value, static_cast<int>(CastTime::StealRestoreShare * 100.f + 0.5f));
             break;
         case CastTime::IllusionEffect::Siphon:
-            mu_swprintf_s(out, size, I18N::Game::SiphonLsLs, skillName, value);
+            mu_swprintf_s(out, size, I18N::Game::SiphonLsLsChanceToGetDOfTheDamageAsMP, skillName, value, static_cast<int>(CastTime::StealRestoreShare * 100.f + 0.5f));
             break;
         case CastTime::IllusionEffect::Fury:
             mu_swprintf_s(out, size, I18N::Game::FuryOfLsLs, skillName, value);
@@ -184,6 +189,85 @@ namespace GameLogic::Events::IllusionOfNoria
     {
         const auto now = GetTickCount64();
         return now >= s_blessingEndsAt ? 0 : static_cast<int>((s_blessingEndsAt - now + 999) / 1000);
+    }
+
+    void ReceiveRestored(const bool mana, const std::uint32_t amount)
+    {
+        if (Hero == nullptr || amount == 0)
+        {
+            return;
+        }
+
+        // to the right on the screen (the direction in which the digits of a number go, RenderNumberPoints)
+        constexpr float Side = 70.f;
+        const float sinTh = sinf(static_cast<float>(ANGLE_TO_RAD * g_Camera.Angle[2]));
+        const float cosTh = cosf(static_cast<float>(ANGLE_TO_RAD * g_Camera.Angle[2]));
+        vec3_t position;
+        VectorCopy(Hero->Object.Position, position);
+        position[0] += Side * cosTh;
+        position[1] -= Side * sinTh;
+        position[2] += 20.f;
+        vec3_t color;
+        if (mana)
+        {
+            Vector(0.35f, 0.65f, 1.f, color);
+        }
+        else
+        {
+            Vector(0.3f, 1.f, 0.35f, color);
+        }
+
+        CreatePoint(position, static_cast<int>(std::min<std::uint32_t>(amount, 0x7FFFFFFF)), color, 20.f);
+    }
+
+    void ReceiveBossState(const int state)
+    {
+        s_bossState = std::clamp(state, 0, 2);
+    }
+
+    void RenderBossState()
+    {
+        if (s_bossState < 0 || SceneFlag != MAIN_SCENE || !gMapManager.IsIllusionOfNoria())
+        {
+            return;
+        }
+
+        // the 40 x 56 part of the 64 x 64 texture, like the buff icons; left of the windows opened on the right
+        constexpr float Width = 30.f;
+        constexpr float Height = 42.f;
+        const float x = static_cast<float>(GetScreenWidth()) - Width - 12.f;
+        constexpr float y = 24.f;
+        static constexpr unsigned int Frames[] = { 0xFF606060u, 0xFFA060FFu, 0xFFFFC840u };
+        static constexpr BYTE Colors[][3] = { { 170, 170, 170 }, { 200, 150, 255 }, { 255, 200, 80 } };
+        const wchar_t* const names[] = { I18N::Game::Banished, I18N::Game::Ritual, I18N::Game::Awakened };
+        const wchar_t* const tips[] = { I18N::Game::DefeatedItReturnsAfterAWhile, I18N::Game::TheKillsInTheIllusionAwakenIt, I18N::Game::AwakeSomewhereInTheIllusion };
+
+        RenderColorQuadARGB(x - 1.f, y - 1.f, Width + 2.f, Height + 2.f, Frames[s_bossState]);
+        EnableAlphaTest();
+        RenderBitmap(SEASON3B::CNewUIBuffWindow::IMAGE_BOSS_BANISHED + s_bossState, x, y, Width, Height, 0.f, 0.f, 40.f / 64.f, 56.f / 64.f);
+
+        const auto& color = Colors[s_bossState];
+        g_pRenderText->SetFont(g_hFontBold);
+        g_pRenderText->SetBgColor(0, 0, 0, 160);
+        g_pRenderText->SetTextColor(color[0], color[1], color[2], 255);
+        g_pRenderText->RenderText(static_cast<int>(x - 20.f), static_cast<int>(y + Height + 3.f), names[s_bossState], static_cast<int>(Width + 40.f), 0, RT3_SORT_CENTER);
+
+        if (SEASON3B::CheckMouseIn(static_cast<int>(x), static_cast<int>(y), static_cast<int>(Width), static_cast<int>(Height + 14.f)))
+        {
+            constexpr float TipWidth = 170.f;
+            const float tipX = x - TipWidth - 6.f;
+            RenderColorQuadARGB(tipX, y, TipWidth, 34.f, 0xE0100810u);
+            EnableAlphaTest();
+            g_pRenderText->SetBgColor(0, 0, 0, 0);
+            g_pRenderText->SetFont(g_hFontBold);
+            g_pRenderText->SetTextColor(255, 200, 80, 255);
+            g_pRenderText->RenderText(static_cast<int>(tipX), static_cast<int>(y + 4.f), I18N::Game::GildedColossus, static_cast<int>(TipWidth), 0, RT3_SORT_CENTER);
+            g_pRenderText->SetFont(g_hFont);
+            g_pRenderText->SetTextColor(color[0], color[1], color[2], 255);
+            g_pRenderText->RenderText(static_cast<int>(tipX), static_cast<int>(y + 19.f), tips[s_bossState], static_cast<int>(TipWidth), 0, RT3_SORT_CENTER);
+        }
+
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
     }
 
     bool HasState()

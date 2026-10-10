@@ -3516,10 +3516,11 @@ void ReceiveAttackDamage(CHARACTER* c, OBJECT* o, const bool success, const int 
             }
             if (bDoubleEnable && !bComboEnable)
             {
-                // double damage (the number is already doubled): one bigger golden number, not three stacked copies
-                vec3_t Gold;
-                Vector(1.f, 0.75f, 0.2f, Gold);
-                CreatePoint(o->Position, damage, Gold, scale + 8.f);
+                // double damage (the number is already doubled, e.g. Fury of the illusion option): one big bright yellow
+                // number - the normal damage on monsters is orange, the old gold was too close to it
+                vec3_t Yellow;
+                Vector(1.f, 1.f, 0.15f, Yellow);
+                CreatePoint(o->Position, damage, Yellow, std::max(scale, 15.f) + 25.f);
             }
             else
             {

@@ -13684,4 +13684,28 @@
   <data name="Weekly quest done. Next in %d d %d h" xml:space="preserve">
     <value>Weekly quest done. Next in %d d %d h</value>
   </data>
+  <data name="Banished" xml:space="preserve">
+    <value>Banished</value>
+  </data>
+  <data name="Ritual" xml:space="preserve">
+    <value>Ritual</value>
+  </data>
+  <data name="Awakened" xml:space="preserve">
+    <value>Awakened</value>
+  </data>
+  <data name="Defeated: it returns after a while" xml:space="preserve">
+    <value>Defeated: it returns after a while</value>
+  </data>
+  <data name="The kills in the Illusion awaken it" xml:space="preserve">
+    <value>The kills in the Illusion awaken it</value>
+  </data>
+  <data name="Awake somewhere in the Illusion!" xml:space="preserve">
+    <value>Awake somewhere in the Illusion!</value>
+  </data>
+  <data name="Vampiric %ls: %ls chance to get %d%% of the damage as HP" xml:space="preserve">
+    <value>Vampiric %ls: %ls chance to get %d%% of the damage as HP</value>
+  </data>
+  <data name="Siphon %ls: %ls chance to get %d%% of the damage as MP" xml:space="preserve">
+    <value>Siphon %ls: %ls chance to get %d%% of the damage as MP</value>
+  </data>
 </root>

@@ -19,6 +19,11 @@ namespace SEASON3B
             IMAGE_BUFF_GOLDEN_CURSE, // Interface\newui_goldencurse (tools/hud/golden_curse_icon.py), EFFECT_GOLDEN_CURSE
             IMAGE_BUFF_VEIL_WARD,     // Interface\newui_veilward (tools/hud/veil_icons.py), the Veil Ward (189)
             IMAGE_BUFF_VEIL_BLESSING, // Interface\newui_veilblessing (tools/hud/veil_icons.py), the Blessing of the Veil (185)
+            // the state of the boss of the Illusion of Noria in the corner of the screen (tools/hud/boss_state_icons.py,
+            // GameLogic::Events::IllusionOfNoria::RenderBossState): banished, ritual, awakened - in this order
+            IMAGE_BOSS_BANISHED,
+            IMAGE_BOSS_RITUAL,
+            IMAGE_BOSS_AWAKENED,
         };
 
         enum BUFF_RENDER

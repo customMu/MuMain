@@ -577,6 +577,9 @@ void SEASON3B::CNewUIBuffWindow::LoadImages()
     LoadBitmap(L"Interface\\newui_goldencurse.jpg", IMAGE_BUFF_GOLDEN_CURSE, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_veilward.jpg", IMAGE_BUFF_VEIL_WARD, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_veilblessing.jpg", IMAGE_BUFF_VEIL_BLESSING, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_bossbanished.jpg", IMAGE_BOSS_BANISHED, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_bossritual.jpg", IMAGE_BOSS_RITUAL, GL_LINEAR);
+    LoadBitmap(L"Interface\\newui_bossawakened.jpg", IMAGE_BOSS_AWAKENED, GL_LINEAR);
 }
 
 void SEASON3B::CNewUIBuffWindow::UnloadImages()
@@ -585,6 +588,9 @@ void SEASON3B::CNewUIBuffWindow::UnloadImages()
     DeleteBitmap(IMAGE_BUFF_GOLDEN_CURSE);
     DeleteBitmap(IMAGE_BUFF_VEIL_WARD);
     DeleteBitmap(IMAGE_BUFF_VEIL_BLESSING);
+    DeleteBitmap(IMAGE_BOSS_BANISHED);
+    DeleteBitmap(IMAGE_BOSS_RITUAL);
+    DeleteBitmap(IMAGE_BOSS_AWAKENED);
     DeleteBitmap(IMAGE_BUFF_STATUS2);
     DeleteBitmap(IMAGE_BUFF_STATUS);
 }

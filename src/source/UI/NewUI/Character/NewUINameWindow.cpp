@@ -161,6 +161,7 @@ bool SEASON3B::CNewUINameWindow::Render()
     UI::Chat::RenderBooleans();
     RenderMonsterHealthBars();
     GameLogic::Events::IllusionOfNoria::RenderWardenMark();
+    GameLogic::Events::IllusionOfNoria::RenderBossState();
     DrawPersonalShopTitleImp();
     DisableAlphaBlend();
 
